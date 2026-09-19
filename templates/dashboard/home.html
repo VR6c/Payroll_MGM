@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-12">
+    <div class="home-tab">
+      <div class="d-sm-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+        <div>
+          <h2 class="fw-bold text-dark mb-1">Dashboard</h2>
+          <p class="text-muted mb-0">Overview of organization metrics and quick operations</p>
+        </div>
+      </div>
+
+      {% if user.role == 'employee' %}
+      <div class="row">
+        <div class="col-md-4 grid-margin stretch-card">
+          <div class="card card-tale bg-primary text-white">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <p class="mb-0">Today's Status</p>
+                <i class="mdi mdi-clock-check-outline fs-3"></i>
+              </div>
+              <h3 class="fw-bold mb-2">{{ today_attendance.get_status_display|default:"Not Checked In" }}</h3>
+              <p class="mb-0 small opacity-75">
+                {% if today_attendance.check_in %}
+                  In: {{ today_attendance.check_in|date:"H:i" }}
+                  {% if today_attendance.check_out %} | Out: {{ today_attendance.check_out|date:"H:i" }}{% endif %}
+                {% else %}
+                  No check-in record for today
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 grid-margin stretch-card">
+          <div class="card card-dark-blue bg-success text-white">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <p class="mb-0">Leave Balance</p>
+                <i class="mdi mdi-calendar-account fs-3"></i>
+              </div>
+              <h3 class="fw-bold mb-2">{{ leave_balance.remaining_days|default:"0" }} Days</h3>
+              <p class="mb-0 small opacity-75">Remaining for year {% now "Y" %}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 grid-margin stretch-card">
+          <div class="card card-light-blue bg-info text-white">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <p class="mb-0">Latest Net Salary</p>
+                <i class="mdi mdi-cash-multiple fs-3"></i>
+              </div>
+              <h3 class="fw-bold mb-2">${{ recent_payslips.0.net_salary|default:"N/A" }}</h3>
+              <p class="mb-0 small opacity-75">
+                {% if recent_payslips.0 %}
+                  Period: {{ recent_payslips.0.payroll_period|date:"M Y" }}
+                {% else %}
+                  No payslips generated yet
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title"><i class="mdi mdi-flash text-warning me-2"></i>Quick Attendance Actions</h4>
+              <p class="card-description">Mark your daily check-in and check-out time.</p>
+              <div class="d-flex flex-wrap gap-2">
+                <form method="post" action="{% url 'attendance:check_in' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-icon-text text-white" {% if today_attendance.check_in %}disabled{% endif %}>
+                    <i class="mdi mdi-login btn-icon-prepend"></i> Check In
+                  </button>
+                </form>
+                <form method="post" action="{% url 'attendance:check_out' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-warning btn-icon-text text-white" {% if not today_attendance.check_in or today_attendance.check_out %}disabled{% endif %}>
+                    <i class="mdi mdi-logout btn-icon-prepend"></i> Check Out
+                  </button>
+                </form>
+                <a href="{% url 'leave:create' %}" class="btn btn-outline-primary btn-icon-text">
+                  <i class="mdi mdi-calendar-plus btn-icon-prepend"></i> Request Leave
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title"><i class="mdi mdi-calendar-clock text-primary me-2"></i>My Recent Leave Requests</h4>
+              {% if my_recent_leaves %}
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Days</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for leave in my_recent_leaves %}
+                        <tr>
+                          <td>{{ leave.leave_type.name }}</td>
+                          <td>
+                            {% if leave.status == 'approved' %}
+                              <span class="badge bg-success">Approved</span>
+                            {% elif leave.status == 'pending' %}
+                              <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif leave.status == 'rejected' %}
+                              <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                              <span class="badge bg-secondary">{{ leave.get_status_display }}</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ leave.total_days }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="text-muted">No recent leave requests found.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="statistics-details d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-3 bg-white rounded shadow-sm">
+            <div>
+              <p class="statistics-title text-muted mb-1">Active Employees</p>
+              <h3 class="rate-percentage fw-bold text-primary mb-0">{{ total_employees }}</h3>
+            </div>
+            <div>
+              <p class="statistics-title text-muted mb-1">Present Today</p>
+              <h3 class="rate-percentage fw-bold text-success mb-0">{{ present_today }}</h3>
+            </div>
+            <div>
+              <p class="statistics-title text-muted mb-1">Late Today</p>
+              <h3 class="rate-percentage fw-bold text-warning mb-0">{{ late_today }}</h3>
+            </div>
+            <div>
+              <p class="statistics-title text-muted mb-1">Pending Leaves</p>
+              <h3 class="rate-percentage fw-bold text-info mb-0">{{ pending_leaves }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-8 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0"><i class="mdi mdi-account-group-outline text-primary me-2"></i>Recent Employees</h4>
+                <a href="{% url 'employees:list' %}" class="btn btn-sm btn-primary">View All</a>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Department</th>
+                      <th>Position</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for emp in recent_employees %}
+                      <tr>
+                        <td class="fw-bold">{{ emp.employee_code }}</td>
+                        <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                        <td>{{ emp.department.name|default:"-" }}</td>
+                        <td>{{ emp.position.name|default:"-" }}</td>
+                        <td>
+                          {% if emp.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                          {% else %}
+                            <span class="badge bg-secondary">{{ emp.get_status_display }}</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="5" class="text-center text-muted">No employees available.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title"><i class="mdi mdi-history text-info me-2"></i>System Activity Stream</h4>
+              <ul class="bullet-line-list ps-3 mt-3">
+                {% for act in recent_activities %}
+                  <li class="mb-3">
+                    <div class="d-flex justify-content-between">
+                      <p class="mb-0 fw-semibold">{{ act.action }} ({{ act.module }})</p>
+                      <small class="text-muted">{{ act.created_at|timesince }} ago</small>
+                    </div>
+                    <p class="text-muted small mb-0">{{ act.description }}</p>
+                  </li>
+                {% empty %}
+                  <p class="text-muted small">No recent activity logs.</p>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

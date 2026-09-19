@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Types - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-calendar-multiselect me-2 text-primary"></i>Leave Types Management</h3>
+        <p class="text-muted mb-0">Configure leave categories, default allowances, and payment policies</p>
+      </div>
+      {% if user.role in 'super_admin,hr_admin' %}
+      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addLeaveTypeModal">
+        <i class="mdi mdi-plus me-1"></i> Add New Leave Type
+      </button>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>#</th>
+                <th>Leave Type Name</th>
+                <th>Company</th>
+                <th>Default Annual Days</th>
+                <th>Paid Leave</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lt in leave_types %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold text-dark">{{ lt.name }}</td>
+                <td>{{ lt.company.name }}</td>
+                <td><span class="badge bg-light text-dark border">{{ lt.default_days }} Days</span></td>
+                <td>
+                  {% if lt.paid %}
+                  <span class="badge bg-success">Paid</span>
+                  {% else %}
+                  <span class="badge bg-warning text-dark">Unpaid</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if lt.status %}
+                  <span class="badge bg-success">Active</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editLeaveTypeModal{{ lt.id }}">
+                    <i class="mdi mdi-pencil"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteLeaveTypeModal{{ lt.id }}">
+                    <i class="mdi mdi-trash-can-outline"></i> Delete
+                  </button>
+
+                  <!-- Edit Modal -->
+                  <div class="modal fade text-start" id="editLeaveTypeModal{{ lt.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'leave:type_update' lt.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Leave Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Company</label>
+                              <select name="company" class="form-select" required>
+                                {% for comp in companies %}
+                                <option value="{{ comp.id }}" {% if comp.id == lt.company.id %}selected{% endif %}>{{ comp.name }}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Leave Type Name</label>
+                              <input type="text" name="name" class="form-control" value="{{ lt.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Default Days</label>
+                              <input type="number" name="default_days" class="form-control" value="{{ lt.default_days }}" required>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" name="paid" id="ltPaid{{ lt.id }}" {% if lt.paid %}checked{% endif %}>
+                              <label class="form-check-label fw-bold" for="ltPaid{{ lt.id }}">Paid Leave Policy</label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" name="status" id="ltStatus{{ lt.id }}" {% if lt.status %}checked{% endif %}>
+                              <label class="form-check-label fw-bold" for="ltStatus{{ lt.id }}">Active</label>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade text-start" id="deleteLeaveTypeModal{{ lt.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'leave:type_delete' lt.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Leave Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to delete leave type <strong>{{ lt.name }}</strong>?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No leave types configured yet. Click "Add New Leave Type" above to create one.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Leave Type Modal -->
+<div class="modal fade" id="addLeaveTypeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'leave:type_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-plus-circle me-1 text-primary"></i> Add New Leave Type</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Company</label>
+            <select name="company" class="form-select" required>
+              {% for comp in companies %}
+              <option value="{{ comp.id }}">{{ comp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Leave Type Name</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Annual Leave, Sick Leave" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Default Days</label>
+            <input type="number" name="default_days" class="form-control" value="18" required>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="paid" id="addLtPaid" checked>
+            <label class="form-check-label fw-bold" for="addLtPaid">Paid Leave Policy</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="status" id="addLtStatus" checked>
+            <label class="form-check-label fw-bold" for="addLtStatus">Active Status</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Create Leave Type</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

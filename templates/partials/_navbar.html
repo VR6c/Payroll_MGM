@@ -1,0 +1,55 @@
+{% load static %}
+<nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row">
+  <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
+    <div class="me-3">
+      <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-bs-toggle="minimize">
+        <span class="icon-menu"></span>
+      </button>
+    </div>
+    <div>
+      <a class="navbar-brand brand-logo" href="{% url 'dashboard:home' %}">
+        <h4 class="fw-bold text-primary mb-0"><i class="mdi mdi-briefcase me-2"></i>Payroll MGM</h4>
+      </a>
+      <a class="navbar-brand brand-logo-mini" href="{% url 'dashboard:home' %}">
+        <h4 class="fw-bold text-primary mb-0"><i class="mdi mdi-briefcase"></i></h4>
+      </a>
+    </div>
+  </div>
+  <div class="navbar-menu-wrapper d-flex align-items-top">
+    <ul class="navbar-nav">
+      <li class="nav-item fw-semibold d-none d-lg-block ms-0">
+        <h1 class="welcome-text">Welcome back, <span class="text-black fw-bold">{{ request.user.get_full_name|default:request.user.username }}</span></h1>
+        <h3 class="welcome-sub-text">Payroll & HR Management System</h3>
+      </li>
+    </ul>
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item dropdown d-none d-lg-block user-dropdown">
+        <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+          <div class="d-flex align-items-center">
+            <span class="avatar-title rounded-circle bg-primary text-white me-2 fs-6 fw-bold d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+              {{ request.user.username|slice:":2"|upper }}
+            </span>
+            <span class="fw-semibold text-dark me-1">{{ request.user.username }}</span>
+            <i class="mdi mdi-chevron-down text-secondary"></i>
+          </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
+          <div class="dropdown-header text-center">
+            <p class="mb-1 mt-2 fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</p>
+            <p class="fw-light text-muted mb-0 small">{{ request.user.email|default:request.user.username }}</p>
+            <span class="badge bg-primary text-white mt-2">{{ request.user.get_role_display }}</span>
+          </div>
+          <a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Change Password</a>
+          <div class="dropdown-divider"></div>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger border-0 bg-transparent w-100 text-start"><i class="dropdown-item-icon mdi mdi-power text-danger me-2"></i> Logout</button>
+          </form>
+        </div>
+      </li>
+    </ul>
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-bs-toggle="offcanvas">
+      <span class="mdi mdi-menu"></span>
+    </button>
+  </div>
+</nav>

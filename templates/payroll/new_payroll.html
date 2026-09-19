@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}New Payroll Generation - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-calculator me-2 text-primary"></i>Generate New Payroll</h3>
+        <p class="text-muted mb-0">Run monthly payroll processing, calculate gross & net salary, and emit payslips</p>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-dark mb-3"><i class="mdi mdi-calendar-clock me-2 text-primary"></i>Payroll Period Setup</h5>
+        <form method="post" action="{% url 'payroll:new_payroll' %}" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-5">
+            <label class="form-label fw-bold">Select Month & Year</label>
+            <input type="month" name="payroll_period" class="form-control" value="2026-09" required>
+          </div>
+          <div class="col-md-7">
+            <button type="submit" class="btn btn-primary text-white w-100">
+              <i class="mdi mdi-play-circle-outline me-1"></i> Calculate & Generate Payroll Run
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title text-muted mb-3"><i class="mdi mdi-history me-1"></i>Generated Payroll Records</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Period</th>
+                <th>Employee</th>
+                <th>Basic Salary</th>
+                <th>Gross Salary</th>
+                <th>Deductions</th>
+                <th>Net Salary</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payrolls %}
+              <tr>
+                <td>{{ p.payroll_period|date:"F Y" }}</td>
+                <td class="fw-semibold text-dark">{{ p.employee.first_name }} {{ p.employee.last_name }}</td>
+                <td>${{ p.basic_salary }}</td>
+                <td>${{ p.gross_salary }}</td>
+                <td><span class="badge bg-light text-danger border">-${{ p.total_deduction }}</span></td>
+                <td><span class="badge bg-success text-white fw-bold">${{ p.net_salary }}</span></td>
+                <td><span class="badge bg-primary">{{ p.get_status_display }}</span></td>
+                <td class="text-end">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <a href="{% url 'payroll:payslip' p.id %}" class="btn btn-sm btn-outline-primary me-1" title="View Payslip">
+                    <i class="mdi mdi-eye"></i> Payslip
+                  </a>
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePayrollModal{{ p.id }}">
+                    <i class="mdi mdi-trash-can-outline"></i>
+                  </button>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade text-start" id="deletePayrollModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'payroll:delete' p.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Payroll Record</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to delete payroll record for <strong>{{ p.employee.first_name }} {{ p.employee.last_name }}</strong> for period {{ p.payroll_period|date:"F Y" }}?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">No payroll cycles executed yet. Click "Calculate & Generate Payroll Run" above to initiate a cycle.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

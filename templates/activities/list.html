@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-history text-primary me-2"></i>System Activity Audit Log</h3>
+        <p class="text-muted mb-0">Track user actions, attendance events, and system modifications</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Module</th>
+                <th>Action</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in activities %}
+              <tr>
+                <td class="small text-muted">{{ a.created_at|date:"M d, Y H:i:s" }}</td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ a.user.get_full_name|default:a.user.username }}</div>
+                  <small class="text-muted">{{ a.user.get_role_display }}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ a.module }}</span></td>
+                <td><span class="badge bg-primary">{{ a.action }}</span></td>
+                <td>{{ a.description }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No activity logs recorded.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'partials/_pagination.html' %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

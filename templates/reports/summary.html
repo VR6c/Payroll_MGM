@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Summary Report - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-chart-donut me-2 text-primary"></i>Executive Summary Report</h3>
+        <p class="text-muted mb-0">High-level HR & Payroll metrics summary</p>
+      </div>
+      <button class="btn btn-outline-primary" onclick="window.print()"><i class="mdi mdi-printer me-1"></i> Print Summary</button>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-white">
+          <div class="card-body">
+            <h6 class="text-muted mb-1">Total Employees</h6>
+            <h3 class="fw-bold text-primary mb-0">{{ total_employees }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-white">
+          <div class="card-body">
+            <h6 class="text-muted mb-1">Active Workforce</h6>
+            <h3 class="fw-bold text-success mb-0">{{ active_employees }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-white">
+          <div class="card-body">
+            <h6 class="text-muted mb-1">Total Net Payroll Paid</h6>
+            <h3 class="fw-bold text-dark mb-0">${{ total_payroll_sum }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-white">
+          <div class="card-body">
+            <h6 class="text-muted mb-1">Leave Requests</h6>
+            <h3 class="fw-bold text-warning mb-0">{{ leave_requests_count }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title text-dark mb-3">Recent Payroll Summary</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Period</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Gross Salary</th>
+                <th>Total Deductions</th>
+                <th>Net Salary</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payrolls %}
+              <tr>
+                <td>{{ p.payroll_period|date:"F Y" }}</td>
+                <td class="fw-semibold text-dark">{{ p.employee.first_name }} {{ p.employee.last_name }}</td>
+                <td>{{ p.employee.department.name|default:"-" }}</td>
+                <td>${{ p.gross_salary }}</td>
+                <td><span class="text-danger">-${{ p.total_deduction }}</span></td>
+                <td><span class="fw-bold text-success">${{ p.net_salary }}</span></td>
+                <td><span class="badge bg-primary">{{ p.get_status_display }}</span></td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No summary data available.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

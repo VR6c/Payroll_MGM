@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Employee - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">
+          <i class="mdi mdi-account-edit-outline text-primary me-2"></i>{% if object %}Edit Employee Profile{% else %}Add New Employee{% endif %}
+        </h3>
+        <p class="text-muted mb-0">Fill in employee details and save to update records</p>
+      </div>
+      <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+        <i class="mdi mdi-arrow-left me-1"></i> Back to List
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="forms-sample">
+          {% csrf_token %}
+          <div class="row">
+            {{ form|crispy }}
+          </div>
+          <div class="mt-4 pt-3 border-top d-flex gap-2">
+            <button type="submit" class="btn btn-primary text-white me-2">
+              <i class="mdi mdi-content-save me-1"></i> Save Employee Record
+            </button>
+            <a href="{% url 'employees:list' %}" class="btn btn-light">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

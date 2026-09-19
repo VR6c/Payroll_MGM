@@ -1,0 +1,125 @@
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ==============================================================================
+# Virtual Environments
+# ==============================================================================
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ==============================================================================
+# Environment & Secrets
+# ==============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# ==============================================================================
+# Django & Databases
+# ==============================================================================
+db.sqlite3
+db.sqlite3-journal
+db.sqlite3-shm
+db.sqlite3-wal
+media/
+staticfiles/
+local_settings.py
+
+# ==============================================================================
+# Logging & Runtime
+# ==============================================================================
+logs/
+*.log
+*.pid
+
+# ==============================================================================
+# Testing, Coverage & Quality Assurance
+# ==============================================================================
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.hypothesis/
+coverage.xml
+nosetests.xml
+.mypy_cache/
+.ruff_cache/
+
+# ==============================================================================
+# Build & Distribution Artifacts
+# ==============================================================================
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==============================================================================
+# IDEs & Code Editors
+# ==============================================================================
+# JetBrains (PyCharm, IntelliJ)
+.idea/
+*.iml
+*.iws
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Text Editors / Swap files
+*.swp
+*.swo
+*~
+*.bak
+.sublime-project
+.sublime-workspace
+
+# ==============================================================================
+# Docker & Containers
+# ==============================================================================
+docker-compose.override.yml
+.docker/
+
+# ==============================================================================
+# Operating System Files
+# ==============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+[Dd]esktop.ini
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+$RECYCLE.BIN/

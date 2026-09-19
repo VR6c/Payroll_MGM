@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Attendance & HR Report - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-file-chart me-2 text-primary"></i>Daily HR & Attendance Report</h3>
+        <p class="text-muted mb-0">Daily tracking summary for {{ today }}</p>
+      </div>
+      <button class="btn btn-outline-primary" onclick="window.print()"><i class="mdi mdi-printer me-1"></i> Print / Export PDF</button>
+    </div>
+
+    <!-- Summary Widgets -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body py-3">
+            <h6 class="text-white-50 mb-1">Active Employees</h6>
+            <h3 class="fw-bold mb-0 text-white">{{ total_employees }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body py-3">
+            <h6 class="text-white-50 mb-1">Present Today</h6>
+            <h3 class="fw-bold mb-0 text-white">{{ present_count }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+          <div class="card-body py-3">
+            <h6 class="text-dark-50 mb-1">Late Check-ins</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ late_count }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-danger text-white">
+          <div class="card-body py-3">
+            <h6 class="text-white-50 mb-1">Absent</h6>
+            <h3 class="fw-bold mb-0 text-white">{{ absent_count }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title text-dark mb-3">Today's Attendance Logs</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Employee</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Working Hours</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for att in today_attendances %}
+              <tr>
+                <td class="fw-semibold text-dark">{{ att.employee.first_name }} {{ att.employee.last_name }}</td>
+                <td>{{ att.check_in|time:"H:i"|default:"-" }}</td>
+                <td>{{ att.check_out|time:"H:i"|default:"-" }}</td>
+                <td>{{ att.working_hours|default:"-" }}</td>
+                <td>
+                  {% if att.status == 'present' %}
+                  <span class="badge bg-success">Present</span>
+                  {% elif att.status == 'late' %}
+                  <span class="badge bg-warning text-dark">Late</span>
+                  {% elif att.status == 'absent' %}
+                  <span class="badge bg-danger">Absent</span>
+                  {% else %}
+                  <span class="badge bg-info">{{ att.get_status_display }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No check-in activity recorded today.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

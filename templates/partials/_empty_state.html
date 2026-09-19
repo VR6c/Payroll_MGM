@@ -1,0 +1,12 @@
+<div class="text-center py-5 px-3 my-3 bg-white rounded-3 border border-light shadow-sm position-relative overflow-hidden">
+  <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-light text-primary rounded-circle p-3 shadow-xs" style="width: 72px; height: 72px;">
+    <i class="mdi {{ icon|default:'mdi-folder-open-outline' }} display-6 text-primary mb-0" style="opacity: 0.85;"></i>
+  </div>
+  <h5 class="fw-bold text-dark mb-1">{{ title|default:"No records found" }}</h5>
+  <p class="text-muted small mb-4 mx-auto" style="max-width: 420px;">{{ message|default:"There are no records matching your request at this time." }}</p>
+  {% if action_url and action_text %}
+    <a href="{{ action_url }}" class="btn btn-primary btn-sm px-4 py-2 shadow-sm rounded-pill font-weight-medium">
+      <i class="mdi mdi-plus me-1"></i>{{ action_text }}
+    </a>
+  {% endif %}
+</div>

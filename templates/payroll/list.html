@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Records - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-cash-multiple text-primary me-2"></i>Payroll Management</h3>
+        <p class="text-muted mb-0">Company payroll history, salary breakdowns, and payslips</p>
+      </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label text-muted mb-1">Status</label>
+            <select name="status" class="form-select">
+              <option value="">-- All Statuses --</option>
+              <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+              <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Processing</option>
+              <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
+              <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label text-muted mb-1">Period (YYYY-MM-DD)</label>
+            <input type="date" name="period" class="form-control" value="{{ request.GET.period }}">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary text-white w-100">
+              <i class="mdi mdi-magnify me-1"></i> Filter
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Employee</th>
+                <th>Period</th>
+                <th>Gross Salary</th>
+                <th>Deductions</th>
+                <th>Net Salary</th>
+                <th>Status</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payrolls %}
+              <tr>
+                <td>
+                  <div class="fw-semibold text-dark">{{ p.employee.first_name }} {{ p.employee.last_name }}</div>
+                  <small class="text-muted">{{ p.employee.employee_code }}</small>
+                </td>
+                <td class="fw-semibold">{{ p.payroll_period|date:"F Y" }}</td>
+                <td>${{ p.gross_salary }}</td>
+                <td class="text-danger">-${{ p.total_deduction }}</td>
+                <td class="fw-bold text-success fs-6">${{ p.net_salary }}</td>
+                <td>
+                  {% if p.status == 'paid' %}
+                    <span class="badge bg-success">Paid</span>
+                  {% elif p.status == 'approved' %}
+                    <span class="badge bg-info">Approved</span>
+                  {% elif p.status == 'processing' %}
+                    <span class="badge bg-warning text-dark">Processing</span>
+                  {% elif p.status == 'draft' %}
+                    <span class="badge bg-secondary">Draft</span>
+                  {% else %}
+                    <span class="badge bg-danger">{{ p.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'payroll:payslip' p.pk %}" class="btn btn-sm btn-outline-primary" title="View Payslip">
+                    <i class="mdi mdi-file-document-outline me-1"></i> Payslip
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="p-0 border-0">
+                  {% include 'partials/_empty_state.html' with title="No Payroll Records" message="No payroll records were found for the selected period or status." action_url="payroll:new_payroll" action_text="Generate Payroll" %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'partials/_pagination.html' %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

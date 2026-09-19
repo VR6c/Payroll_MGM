@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Employees - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-account-group-outline me-2 text-primary"></i>Employee Management</h3>
+        <p class="text-muted mb-0">Manage employee records, roles, and status</p>
+      </div>
+      {% if user.role in 'super_admin,hr_admin' %}
+      <a href="{% url 'employees:create' %}" class="btn btn-primary text-white">
+        <i class="mdi mdi-account-plus me-1"></i> Add New Employee
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-muted mb-3"><i class="mdi mdi-filter-variant me-1"></i>Filter Employees</h5>
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-md-5">
+            {{ filter_form.search|as_crispy_field }}
+          </div>
+          <div class="col-md-3">
+            {{ filter_form.department|as_crispy_field }}
+          </div>
+          <div class="col-md-2">
+            {{ filter_form.status|as_crispy_field }}
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary text-white w-100 mb-3">
+              <i class="mdi mdi-magnify me-1"></i> Filter
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Employee Table Card -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Code</th>
+                <th>Employee Name</th>
+                <th>Department</th>
+                <th>Position</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for emp in employees %}
+              <tr>
+                <td><span class="badge bg-light text-dark fw-bold border">{{ emp.employee_code }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <span class="avatar-title rounded-circle bg-soft-primary text-primary fw-bold me-2 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #eef2f7;">
+                      {{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}
+                    </span>
+                    <div>
+                      <div class="fw-semibold text-dark">{{ emp.first_name }} {{ emp.last_name }}</div>
+                      <small class="text-muted">{{ emp.email }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ emp.department.name|default:"-" }}</td>
+                <td>{{ emp.position.name|default:"-" }}</td>
+                <td>
+                  {% if emp.status == 'active' %}
+                    <span class="badge bg-success">Active</span>
+                  {% elif emp.status == 'inactive' %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% elif emp.status == 'resigned' %}
+                    <span class="badge bg-warning text-dark">Resigned</span>
+                  {% elif emp.status == 'terminated' %}
+                    <span class="badge bg-danger">Terminated</span>
+                  {% else %}
+                    <span class="badge bg-info">{{ emp.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'employees:detail' emp.pk %}" class="btn btn-sm btn-outline-primary me-1" title="View Detail">
+                    <i class="mdi mdi-eye"></i>
+                  </a>
+                  {% if user.role in 'super_admin,hr_admin,manager' %}
+                  <a href="{% url 'employees:update' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit Employee">
+                    <i class="mdi mdi-pencil"></i>
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="p-0 border-0">
+                  {% include 'partials/_empty_state.html' with title="No Employees Found" message="No employees matched your current search and filter settings." action_url="employees:create" action_text="Add Employee" %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'partials/_pagination.html' %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

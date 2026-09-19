@@ -1,0 +1,51 @@
+from django.db import models
+from employees.models import Employee
+
+class SalaryStructure(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salary_structures')
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    transportation = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    housing = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    meal_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    other_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    effective_date = models.DateField()
+    status = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-effective_date']
+        indexes = [
+            models.Index(fields=['employee', 'status']),
+        ]
+
+class Payroll(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
+        PROCESSING = 'processing', 'Processing'
+        APPROVED = 'approved', 'Approved'
+        PAID = 'paid', 'Paid'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payrolls')
+    payroll_period = models.DateField()
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    overtime = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    bonus = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    nssf = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    other_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_deduction = models.DecimalField(max_digits=12, decimal_places=2)
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('employee', 'payroll_period')
+        indexes = [
+            models.Index(fields=['payroll_period']),
+            models.Index(fields=['status']),
+            models.Index(fields=['employee', 'payroll_period']),
+        ]
+

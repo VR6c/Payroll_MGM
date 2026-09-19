@@ -1,0 +1,52 @@
+name: payroll_mgm
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: payroll_mysql_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-payroll_mgm_db}
+      MYSQL_USER: ${DB_USER:-payroll_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-payroll_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payroll_django_web
+    restart: always
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - USE_MYSQL=true
+      - DB_NAME=${DB_NAME:-payroll_mgm_db}
+      - DB_USER=${DB_USER:-payroll_user}
+      - DB_PASSWORD=${DB_PASSWORD:-payroll_pass}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key}
+      - DEBUG=${DEBUG:-True}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  static_volume:
+  media_volume:

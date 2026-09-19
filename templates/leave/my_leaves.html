@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}My Leave Requests - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-calendar-check-outline text-primary me-2"></i>My Leave Requests</h3>
+        <p class="text-muted mb-0">View submitted leave requests and status</p>
+      </div>
+      <a href="{% url 'leave:create' %}" class="btn btn-primary text-white">
+        <i class="mdi mdi-plus me-1"></i> Request Leave
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Leave Type</th>
+                <th>Total Days</th>
+                <th>Status</th>
+                <th>Date Requested</th>
+                <th>Approved By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lr in leaves %}
+              <tr>
+                <td class="fw-semibold text-dark">{{ lr.leave_type.name }}</td>
+                <td><span class="badge bg-light text-dark border fw-bold">{{ lr.total_days }} Days</span></td>
+                <td>
+                  {% if lr.status == 'approved' %}
+                    <span class="badge bg-success">Approved</span>
+                  {% elif lr.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% elif lr.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% elif lr.status == 'cancelled' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                  {% else %}
+                    <span class="badge bg-info">{{ lr.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ lr.created_at|date:"M d, Y" }}</td>
+                <td>{{ lr.approved_by.get_full_name|default:lr.approved_by.username|default:"-" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No leave requests submitted yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'partials/_pagination.html' %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

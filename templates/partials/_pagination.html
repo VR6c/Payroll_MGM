@@ -1,0 +1,98 @@
+{% load pagination_tags %}
+
+{% if is_paginated %}
+<div class="app-pagination-wrap">
+  <!-- Left: Informational Record Counter & Page Badge -->
+  <div class="pagination-meta">
+    <span class="pagination-page-badge">
+      <i class="mdi mdi-layers-outline me-1"></i>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <span class="pagination-records-text">
+      Showing <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> results
+    </span>
+  </div>
+
+  <!-- Right: Modern Navigation Controls -->
+  <nav aria-label="Page navigation">
+    <ul class="pagination-modern">
+      <!-- First Page (Multi-page jump when pages > 4) -->
+      {% if page_obj.paginator.num_pages > 4 %}
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+            <a class="page-link page-ctrl-btn" href="?{% url_replace page=1 %}" title="First Page" aria-label="First">
+              <i class="mdi mdi-chevron-double-left"></i>
+            </a>
+          {% else %}
+            <span class="page-link page-ctrl-btn" aria-hidden="true" title="First Page">
+              <i class="mdi mdi-chevron-double-left"></i>
+            </span>
+          {% endif %}
+        </li>
+      {% endif %}
+
+      <!-- Previous Page -->
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        {% if page_obj.has_previous %}
+          <a class="page-link page-ctrl-btn" href="?{% url_replace page=page_obj.previous_page_number %}" title="Previous Page" aria-label="Previous">
+            <i class="mdi mdi-chevron-left"></i>
+            <span class="d-none d-sm-inline ms-1">Prev</span>
+          </a>
+        {% else %}
+          <span class="page-link page-ctrl-btn" aria-hidden="true" title="Previous Page">
+            <i class="mdi mdi-chevron-left"></i>
+            <span class="d-none d-sm-inline ms-1">Prev</span>
+          </span>
+        {% endif %}
+      </li>
+
+      <!-- Smart Numbered Pages with Elision -->
+      {% get_elided_page_range page_obj.paginator page_obj.number 2 1 as elided_pages %}
+      {% for p in elided_pages %}
+        {% if p == page_obj.paginator.ELLIPSIS or p == '…' or p == '...' %}
+          <li class="page-item disabled elision-item">
+            <span class="page-link">…</span>
+          </li>
+        {% elif p == page_obj.number %}
+          <li class="page-item active" aria-current="page">
+            <span class="page-link page-num-btn">{{ p }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link page-num-btn" href="?{% url_replace page=p %}">{{ p }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Next Page -->
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        {% if page_obj.has_next %}
+          <a class="page-link page-ctrl-btn" href="?{% url_replace page=page_obj.next_page_number %}" title="Next Page" aria-label="Next">
+            <span class="d-none d-sm-inline me-1">Next</span>
+            <i class="mdi mdi-chevron-right"></i>
+          </a>
+        {% else %}
+          <span class="page-link page-ctrl-btn" aria-hidden="true" title="Next Page">
+            <span class="d-none d-sm-inline me-1">Next</span>
+            <i class="mdi mdi-chevron-right"></i>
+          </span>
+        {% endif %}
+      </li>
+
+      <!-- Last Page (Multi-page jump when pages > 4) -->
+      {% if page_obj.paginator.num_pages > 4 %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+            <a class="page-link page-ctrl-btn" href="?{% url_replace page=page_obj.paginator.num_pages %}" title="Last Page" aria-label="Last">
+              <i class="mdi mdi-chevron-double-right"></i>
+            </a>
+          {% else %}
+            <span class="page-link page-ctrl-btn" aria-hidden="true" title="Last Page">
+              <i class="mdi mdi-chevron-double-right"></i>
+            </span>
+          {% endif %}
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endif %}

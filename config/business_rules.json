@@ -1,0 +1,18 @@
+{
+  "payroll": {
+    "tax_rate": "0.10",
+    "nssf_rate": "0.05",
+    "overtime_multiplier": "1.5",
+    "currency_symbol": "$",
+    "decimal_places": 2
+  },
+  "leave": {
+    "accrual_method": "monthly",
+    "carry_over_max_days": 5,
+    "min_notice_days": 3
+  },
+  "attendance": {
+    "standard_work_hours_per_day": "8.0",
+    "grace_period_minutes": 5
+  }
+}

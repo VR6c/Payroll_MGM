@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Payslip - {{ object.payroll_period|date:"F Y" }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-10 offset-md-1">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-receipt text-primary me-2"></i>Official Payslip</h3>
+        <p class="text-muted mb-0">Monthly Salary Statement for {{ object.payroll_period|date:"F Y" }}</p>
+      </div>
+      <div>
+        {% if user.role != 'employee' %}
+          <a href="{% url 'payroll:list' %}" class="btn btn-outline-secondary me-2"><i class="mdi mdi-arrow-left me-1"></i> Back to Payroll</a>
+        {% else %}
+          <a href="{% url 'payroll:my_payslips' %}" class="btn btn-outline-secondary me-2"><i class="mdi mdi-arrow-left me-1"></i> Back to Payslips</a>
+        {% endif %}
+        <button onclick="window.print()" class="btn btn-primary text-white"><i class="mdi mdi-printer me-1"></i> Print Payslip</button>
+      </div>
+    </div>
+
+    <div class="card shadow-sm border p-4 p-md-5 bg-white">
+      <div class="text-center mb-4 border-bottom pb-4">
+        <h2 class="fw-bold text-primary mb-1"><i class="mdi mdi-briefcase me-2"></i>{{ object.employee.company.name|default:"Payroll MGM" }}</h2>
+        <h4 class="text-dark fw-bold uppercase mt-2">SALARY PAYSLIP</h4>
+        <p class="text-muted mb-0">For the Period of <strong>{{ object.payroll_period|date:"F Y" }}</strong></p>
+      </div>
+
+      <div class="row mb-4 bg-light p-3 rounded mx-0">
+        <div class="col-md-6 mb-2 mb-md-0">
+          <p class="mb-1 text-muted small">EMPLOYEE DETAILS</p>
+          <h5 class="fw-bold text-dark mb-1">{{ object.employee.first_name }} {{ object.employee.last_name }}</h5>
+          <p class="mb-0 text-muted">Code: <span class="fw-semibold text-dark">{{ object.employee.employee_code }}</span></p>
+          <p class="mb-0 text-muted">Department: <span class="fw-semibold text-dark">{{ object.employee.department.name|default:"-" }}</span></p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="mb-1 text-muted small">PAYROLL DETAILS</p>
+          <p class="mb-1">Status: <span class="badge bg-success">{{ object.get_status_display }}</span></p>
+          <p class="mb-0 text-muted">Issue Date: <span class="fw-semibold text-dark">{{ object.created_at|date:"M d, Y" }}</span></p>
+        </div>
+      </div>
+
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="w-50">EARNINGS</th>
+              <th class="text-end">AMOUNT ($)</th>
+              <th class="w-50">DEDUCTIONS</th>
+              <th class="text-end">AMOUNT ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Basic Salary</td>
+              <td class="text-end fw-semibold">${{ object.basic_salary }}</td>
+              <td>Tax Withheld</td>
+              <td class="text-end text-danger">${{ object.tax }}</td>
+            </tr>
+            <tr>
+              <td>Allowances</td>
+              <td class="text-end fw-semibold">${{ object.allowance }}</td>
+              <td>NSSF Contribution</td>
+              <td class="text-end text-danger">${{ object.nssf }}</td>
+            </tr>
+            <tr>
+              <td>Overtime Pay</td>
+              <td class="text-end fw-semibold">${{ object.overtime }}</td>
+              <td>Other Deductions</td>
+              <td class="text-end text-danger">${{ object.other_deduction }}</td>
+            </tr>
+            <tr>
+              <td>Bonus / Incentives</td>
+              <td class="text-end fw-semibold">${{ object.bonus }}</td>
+              <td>-</td>
+              <td class="text-end text-muted">-</td>
+            </tr>
+            <tr class="table-light fw-bold">
+              <td class="text-primary">TOTAL GROSS EARNINGS</td>
+              <td class="text-end text-primary">${{ object.gross_salary }}</td>
+              <td class="text-danger">TOTAL DEDUCTIONS</td>
+              <td class="text-end text-danger">${{ object.total_deduction }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end align-items-center bg-primary text-white p-3 rounded shadow-sm">
+        <div class="text-end">
+          <span class="fs-6 me-3 text-uppercase opacity-75">Net Take-Home Pay:</span>
+          <span class="fs-3 fw-bold">${{ object.net_salary }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  body { background: white !important; }
+  .navbar, .sidebar, .footer, .no-print { display: none !important; }
+  .main-panel { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .content-wrapper { padding: 0 !important; background: white !important; }
+  .card { border: none !important; box-shadow: none !important; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Type Groups & Balances - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-buffer me-2 text-primary"></i>Leave Type Groups & Balances</h3>
+        <p class="text-muted mb-0">Overview of employee leave allocations, usage, and remaining balances</p>
+      </div>
+      {% if user.role in 'super_admin,hr_admin' %}
+      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addLeaveBalanceModal">
+        <i class="mdi mdi-plus me-1"></i> Allocate Leave Balance
+      </button>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>Year</th>
+                <th>Allocated</th>
+                <th>Used</th>
+                <th>Remaining</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bal in balances %}
+              <tr>
+                <td class="fw-semibold text-dark">{{ bal.employee.first_name }} {{ bal.employee.last_name }}</td>
+                <td>{{ bal.leave_type.name }}</td>
+                <td>{{ bal.year }}</td>
+                <td><span class="badge bg-light text-dark border">{{ bal.allocated_days }} Days</span></td>
+                <td><span class="badge bg-warning text-dark">{{ bal.used_days }} Days</span></td>
+                <td><span class="badge bg-success">{{ bal.remaining_days }} Days</span></td>
+                <td class="text-end">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editBalanceModal{{ bal.id }}">
+                    <i class="mdi mdi-pencil"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBalanceModal{{ bal.id }}">
+                    <i class="mdi mdi-trash-can-outline"></i> Delete
+                  </button>
+
+                  <!-- Edit Modal -->
+                  <div class="modal fade text-start" id="editBalanceModal{{ bal.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'leave:type_group_update' bal.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Leave Allocation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Employee</label>
+                              <input type="text" class="form-control" value="{{ bal.employee.first_name }} {{ bal.employee.last_name }}" disabled>
+                              <input type="hidden" name="employee" value="{{ bal.employee.id }}">
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Leave Type</label>
+                              <select name="leave_type" class="form-select" required>
+                                {% for lt in leave_types %}
+                                <option value="{{ lt.id }}" {% if lt.id == bal.leave_type.id %}selected{% endif %}>{{ lt.name }}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Year</label>
+                              <input type="number" name="year" class="form-control" value="{{ bal.year }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Allocated Days</label>
+                              <input type="number" step="0.5" name="allocated_days" class="form-control" value="{{ bal.allocated_days }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Used Days</label>
+                              <input type="number" step="0.5" name="used_days" class="form-control" value="{{ bal.used_days }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Remaining Days</label>
+                              <input type="number" step="0.5" name="remaining_days" class="form-control" value="{{ bal.remaining_days }}" required>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade text-start" id="deleteBalanceModal{{ bal.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'leave:type_group_delete' bal.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Allocation Record</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to delete leave balance for <strong>{{ bal.employee.first_name }} {{ bal.employee.last_name }}</strong> ({{ bal.leave_type.name }})?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No leave balance records available. Click "Allocate Leave Balance" above to assign one.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Leave Allocation Modal -->
+<div class="modal fade" id="addLeaveBalanceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'leave:type_group_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-plus-circle me-1 text-primary"></i> Allocate Leave Balance</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Select Employee</label>
+            <select name="employee" class="form-select" required>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Select Leave Type</label>
+            <select name="leave_type" class="form-select" required>
+              {% for lt in leave_types %}
+              <option value="{{ lt.id }}">{{ lt.name }} (Default: {{ lt.default_days }} Days)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Year</label>
+            <input type="number" name="year" class="form-control" value="2026" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Allocated Days</label>
+            <input type="number" step="0.5" name="allocated_days" class="form-control" value="18" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Used Days</label>
+            <input type="number" step="0.5" name="used_days" class="form-control" value="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Remaining Days</label>
+            <input type="number" step="0.5" name="remaining_days" class="form-control" value="18" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Save Allocation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

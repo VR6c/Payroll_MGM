@@ -1,0 +1,1212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Workday & Shift Schedules - Payroll MGM{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --pm-primary: #3157d5;
+    --pm-primary-dark: #2546b7;
+    --pm-primary-soft: #eef3ff;
+    --pm-text: #172033;
+    --pm-muted: #718096;
+    --pm-border: #e7ebf2;
+    --pm-surface: #ffffff;
+    --pm-bg: #f6f8fc;
+    --pm-success: #16835b;
+    --pm-success-soft: #eaf8f2;
+    --pm-warning: #9a6700;
+    --pm-warning-soft: #fff7df;
+    --pm-off-soft: #f7f4f2;
+  }
+
+  .schedule-page {
+    color: var(--pm-text);
+  }
+
+  .page-heading {
+    padding: 4px 0 22px;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+    letter-spacing: -.02em;
+  }
+
+  .page-subtitle {
+    color: var(--pm-muted);
+    font-size: .9rem;
+  }
+
+  .surface {
+    background: var(--pm-surface);
+    border: 1px solid var(--pm-border);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(22, 34, 58, .035);
+    overflow: hidden;
+  }
+
+  .filter-card {
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  .section-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    color: #8792a6;
+  }
+
+  .form-label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #596579;
+  }
+
+  .form-control,
+  .form-select {
+    border-color: #dfe4ec;
+    border-radius: 9px;
+    min-height: 38px;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #9eb2f3;
+    box-shadow: 0 0 0 .18rem rgba(49, 87, 213, .10);
+  }
+
+  .btn {
+    border-radius: 9px;
+    font-weight: 600;
+  }
+
+  .btn-primary {
+    background: var(--pm-primary);
+    border-color: var(--pm-primary);
+  }
+
+  .btn-primary:hover {
+    background: var(--pm-primary-dark);
+    border-color: var(--pm-primary-dark);
+  }
+
+  .toolbar {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--pm-border);
+  }
+
+  .toolbar-title {
+    font-size: .95rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .schedule-table-wrap {
+    overflow-x: auto;
+  }
+
+  #scheduleTable {
+    min-width: 1160px;
+    margin-bottom: 0;
+  }
+
+  #scheduleTable thead th {
+    background: #fafbfe;
+    color: #6d788c;
+    border-bottom: 1px solid var(--pm-border);
+    border-top: 0;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .055em;
+    padding: 13px 10px;
+    white-space: nowrap;
+  }
+
+  #scheduleTable thead th.sun-col {
+    color: #c45151;
+  }
+
+  #scheduleTable tbody td {
+    border-color: #eef1f5;
+    padding: 10px;
+  }
+
+  #scheduleTable tbody tr.employee-row:hover {
+    background: #fbfcff;
+  }
+
+  .employee-index {
+    color: #a0a8b7;
+    font-size: .75rem;
+    font-weight: 700;
+  }
+
+  .employee {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 225px;
+  }
+
+  .employee-avatar,
+  #modalEmpAvatar {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pm-primary-soft);
+    color: var(--pm-primary);
+    font-size: .75rem;
+    font-weight: 800;
+    overflow: hidden;
+  }
+
+  .employee-avatar img,
+  #modalEmpAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .employee-name {
+    color: var(--pm-text);
+    font-size: .82rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .employee-name:hover {
+    color: var(--pm-primary);
+  }
+
+  .employee-meta {
+    color: #98a1b1;
+    font-size: .69rem;
+    margin-top: 2px;
+  }
+
+  .schedule-cell {
+    min-width: 126px;
+  }
+
+  .day-card {
+    min-height: 58px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    padding: 8px 7px;
+    transition: .15s ease;
+    cursor: pointer;
+    align-content: center;
+  }
+
+  .day-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(31, 48, 86, .08);
+  }
+
+  .work-card {
+    background: #f2f6ff;
+    border-color: #dce6ff;
+  }
+
+  .off-card {
+    background: var(--pm-off-soft);
+    border-color: #eee7e2;
+  }
+
+  .time-line {
+    color: #334057;
+    font-size: .71rem;
+    font-weight: 700;
+    line-height: 1.45;
+    white-space: nowrap;
+  }
+
+  .time-dot {
+    color: var(--pm-primary);
+    margin-right: 4px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    margin-top: 5px;
+    border-radius: 999px;
+    font-size: .62rem;
+    font-weight: 800;
+  }
+
+  .status-full {
+    color: #2854c4;
+    background: #e5edff;
+  }
+
+  .status-half {
+    color: #936200;
+    background: var(--pm-warning-soft);
+  }
+
+  .holiday-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #7d756f;
+    background: #fff;
+    border: 1px solid #e6dfda;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: .63rem;
+    font-weight: 700;
+  }
+
+  .group-row td {
+    background: #f8f9fc !important;
+    border-top: 1px solid var(--pm-border) !important;
+    color: #3e495d;
+    padding: 9px 14px !important;
+  }
+
+  .group-badge {
+    display: inline-flex;
+    min-width: 23px;
+    height: 21px;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #e9edf5;
+    color: #677286;
+    font-size: .65rem;
+  }
+
+  .empty-state {
+    padding: 55px 20px !important;
+    color: #8c96a8;
+  }
+
+  /* Schedule Page Modern Pagination Theme */
+  .schedule-page .app-pagination-wrap {
+    background: var(--pm-surface);
+    border-top: 1px solid var(--pm-border);
+  }
+
+  .schedule-page .pagination-page-badge {
+    background-color: var(--pm-primary-soft) !important;
+    color: var(--pm-primary) !important;
+    border-color: #dce6ff !important;
+  }
+
+  .schedule-page .pagination-modern .page-link {
+    border-color: var(--pm-border);
+    color: #4b5563;
+  }
+
+  .schedule-page .pagination-modern .page-item:not(.active):not(.disabled) .page-link:hover {
+    background-color: var(--pm-primary-soft);
+    color: var(--pm-primary);
+    border-color: #cbd5e1;
+  }
+
+  .schedule-page .pagination-modern .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--pm-primary) 0%, var(--pm-primary-dark) 100%) !important;
+    border-color: var(--pm-primary) !important;
+    box-shadow: 0 4px 12px rgba(49, 87, 213, 0.28) !important;
+  }
+
+  /* Modal Responsive Fixes */
+  #editScheduleModal .modal-dialog {
+    max-width: 1080px;
+    width: 95%;
+    margin: 1.5rem auto;
+  }
+
+  #editScheduleModal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .modal-topbar {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--pm-border);
+    background: #fff;
+  }
+
+  .modal-topbar-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .employee-context {
+    background: #f8faff;
+    border: 1px solid #e3e9f8;
+    border-radius: 11px;
+    padding: 12px 14px;
+  }
+
+  .employee-context-name {
+    font-size: .85rem;
+    font-weight: 800;
+  }
+
+  .employee-context-meta {
+    font-size: .72rem;
+    color: #8792a6;
+  }
+
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    background: #f2f4f8;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+  .mode-switch .btn {
+    border: 0;
+    color: #6e788a;
+    background: transparent;
+    padding: 9px 12px;
+    white-space: nowrap;
+  }
+
+  .mode-switch .btn-check:checked+.btn {
+    background: #fff;
+    color: var(--pm-primary);
+    box-shadow: 0 2px 7px rgba(31, 48, 86, .09);
+  }
+
+  .day-box-card {
+    height: 100%;
+    border: 1px solid var(--pm-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: none;
+  }
+
+  .day-box-card .card-header {
+    background: #fbfcfe !important;
+    border-bottom-color: var(--pm-border);
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .day-name {
+    font-size: .77rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .day-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .day-controls .form-check {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 1.25rem;
+  }
+
+  .day-controls .form-check-label {
+    font-size: .7rem;
+    color: #7a8597;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .day-controls .work-label {
+    color: #39445a;
+    font-weight: 700;
+  }
+
+  .day-box-card .card-body {
+    min-height: 112px;
+    padding: 13px;
+  }
+
+  .field-label {
+    font-size: .68rem;
+    color: #7a8597;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .standard-panel {
+    background: #f8f9fc;
+    border: 1px solid var(--pm-border);
+    border-radius: 12px;
+    padding: 15px;
+  }
+
+  .active-days {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .active-day {
+    background: #fff;
+    border: 1px solid var(--pm-border);
+    border-radius: 9px;
+    padding: 9px 10px;
+  }
+
+  .active-day .form-check-label {
+    font-size: .73rem;
+    font-weight: 700;
+  }
+
+  .modal-footer {
+    background: #fafbfc;
+  }
+
+  @media (max-width: 991.98px) {
+    #editScheduleModal .modal-dialog {
+      width: 98%;
+      margin: 1rem auto;
+    }
+
+    .active-days {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    #editScheduleModal .modal-dialog {
+      width: calc(100% - 1rem);
+      margin: 0.5rem auto;
+    }
+
+    .page-heading .btn {
+      display: none;
+    }
+
+    .filter-card {
+      padding: 14px;
+    }
+
+    .active-days {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mode-switch {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .active-days {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="schedule-page">
+  <div class="page-heading d-flex align-items-start justify-content-between">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="mdi mdi-calendar-clock text-primary fs-4"></i>
+        <h3 class="page-title fw-bold mb-0">Workday & Shift Schedules</h3>
+      </div>
+      <p class="page-subtitle mb-0">Manage employee working days, shift hours, and schedule policies.</p>
+    </div>
+
+  </div>
+
+  <!-- Filters -->
+  <div class="surface filter-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <div class="section-label">Schedule filters</div>
+        <div class="fw-bold mt-1">Find employees and schedules</div>
+      </div>
+      <i class="mdi mdi-filter-variant text-muted"></i>
+    </div>
+
+    <form method="get" action="{% url 'attendance:schedules' %}" id="filterForm">
+      <div class="row g-3 align-items-end">
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label mb-1">Department</label>
+          <select name="department" class="form-select form-select-sm">
+            <option value="">All Departments</option>
+            {% for d in departments %}
+            <option value="{{ d.id }}" {% if active_department == d.id %}selected{% endif %}>{{ d.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label mb-1">Position</label>
+          <select name="position" class="form-select form-select-sm">
+            <option value="">All Positions</option>
+            {% for p in positions %}
+            <option value="{{ p.id }}" {% if active_position == p.id %}selected{% endif %}>{{ p.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label mb-1">Rows</label>
+          <select name="limit" class="form-select form-select-sm">
+            <option value="10" {% if active_limit == '10' %}selected{% endif %}>10</option>
+            <option value="25" {% if active_limit == '25' %}selected{% endif %}>25</option>
+            <option value="50" {% if active_limit == '50' %}selected{% endif %}>50</option>
+            <option value="100" {% if active_limit == '100' %}selected{% endif %}>100</option>
+            <option value="all" {% if active_limit == 'all' %}selected{% endif %}>All</option>
+          </select>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <label class="form-label mb-1">Employee</label>
+          <div class="input-group input-group-sm">
+            <input type="text" name="search" class="form-control" placeholder="Name, employee code, email..."
+              value="{{ active_search }}">
+            <button type="submit" class="btn btn-primary px-3">
+              <i class="mdi mdi-magnify me-1"></i> Search
+            </button>
+          </div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2 pt-1">
+          <a href="{% url 'attendance:schedules' %}" class="btn btn-light border btn-sm px-3">
+            <i class="mdi mdi-refresh me-1"></i> Reset
+          </a>
+          <button type="submit" class="btn btn-primary btn-sm px-3">
+            <i class="mdi mdi-filter-outline me-1"></i> Apply Filter
+          </button>
+          <a href="{% url 'attendance:export_schedules' %}" class="btn btn-outline-success btn-sm px-3">
+            <i class="mdi mdi-file-excel-outline me-1"></i> Export
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Schedule -->
+  <div class="surface">
+    <div class="toolbar d-flex align-items-center justify-content-between gap-3">
+      <div>
+        <div class="toolbar-title">Employee Schedule</div>
+      </div>
+    </div>
+
+    <div class="schedule-table-wrap">
+      <table class="table align-middle" id="scheduleTable">
+        <thead>
+          <tr>
+            <th style="width:44px;">#</th>
+            <th style="min-width:250px;" class="text-start">Employee</th>
+            <th class="text-center">Mon</th>
+            <th class="text-center">Tue</th>
+            <th class="text-center">Wed</th>
+            <th class="text-center">Thu</th>
+            <th class="text-center">Fri</th>
+            <th class="text-center">Sat</th>
+            <th class="text-center sun-col">Sun</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if grouped_employees %}
+          {% for group_name, emp_list in grouped_employees.items %}
+          <tr class="group-row">
+            <td colspan="9">
+              <i
+                class="{% if active_group_by == 'department' %}mdi mdi-account-group-outline{% else %}mdi mdi-store-outline{% endif %} text-primary me-1"></i>
+              <span class="fw-bold">{{ group_name }}</span>
+              <span class="group-badge">{{ emp_list|length }}</span>
+            </td>
+          </tr>
+
+          {% for emp in emp_list %}
+          <tr class="employee-row">
+            <td class="text-center employee-index">{{ forloop.counter }}</td>
+            <td>
+              <div class="employee">
+                {% if emp.photo %}
+                <span class="employee-avatar">
+                  <img src="{{ emp.photo.url }}" alt="{{ emp.first_name }} {{ emp.last_name }}">
+                </span>
+                {% else %}
+                <span class="employee-avatar">
+                  {{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}
+                </span>
+                {% endif %}
+
+                <div>
+                  <a href="#" class="employee-name d-block" data-emp-id="{{ emp.id }}"
+                    onclick="openEditModal(this.dataset.empId); return false;">
+                    {{ emp.first_name }} {{ emp.last_name }}
+                  </a>
+                  <div class="employee-meta">
+                    {{ emp.position.name|default:"-" }} · {{ emp.department.name|default:"-" }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            {% for day in emp.weekly_matrix %}
+            <td class="schedule-cell text-center p-2">
+              {% if day.is_work_day %}
+              <div class="day-card work-card" data-emp-id="{{ emp.id }}" onclick="openEditModal(this.dataset.empId)">
+                <div class="time-line">
+                  <span class="time-dot">●</span>{{ day.start_time }} – {{ day.end_time }}
+                </div>
+                {% if day.start_time2 %}
+                <div class="time-line">
+                  <span class="time-dot">●</span>{{ day.start_time2 }} – {{ day.end_time2 }}
+                </div>
+                {% endif %}
+
+              </div>
+              {% else %}
+              <div class="day-card off-card d-flex align-items-center justify-content-center" data-emp-id="{{ emp.id }}"
+                onclick="openEditModal(this.dataset.empId)">
+                <span class="holiday-pill">
+                  <i class="mdi mdi-calendar-remove-outline"></i> Holiday
+                </span>
+              </div>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          {% endfor %}
+
+          {% else %}
+          {% for emp in employees %}
+          <tr class="employee-row">
+            <td class="text-center employee-index">{{ forloop.counter }}</td>
+            <td>
+              <div class="employee">
+                {% if emp.photo %}
+                <span class="employee-avatar">
+                  <img src="{{ emp.photo.url }}" alt="{{ emp.first_name }} {{ emp.last_name }}">
+                </span>
+                {% else %}
+                <span class="employee-avatar">
+                  {{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}
+                </span>
+                {% endif %}
+
+                <div>
+                  <a href="#" class="employee-name d-block" data-emp-id="{{ emp.id }}"
+                    onclick="openEditModal(this.dataset.empId); return false;">
+                    {{ emp.first_name }} {{ emp.last_name }}
+                  </a>
+                  <div class="employee-meta">
+                    {{ emp.position.name|default:"-" }} · {{ emp.department.name|default:"-" }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            {% for day in emp.weekly_matrix %}
+            <td class="schedule-cell text-center p-2">
+              {% if day.is_work_day %}
+              <div class="day-card work-card" data-emp-id="{{ emp.id }}" onclick="openEditModal(this.dataset.empId)">
+                <div class="time-line">
+                  <span class="time-dot">●</span>{{ day.start_time }} – {{ day.end_time }}
+                </div>
+                {% if day.start_time2 %}
+                <div class="time-line">
+                  <span class="time-dot">●</span>{{ day.start_time2 }} – {{ day.end_time2 }}
+                </div>
+                {% endif %}
+
+              </div>
+              {% else %}
+              <div class="day-card off-card d-flex align-items-center justify-content-center" data-emp-id="{{ emp.id }}"
+                onclick="openEditModal(this.dataset.empId)">
+                <span class="holiday-pill">
+                  <i class="mdi mdi-calendar-remove-outline"></i> Holiday
+                </span>
+              </div>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="empty-state text-center">
+              <i class="mdi mdi-calendar-search-outline fs-2 d-block mb-2"></i>
+              No employee schedules found.
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include 'partials/_pagination.html' %}
+  </div>
+</div>
+
+<!-- EDIT SHIFT MODAL -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-topbar d-flex justify-content-between align-items-start">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="mdi mdi-calendar-edit-outline text-primary fs-4"></i>
+            <h5 class="modal-topbar-title">Edit Work Schedule</h5>
+          </div>
+          <div class="small text-muted mt-1">Configure working days and shift hours.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="employee-context d-flex align-items-center justify-content-between mb-4">
+          <div class="d-flex align-items-center gap-3">
+            <div id="modalEmpAvatar">MO</div>
+            <div>
+              <div id="modalEmpName" class="employee-context-name">Multiple Overtime</div>
+              <div id="modalEmpPos" class="employee-context-meta">Marketing Officer</div>
+            </div>
+          </div>
+          <span class="badge rounded-pill bg-light text-secondary border px-3 py-2">
+            <i class="mdi mdi-calendar-check-outline me-1"></i> Schedule
+          </span>
+        </div>
+
+        <input type="hidden" id="targetEmployeeId" value="">
+
+        <div class="mode-switch mb-4" role="group">
+          <input type="radio" class="btn-check" name="scheduleMode" id="modeFlexible" value="flexible" checked
+            onchange="onScheduleModeChange()">
+          <label class="btn" for="modeFlexible">
+            <i class="mdi mdi-view-grid-outline me-1"></i> Flexible Schedule
+          </label>
+
+          <input type="radio" class="btn-check" name="scheduleMode" id="modeStandard" value="standard"
+            onchange="onScheduleModeChange()">
+          <label class="btn" for="modeStandard">
+            <i class="mdi mdi-clock-outline me-1"></i> Standard Schedule
+          </label>
+        </div>
+
+        <!-- FLEXIBLE -->
+        <div id="flexibleView" class="row g-3">
+          {% for day in days_list %}
+          <div class="col-lg-6">
+            <div class="card day-box-card">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <span class="day-name {% if day == 'sunday' %}text-danger{% endif %}">
+                  <i class="mdi mdi-calendar-blank-outline me-1"></i>{{ day|title }}
+                </span>
+                <div class="day-controls">
+                  <div class="form-check">
+                    <input type="checkbox" id="flex_half_{{ day }}" class="form-check-input"
+                      onchange="updateDayCardLayout('{{ day }}')">
+                    <label class="form-check-label" for="flex_half_{{ day }}">Half day</label>
+                  </div>
+                  <div class="form-check">
+                    <input type="checkbox" id="flex_work_{{ day }}" class="form-check-input" {% if day != 'saturday' and day != 'sunday' %}checked{% endif %} onchange="updateDayCardLayout('{{ day }}')">
+                    <label class="form-check-label work-label" for="flex_work_{{ day }}">Work</label>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body" id="flex_body_{{ day }}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- STANDARD -->
+        <div id="standardView" class="d-none">
+          <div class="standard-panel mb-4">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="std_half_day" onchange="toggleStdHalfDay()">
+              <label class="form-check-label fw-bold" for="std_half_day">Half Day Shift Only</label>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label mb-1">Morning Shift Start <span class="text-danger">*</span></label>
+                <input type="time" id="std_start_time" class="form-control" value="08:00">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1">Morning Shift End <span class="text-danger">*</span></label>
+                <input type="time" id="std_end_time" class="form-control" value="12:00">
+              </div>
+              <div class="col-md-6 std-shift2-box">
+                <label class="form-label mb-1">Afternoon Shift Start <span class="text-danger">*</span></label>
+                <input type="time" id="std_start_time2" class="form-control" value="13:00">
+              </div>
+              <div class="col-md-6 std-shift2-box">
+                <label class="form-label mb-1">Afternoon Shift End <span class="text-danger">*</span></label>
+                <input type="time" id="std_end_time2" class="form-control" value="17:00">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+              <div class="section-label">Working days</div>
+              <div class="fw-bold mt-1">Apply shift to active days</div>
+            </div>
+            <span class="small text-muted">Select the days that should use this shift.</span>
+          </div>
+
+          <div class="active-days">
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="monday"
+                  id="std_mon" checked><label class="form-check-label" for="std_mon">Monday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="tuesday"
+                  id="std_tue" checked><label class="form-check-label" for="std_tue">Tuesday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="wednesday"
+                  id="std_wed" checked><label class="form-check-label" for="std_wed">Wednesday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="thursday"
+                  id="std_thu" checked><label class="form-check-label" for="std_thu">Thursday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="friday"
+                  id="std_fri" checked><label class="form-check-label" for="std_fri">Friday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="saturday"
+                  id="std_sat"><label class="form-check-label" for="std_sat">Saturday</label></div>
+            </div>
+            <div class="active-day">
+              <div class="form-check"><input class="form-check-input std-day-chk" type="checkbox" value="sunday"
+                  id="std_sun"><label class="form-check-label text-danger" for="std_sun">Sunday</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-top px-4 py-3">
+        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="btnSaveSchedule" class="btn btn-primary px-4" onclick="submitScheduleForm()">
+          <i class="mdi mdi-content-save-outline me-1"></i> Save changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div class="modal fade" id="tutorialVideoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="mdi mdi-play-circle-outline text-primary me-2"></i>
+          Workday & Shift Schedules Tutorial
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="ratio ratio-16x9 rounded overflow-hidden">
+          <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Workday Shift Guide" allowfullscreen></iframe>
+        </div>
+        <p class="text-muted small mt-3 mb-0">
+          Learn how to configure flexible shift timings, standard workdays, and bulk assignments.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const daysList = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  function updateDayCardLayout(day) {
+    const isWork = document.getElementById(`flex_work_${day}`).checked;
+    const isHalf = document.getElementById(`flex_half_${day}`).checked;
+    const bodyEl = document.getElementById(`flex_body_${day}`);
+
+    if (!isWork) {
+      bodyEl.innerHTML = `
+        <div class="text-center py-2 bg-light rounded text-muted small fw-semibold">
+          <i class="mdi mdi-palm-tree text-success me-1"></i> Holiday / Off Day
+        </div>
+      `;
+      return;
+    }
+
+    if (isHalf) {
+      bodyEl.innerHTML = `
+        <div class="row g-2">
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">Start Time <span class="text-danger">*</span></label>
+            <input type="time" id="flex_start_${day}" class="form-control form-control-sm" value="08:00">
+          </div>
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">End Time <span class="text-danger">*</span></label>
+            <input type="time" id="flex_end_${day}" class="form-control form-control-sm" value="12:00">
+          </div>
+        </div>
+      `;
+    } else {
+      bodyEl.innerHTML = `
+        <div class="row g-2 mb-2">
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">Start Time 1 <span class="text-danger">*</span></label>
+            <input type="time" id="flex_start_${day}" class="form-control form-control-sm" value="08:00">
+          </div>
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">End Time 1 <span class="text-danger">*</span></label>
+            <input type="time" id="flex_end_${day}" class="form-control form-control-sm" value="12:00">
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">Start Time 2 <span class="text-danger">*</span></label>
+            <input type="time" id="flex_start2_${day}" class="form-control form-control-sm" value="13:00">
+          </div>
+          <div class="col-sm-6 col-12">
+            <label class="form-label small text-muted mb-1">End Time 2 <span class="text-danger">*</span></label>
+            <input type="time" id="flex_end2_${day}" class="form-control form-control-sm" value="17:00">
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function toggleStdHalfDay() {
+    const isHalf = document.getElementById('std_half_day').checked;
+    document.querySelectorAll('.std-shift2-box').forEach(el => {
+      if (isHalf) {
+        el.classList.add('d-none');
+      } else {
+        el.classList.remove('d-none');
+      }
+    });
+  }
+
+  function onScheduleModeChange() {
+    const isFlexible = document.getElementById('modeFlexible').checked;
+    const flexView = document.getElementById('flexibleView');
+    const stdView = document.getElementById('standardView');
+
+    if (isFlexible) {
+      flexView.classList.remove('d-none');
+      stdView.classList.add('d-none');
+    } else {
+      flexView.classList.add('d-none');
+      stdView.classList.remove('d-none');
+    }
+  }
+
+  function showScheduleModal() {
+    const modalEl = document.getElementById('editScheduleModal');
+    if (!modalEl) return;
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    } else if (typeof $ !== 'undefined' && $.fn.modal) {
+      $(modalEl).modal('show');
+    } else {
+      modalEl.classList.add('show');
+      modalEl.style.display = 'block';
+    }
+  }
+
+  function openEditModal(empId) {
+    document.getElementById('targetEmployeeId').value = empId;
+
+    // Initialize day cards layout
+    daysList.forEach(d => updateDayCardLayout(d));
+
+    fetch(`/attendance/schedules/api/get/${empId}/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const emp = data.employee;
+          document.getElementById('modalEmpName').innerText = emp.name;
+          document.getElementById('modalEmpPos').innerText = emp.position || '-';
+
+          const avatarBox = document.getElementById('modalEmpAvatar');
+          if (emp.avatar) {
+            avatarBox.innerHTML = `<img src="${emp.avatar}" class="rounded-circle" style="width:100%; height:100%; object-fit:cover;">`;
+          } else {
+            avatarBox.innerText = emp.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+          }
+
+          if (data.schedule_type === 'standard') {
+            document.getElementById('modeStandard').checked = true;
+          } else {
+            document.getElementById('modeFlexible').checked = true;
+          }
+          onScheduleModeChange();
+
+          daysList.forEach(d => {
+            if (data.days && data.days[d]) {
+              const dInfo = data.days[d];
+              document.getElementById(`flex_work_${d}`).checked = dInfo.is_work;
+              document.getElementById(`flex_half_${d}`).checked = dInfo.is_half;
+              updateDayCardLayout(d);
+
+              if (dInfo.is_work) {
+                const s1 = document.getElementById(`flex_start_${d}`);
+                const e1 = document.getElementById(`flex_end_${d}`);
+                if (s1) s1.value = dInfo.start_time || '08:00';
+                if (e1) e1.value = dInfo.end_time || '12:00';
+
+                if (!dInfo.is_half) {
+                  const s2 = document.getElementById(`flex_start2_${d}`);
+                  const e2 = document.getElementById(`flex_end2_${d}`);
+                  if (s2) s2.value = dInfo.start_time2 || '13:00';
+                  if (e2) e2.value = dInfo.end_time2 || '17:00';
+                }
+              }
+            }
+          });
+
+          showScheduleModal();
+        } else {
+          showScheduleModal();
+        }
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        showScheduleModal();
+      });
+  }
+
+  function openBulkEditModal() {
+    document.getElementById('targetEmployeeId').value = 'all';
+    document.getElementById('modalEmpName').innerText = 'All Filtered / Grouped Employees';
+    document.getElementById('modalEmpPos').innerText = 'Bulk Shift Schedule Update';
+    document.getElementById('modalEmpAvatar').innerText = 'ALL';
+    daysList.forEach(d => updateDayCardLayout(d));
+    showScheduleModal();
+  }
+
+  function submitScheduleForm() {
+    const empId = document.getElementById('targetEmployeeId').value;
+    const isFlexible = document.getElementById('modeFlexible').checked;
+
+    let payload = {
+      employee_ids: empId,
+      schedule_type: isFlexible ? 'flexible' : 'standard',
+    };
+
+    if (isFlexible) {
+      payload.days = {};
+      daysList.forEach(d => {
+        const isWork = document.getElementById(`flex_work_${d}`).checked;
+        const isHalf = document.getElementById(`flex_half_${d}`).checked;
+
+        let dData = {
+          is_work: isWork,
+          is_half: isHalf,
+        };
+
+        if (isWork) {
+          const s1 = document.getElementById(`flex_start_${d}`);
+          const e1 = document.getElementById(`flex_end_${d}`);
+          dData.start_time = s1 ? s1.value : '08:00';
+          dData.end_time = e1 ? e1.value : '12:00';
+
+          if (!isHalf) {
+            const s2 = document.getElementById(`flex_start2_${d}`);
+            const e2 = document.getElementById(`flex_end2_${d}`);
+            dData.start_time2 = s2 ? s2.value : '13:00';
+            dData.end_time2 = e2 ? e2.value : '17:00';
+          }
+        }
+
+        payload.days[d] = dData;
+      });
+    } else {
+      payload.start_time = document.getElementById('std_start_time').value;
+      payload.end_time = document.getElementById('std_end_time').value;
+      payload.start_time2 = document.getElementById('std_start_time2').value;
+      payload.end_time2 = document.getElementById('std_end_time2').value;
+      payload.is_half = document.getElementById('std_half_day').checked;
+      payload.active_days = [];
+      document.querySelectorAll('.std-day-chk:checked').forEach(chk => {
+        payload.active_days.push(chk.value);
+      });
+    }
+
+    const saveBtn = document.getElementById('btnSaveSchedule');
+    const origHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Saving...';
+
+    fetch("{% url 'attendance:save_schedule' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.message || 'Error saving schedules.');
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = origHtml;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Network error while saving schedules.');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = origHtml;
+      });
+  }
+
+  // Initialize day card layouts on page load
+  document.addEventListener('DOMContentLoaded', function () {
+    daysList.forEach(d => updateDayCardLayout(d));
+  });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/vendors/datatables.net/jquery.dataTables.js' %}"></script>
+<script src="{% static 'assets/vendors/datatables.net-bs4/dataTables.bootstrap4.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    if ($.fn.DataTable && $('#scheduleTable').length) {
+      $('#scheduleTable').DataTable({
+        "paging": false,
+        "info": false,
+        "searching": false,
+        "ordering": true,
+        "autoWidth": false,
+        "columnDefs": [
+          { "orderable": false, "targets": [2, 3, 4, 5, 6, 7, 8] }
+        ]
+      });
+    }
+  });
+</script>
+{% endblock %}

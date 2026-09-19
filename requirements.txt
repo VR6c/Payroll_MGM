@@ -1,0 +1,8 @@
+Django==5.1
+# mysqlclient==2.2.4
+PyMySQL==1.1.1
+Pillow==10.4.0
+django-crispy-forms==2.3
+crispy-bootstrap5==2024.2
+python-dateutil==2.9.0
+factory-boy==3.3.1
