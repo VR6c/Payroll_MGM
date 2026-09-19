@@ -50,7 +50,7 @@
                     <span class="text-muted">-</span>
                   {% endif %}
                 </td>
-                <td>{{ a.working_hours|default:"-" }}</td>
+                <td>{{ a.get_working_hours|default:a.working_hours|default:"-" }}</td>
                 <td>
                   {% if a.status == 'present' %}
                     <span class="badge bg-success">Present</span>
@@ -58,8 +58,8 @@
                     <span class="badge bg-warning text-dark">Late</span>
                   {% elif a.status == 'absent' %}
                     <span class="badge bg-danger">Absent</span>
-                  {% elif a.status == 'early_leave' %}
-                    <span class="badge bg-info">Early Leave</span>
+                  {% elif a.status == 'checkout_early' %}
+                    <span class="badge bg-info text-white">Checkout Early</span>
                   {% elif a.status == 'overtime' %}
                     <span class="badge bg-primary">Overtime</span>
                   {% else %}

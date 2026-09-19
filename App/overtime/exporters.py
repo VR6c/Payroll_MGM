@@ -239,6 +239,15 @@ def generate_overtime_report_pdf(report_data, company_name="Payroll MGM", genera
             textColor=colors.white,
             alignment=1,
         ))
+    if 'ReportSubtitle' not in styles:
+        styles.add(ParagraphStyle(
+            name='ReportSubtitle',
+            fontName='Helvetica',
+            fontSize=8.5,
+            leading=11,
+            textColor=colors.HexColor('#64748B'),
+            alignment=0,
+        ))
 
     story = []
 

@@ -409,15 +409,46 @@
     }
 
     /* Clean Responsive Modal & Form Field Alignment */
+    .modal,
+    .modal-dialog,
+    .modal-content,
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      white-space: normal !important;
+      line-height: 1.5;
+    }
+
     .modal-dialog {
       margin: 1.75rem auto;
       max-width: 500px;
     }
 
+    @media (min-width: 576px) {
+      .modal-dialog.modal-sm {
+        max-width: 380px !important;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .modal-dialog.modal-md {
+        max-width: 600px !important;
+      }
+    }
+
+    @media (min-width: 992px) {
+      .modal-dialog.modal-lg {
+        max-width: 820px !important;
+      }
+      .modal-dialog.modal-xl {
+        max-width: 1140px !important;
+      }
+    }
+
     @media (max-width: 576px) {
       .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
+        margin: 0.5rem auto;
+        max-width: calc(100% - 1rem) !important;
       }
     }
 
@@ -642,6 +673,26 @@
         font-size: 0.8rem !important;
       }
 
+      .app-pagination-wrap {
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.75rem !important;
+        padding: 0.85rem 0.75rem !important;
+        text-align: center !important;
+      }
+
+      .pagination-meta {
+        justify-content: center !important;
+        width: 100% !important;
+      }
+
+      .pagination-modern {
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+      }
+
       .btn:not(.btn-sm):not(.btn-xs):not(.page-link) {
         font-size: 0.85rem !important;
         min-height: 42px;
@@ -678,15 +729,27 @@
     /* ==========================================================
        Universal Breadcrumb Navigation Component
        ========================================================== */
-    .breadcrumb {
+    .breadcrumb,
+    nav[aria-label="breadcrumb"] .breadcrumb,
+    .page-header .breadcrumb {
       margin-bottom: 0;
       background: transparent !important;
+      border: none !important;
+      border-width: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
       padding: 0 !important;
       font-size: 0.84rem;
       font-weight: 500;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+    }
+
+    nav[aria-label="breadcrumb"] {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
     }
 
     .breadcrumb-item {

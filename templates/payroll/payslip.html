@@ -367,9 +367,19 @@
                       <tr>
                         <td class="py-2 px-3 px-sm-4">
                           <span class="text-dark fw-medium small d-block">Other Deductions</span>
-                          <small class="text-muted" style="font-size: 0.72rem;">Unpaid absence, advances, etc.</small>
+                          <small class="text-muted" style="font-size: 0.72rem;">Unpaid absence, lateness, unpaid leave</small>
+                          {% if object.deduction_items.all %}
+                          <div class="mt-2 ps-2 border-start border-2 border-danger border-opacity-50">
+                            {% for item in object.deduction_items.all %}
+                            <div class="d-flex justify-content-between text-muted py-1" style="font-size: 0.73rem;">
+                              <span><i class="mdi mdi-circle-medium text-danger me-1"></i>{{ item.name }}</span>
+                              <span class="text-danger fw-semibold ms-2">-${{ item.calculated_amount }}</span>
+                            </div>
+                            {% endfor %}
+                          </div>
+                          {% endif %}
                         </td>
-                        <td class="py-2 px-3 px-sm-4 text-end fw-semibold text-danger small">${{ object.other_deduction }}</td>
+                        <td class="py-2 px-3 px-sm-4 text-end fw-semibold text-danger small align-top">${{ object.other_deduction }}</td>
                       </tr>
                       <tr>
                         <td class="py-2 px-3 px-sm-4">

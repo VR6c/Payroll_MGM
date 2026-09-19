@@ -748,10 +748,12 @@
                               Payroll Record</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
-                          <div class="modal-body">
-                            Are you sure you want to delete payroll record for
-                            <strong>{{ p.employee.first_name }} {{ p.employee.last_name }}</strong>
-                            for period {{ p.payroll_period|date:"F Y" }}?
+                          <div class="modal-body py-4">
+                            <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
+                              Are you sure you want to delete payroll record for
+                              <strong class="text-dark">{{ p.employee.first_name }} {{ p.employee.last_name }}</strong>
+                              for period <strong class="text-dark">{{ p.payroll_period|date:"F Y" }}</strong>?
+                            </p>
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

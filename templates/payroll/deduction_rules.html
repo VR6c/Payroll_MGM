@@ -1,0 +1,901 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Deduction Rules - Payroll MGM{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card {
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 14px;
+    background: #ffffff;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+  .filter-pills-scroll {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-pills-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .pill-tab {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  .pill-tab.active {
+    background: linear-gradient(135deg, #4F46E5, #6366F1);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+  .pill-tab:not(.active) {
+    background: #F1F5F9;
+    color: #475569;
+    border-color: #E2E8F0;
+  }
+  .pill-tab:not(.active):hover {
+    background: #E2E8F0;
+    color: #0F172A;
+  }
+  .simulator-container {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .sim-metric-pill {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.15rem 1rem;
+    transition: all 0.2s ease;
+  }
+  .sim-metric-pill:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+  .sim-total-card {
+    background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%) !important;
+    border: 1px solid #FECDD3 !important;
+    border-radius: 12px;
+    padding: 1.15rem 1rem;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.06);
+    transition: transform 0.2s ease;
+  }
+  .sim-total-card:hover {
+    transform: translateY(-2px);
+  }
+  .sim-total-amount {
+    color: #BE123C !important;
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+  }
+  .table-custom-hover tbody tr:hover {
+    background-color: rgba(248, 250, 252, 0.8) !important;
+  }
+
+  /* High-Contrast Category Badges */
+  .badge-cat-absent {
+    background-color: #FEE2E2 !important;
+    color: #B91C1C !important;
+    border: 1px solid #FCA5A5 !important;
+  }
+  .badge-cat-unpaid {
+    background-color: #FEF3C7 !important;
+    color: #B45309 !important;
+    border: 1px solid #FCD34D !important;
+  }
+  .badge-cat-late {
+    background-color: #E0F2FE !important;
+    color: #0369A1 !important;
+    border: 1px solid #BAE6FD !important;
+  }
+  .badge-cat-early {
+    background-color: #F3E8FF !important;
+    color: #6D28D9 !important;
+    border: 1px solid #DDD6FE !important;
+  }
+  .badge-cat-custom {
+    background-color: #EEF2FF !important;
+    color: #4338CA !important;
+    border: 1px solid #C7D2FE !important;
+  }
+
+  /* Rate and Value Badges */
+  .badge-rate-percent {
+    background-color: #EFF6FF !important;
+    color: #1D4ED8 !important;
+    border: 1px solid #BFDBFE !important;
+  }
+  .badge-rate-fixed {
+    background-color: #ECFDF5 !important;
+    color: #047857 !important;
+    border: 1px solid #A7F3D0 !important;
+  }
+  .badge-priority {
+    background-color: #F8FAFC !important;
+    color: #475569 !important;
+    border: 1px solid #E2E8F0 !important;
+  }
+
+  /* Responsive refinements for mobile devices (< 768px) */
+  @media (max-width: 767.98px) {
+    .stat-card {
+      padding: 0.85rem 0.75rem !important;
+    }
+    .stat-icon {
+      width: 36px !important;
+      height: 36px !important;
+      border-radius: 9px !important;
+    }
+    .stat-icon i {
+      font-size: 1.15rem !important;
+    }
+    .stat-card h3 {
+      font-size: 1.35rem !important;
+    }
+    .table-custom-hover th,
+    .table-custom-hover td {
+      padding-top: 0.65rem !important;
+      padding-bottom: 0.65rem !important;
+      font-size: 0.82rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <!-- Top Executive Header & Actions -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <div class="stat-icon" style="width: 36px; height: 36px; border-radius: 9px; background: linear-gradient(135deg, #EF4444, #DC2626);">
+            <i class="mdi mdi-calculator-variant-outline fs-5"></i>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">Custom Deduction Rules</h3>
+        </div>
+        <p class="text-muted mb-0 small">
+          Configure rule-based penalties for Absent days, Unpaid Leave, Lateness thresholds, and Custom deductions
+        </p>
+      </div>
+
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2 w-100 w-md-auto">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}" class="text-decoration-none text-muted"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Payroll</li>
+            <li class="breadcrumb-item active fw-semibold text-primary" aria-current="page">Deduction Rules</li>
+          </ol>
+        </nav>
+
+        {% if user.role in 'super_admin,hr_admin' %}
+        <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+          <form method="post" action="{% url 'payroll:deduction_rule_seed' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-sm" title="Load standard rules: Absent 100%, Leave Unpaid 100%, Late Tiers">
+              <i class="mdi mdi-auto-fix text-warning"></i>
+              <span>Load Standard Presets</span>
+            </button>
+          </form>
+          <button type="button" class="btn btn-sm btn-primary text-white d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+            <i class="mdi mdi-plus-circle-outline"></i>
+            <span>Add Deduction Rule</span>
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card p-3 p-xl-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider" style="font-size: 0.72rem;">Total Rules</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4F46E5, #7C3AED); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);">
+              <i class="mdi mdi-format-list-bulleted fs-4"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2">
+            <h3 class="fw-bold mb-0 text-dark">{{ total_rules }}</h3>
+            <span class="small text-muted">configured</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="stat-card p-3 p-xl-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider" style="font-size: 0.72rem;">Active Rules</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+              <i class="mdi mdi-check-circle-outline fs-4"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2">
+            <h3 class="fw-bold mb-0 text-success">{{ active_rules }}</h3>
+            <span class="small text-success fw-medium">in effect</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="stat-card p-3 p-xl-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider" style="font-size: 0.72rem;">Lateness Tiers</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #0284C7, #0369A1); box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);">
+              <i class="mdi mdi-clock-alert-outline fs-4"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2">
+            <h3 class="fw-bold mb-0 text-dark">{{ late_rules_count }}</h3>
+            <span class="small text-muted">active rules</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="stat-card p-3 p-xl-4 h-100">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider" style="font-size: 0.72rem;">Absent / Unpaid</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #EF4444, #DC2626); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);">
+              <i class="mdi mdi-account-cancel-outline fs-4"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2">
+            <h3 class="fw-bold mb-0 text-dark">{{ absent_rules_count }}</h3>
+            <span class="small text-muted">active rules</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Filter Bar (Touch-friendly & Horizontal Scrolling on Mobile) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+      <div class="card-body p-3">
+        <form method="get" class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+          <div class="filter-pills-scroll d-flex align-items-center gap-2 pb-1 pb-lg-0">
+            <a href="{% url 'payroll:deduction_rules' %}" class="pill-tab {% if not selected_category %}active{% endif %}">
+              <i class="mdi mdi-view-grid-outline me-1"></i>All Rules ({{ total_rules }})
+            </a>
+            {% for cat_val, cat_label in categories %}
+            <a href="{% url 'payroll:deduction_rules' %}?category={{ cat_val }}" class="pill-tab {% if selected_category == cat_val %}active{% endif %}">
+              {% if cat_val == 'absent' %}
+              <i class="mdi mdi-account-cancel-outline me-1"></i>
+              {% elif cat_val == 'unpaid_leave' %}
+              <i class="mdi mdi-calendar-remove-outline me-1"></i>
+              {% elif cat_val == 'late' %}
+              <i class="mdi mdi-clock-alert-outline me-1"></i>
+              {% elif cat_val == 'early_leave' %}
+              <i class="mdi mdi-exit-to-app me-1"></i>
+              {% else %}
+              <i class="mdi mdi-tag-outline me-1"></i>
+              {% endif %}
+              {{ cat_label }}
+            </a>
+            {% endfor %}
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <select name="status" class="form-select form-select-sm" style="width: auto; min-width: 130px;" onchange="this.form.submit()">
+              <option value="">All Statuses</option>
+              <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active Only</option>
+              <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+            </select>
+
+            {% if companies|length > 1 %}
+            <select name="company" class="form-select form-select-sm" style="width: auto; min-width: 140px;" onchange="this.form.submit()">
+              <option value="">All Companies</option>
+              {% for c in companies %}
+              <option value="{{ c.id }}" {% if selected_company == c.id|stringformat:"i" %}selected{% endif %}>{{ c.name }}</option>
+              {% endfor %}
+            </select>
+            {% endif %}
+
+            {% if selected_category or selected_status or selected_company %}
+            <a href="{% url 'payroll:deduction_rules' %}" class="btn btn-sm btn-light border text-muted px-2" title="Clear Filters">
+              <i class="mdi mdi-close"></i>
+            </a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Rules Data Table Card -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px; overflow: hidden;">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-custom-hover align-middle mb-0">
+            <thead class="bg-light border-bottom">
+              <tr class="text-secondary small text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                <th style="width: 60px;" class="text-center py-3">Priority</th>
+                <th class="py-3">Deduction Rule</th>
+                <th class="py-3">Category</th>
+                <th class="py-3">Condition / Threshold</th>
+                <th class="py-3">Calculation Mode</th>
+                <th class="py-3 text-center">Rate / Value</th>
+                <th class="py-3 text-center">Status</th>
+                <th class="py-3 text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rules %}
+              <tr class="{% if not r.is_active %}opacity-50{% endif %}">
+                <td class="text-center fw-bold text-muted">
+                  <span class="badge badge-priority rounded-pill px-2">#{{ r.priority }}</span>
+                </td>
+                <td class="py-3">
+                  <div class="fw-bold text-dark">{{ r.name }}</div>
+                  {% if r.description %}
+                  <div class="text-muted small" style="font-size: 0.78rem;">{{ r.description|truncatewords:12 }}</div>
+                  {% endif %}
+                  <small class="text-muted opacity-75 d-inline-flex align-items-center gap-1">
+                    <i class="mdi mdi-domain"></i>{{ r.company.name }}
+                  </small>
+                </td>
+                <td>
+                  {% if r.category == 'absent' %}
+                  <span class="badge rounded-pill badge-cat-absent px-2 py-1 small fw-semibold">
+                    <i class="mdi mdi-account-cancel-outline me-1"></i>Absent
+                  </span>
+                  {% elif r.category == 'unpaid_leave' %}
+                  <span class="badge rounded-pill badge-cat-unpaid px-2 py-1 small fw-semibold">
+                    <i class="mdi mdi-calendar-remove-outline me-1"></i>Leave Unpaid
+                  </span>
+                  {% elif r.category == 'late' %}
+                  <span class="badge rounded-pill badge-cat-late px-2 py-1 small fw-semibold">
+                    <i class="mdi mdi-clock-alert-outline me-1"></i>Late
+                  </span>
+                  {% elif r.category == 'early_leave' %}
+                  <span class="badge rounded-pill badge-cat-early px-2 py-1 small fw-semibold">
+                    <i class="mdi mdi-exit-to-app me-1"></i>Early Leave
+                  </span>
+                  {% else %}
+                  <span class="badge rounded-pill badge-cat-custom px-2 py-1 small fw-semibold">
+                    <i class="mdi mdi-tag-outline me-1"></i>Custom
+                  </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="font-monospace small fw-medium text-dark bg-light px-2 py-1 rounded border">
+                    {% if r.operator == 'always' %}
+                    Per 1 {{ r.get_condition_unit_display|slice:":-1" }}
+                    {% elif r.operator == 'lte' %}
+                    ≤ {{ r.threshold_max }} {{ r.get_condition_unit_display }}
+                    {% elif r.operator == 'lt' %}
+                    &lt; {{ r.threshold_max }} {{ r.get_condition_unit_display }}
+                    {% elif r.operator == 'gte' %}
+                    ≥ {{ r.threshold_min }} {{ r.get_condition_unit_display }}
+                    {% elif r.operator == 'gt' %}
+                    &gt; {{ r.threshold_min }} {{ r.get_condition_unit_display }}
+                    {% elif r.operator == 'between' %}
+                    {{ r.threshold_min }} – {{ r.threshold_max }} {{ r.get_condition_unit_display }}
+                    {% else %}
+                    = {{ r.threshold_min|default:r.threshold_max }} {{ r.get_condition_unit_display }}
+                    {% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="small text-secondary fw-semibold">
+                    {{ r.get_calc_type_display }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  {% if 'percent' in r.calc_type %}
+                  <span class="badge rounded-pill badge-rate-percent fw-bold px-2 py-1 font-monospace" style="font-size: 0.82rem;">
+                    {{ r.rate_or_amount }}%
+                  </span>
+                  {% else %}
+                  <span class="badge rounded-pill badge-rate-fixed fw-bold px-2 py-1 font-monospace" style="font-size: 0.82rem;">
+                    ${{ r.rate_or_amount }}
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <form method="post" action="{% url 'payroll:deduction_rule_toggle' r.id %}" class="d-inline">
+                    {% csrf_token %}
+                    {% if r.is_active %}
+                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2 rounded-pill d-inline-flex align-items-center gap-1 shadow-none" title="Click to deactivate rule">
+                      <i class="mdi mdi-check-circle" style="font-size: 0.9rem;"></i>
+                      <span class="small fw-semibold">Active</span>
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2 rounded-pill d-inline-flex align-items-center gap-1 shadow-none" title="Click to activate rule">
+                      <i class="mdi mdi-close-circle" style="font-size: 0.9rem;"></i>
+                      <span class="small fw-semibold">Inactive</span>
+                    </button>
+                    {% endif %}
+                  </form>
+                </td>
+                <td class="text-end pe-4">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <div class="d-inline-flex gap-1">
+                    <button class="btn btn-sm btn-light border text-primary" data-bs-toggle="modal" data-bs-target="#editRuleModal{{ r.id }}" title="Edit Rule">
+                      <i class="mdi mdi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteRuleModal{{ r.id }}" title="Delete Rule">
+                      <i class="mdi mdi-trash-can-outline"></i>
+                    </button>
+                  </div>
+
+                  <!-- Edit Rule Modal -->
+                  <div class="modal fade text-start" id="editRuleModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                      <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <form method="post" action="{% url 'payroll:deduction_rule_update' r.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header border-bottom py-3 px-4">
+                            <div class="d-flex align-items-center gap-2">
+                              <div class="stat-icon" style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #4F46E5, #6366F1);">
+                                <i class="mdi mdi-pencil fs-6"></i>
+                              </div>
+                              <h5 class="modal-title fw-bold text-dark mb-0">Edit Deduction Rule</h5>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body p-4">
+                            <div class="row g-3">
+                              <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Company&nbsp;<span class="text-danger">*</span></label>
+                                <select name="company" class="form-select" required>
+                                  {% for c in companies %}
+                                  <option value="{{ c.id }}" {% if r.company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Rule Name&nbsp;<span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" value="{{ r.name }}" required>
+                              </div>
+
+                              <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold small">Category&nbsp;<span class="text-danger">*</span></label>
+                                <select name="category" class="form-select" required>
+                                  {% for cat_k, cat_v in categories %}
+                                  <option value="{{ cat_k }}" {% if r.category == cat_k %}selected{% endif %}>{{ cat_v }}</option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold small">Condition Unit&nbsp;<span class="text-danger">*</span></label>
+                                <select name="condition_unit" class="form-select" required>
+                                  <option value="days" {% if r.condition_unit == 'days' %}selected{% endif %}>Days</option>
+                                  <option value="hours" {% if r.condition_unit == 'hours' %}selected{% endif %}>Hours</option>
+                                  <option value="times" {% if r.condition_unit == 'times' %}selected{% endif %}>Times (Occurrences)</option>
+                                </select>
+                              </div>
+                              <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold small text-nowrap">Condition / Operator&nbsp;<span class="text-danger">*</span></label>
+                                <select name="operator" class="form-select" required>
+                                  <option value="always" {% if r.operator == 'always' %}selected{% endif %}>Per Unit (Always Apply)</option>
+                                  <option value="lte" {% if r.operator == 'lte' %}selected{% endif %}>≤ Less than or equal to</option>
+                                  <option value="lt" {% if r.operator == 'lt' %}selected{% endif %}>&lt; Less than</option>
+                                  <option value="gte" {% if r.operator == 'gte' %}selected{% endif %}>≥ Greater than or equal to</option>
+                                  <option value="gt" {% if r.operator == 'gt' %}selected{% endif %}>&gt; Greater than</option>
+                                  <option value="between" {% if r.operator == 'between' %}selected{% endif %}>Between</option>
+                                  <option value="eq" {% if r.operator == 'eq' %}selected{% endif %}>= Equal to</option>
+                                </select>
+                              </div>
+
+                              <div class="col-6 col-md-6">
+                                <label class="form-label fw-semibold small">Threshold Min</label>
+                                <input type="number" step="0.01" name="threshold_min" class="form-control" value="{{ r.threshold_min|default:'' }}" placeholder="Optional">
+                              </div>
+                              <div class="col-6 col-md-6">
+                                <label class="form-label fw-semibold small">Threshold Max</label>
+                                <input type="number" step="0.01" name="threshold_max" class="form-control" value="{{ r.threshold_max|default:'' }}" placeholder="Optional">
+                              </div>
+
+                              <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Calculation Type&nbsp;<span class="text-danger">*</span></label>
+                                <select name="calc_type" class="form-select" required>
+                                  <option value="percent_daily" {% if r.calc_type == 'percent_daily' %}selected{% endif %}>% of Salary / Day</option>
+                                  <option value="percent_hourly" {% if r.calc_type == 'percent_hourly' %}selected{% endif %}>% of Salary / Hour</option>
+                                  <option value="percent_monthly" {% if r.calc_type == 'percent_monthly' %}selected{% endif %}>% of Monthly Salary</option>
+                                  <option value="fixed_per_unit" {% if r.calc_type == 'fixed_per_unit' %}selected{% endif %}>Fixed Amount per Unit ($)</option>
+                                  <option value="fixed_flat" {% if r.calc_type == 'fixed_flat' %}selected{% endif %}>Fixed Flat Amount ($)</option>
+                                </select>
+                              </div>
+                              <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Rate or Amount&nbsp;<span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" name="rate_or_amount" class="form-control" value="{{ r.rate_or_amount }}" required>
+                              </div>
+
+                              <div class="col-6 col-md-6">
+                                <label class="form-label fw-semibold small">Priority (1 = Highest)</label>
+                                <input type="number" name="priority" class="form-control" value="{{ r.priority }}" min="1">
+                              </div>
+                              <div class="col-6 col-md-6 d-flex align-items-center pt-3">
+                                <div class="form-check form-switch">
+                                  <input type="checkbox" name="is_active" class="form-check-input" id="activeEdit{{ r.id }}" {% if r.is_active %}checked{% endif %}>
+                                  <label class="form-check-label fw-semibold small" for="activeEdit{{ r.id }}">Rule is Active</label>
+                                </div>
+                              </div>
+
+                              <div class="col-12">
+                                <label class="form-label fw-semibold small">Description / Notes</label>
+                                <textarea name="description" class="form-control" rows="2">{{ r.description }}</textarea>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="modal-footer border-top py-2 px-4">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Rule Modal -->
+                  <div class="modal fade text-start" id="deleteRuleModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <form method="post" action="{% url 'payroll:deduction_rule_delete' r.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header border-bottom py-3 px-4">
+                            <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2 mb-0">
+                              <i class="mdi mdi-alert-circle-outline fs-5"></i>Delete Deduction Rule
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body p-4">
+                            <p class="mb-2">Are you sure you want to delete this deduction rule?</p>
+                            <div class="p-3 bg-light rounded border mb-3">
+                              <strong>{{ r.name }}</strong> ({{ r.get_category_display }})<br>
+                              <small class="text-muted">{{ r.get_calc_type_display }}: {{ r.rate_or_amount }}</small>
+                            </div>
+                            <small class="text-muted d-block">Note: Previously generated payroll records will retain their computed snapshot amounts.</small>
+                          </div>
+                          <div class="modal-footer border-top py-2 px-4">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Confirm Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-5">
+                  <div class="py-4">
+                    <div class="stat-icon mx-auto mb-3" style="width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #4F46E5, #6366F1); box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);">
+                      <i class="mdi mdi-calculator-variant-outline fs-2 text-white"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">No Deduction Rules Configured Yet</h5>
+                    <p class="text-muted small mx-auto mb-4" style="max-width: 480px;">
+                      Start setting up automated deduction rules for Absent days, Leave Unpaid, Late arrival tiers, or load the preconfigured standard presets.
+                    </p>
+                    {% if user.role in 'super_admin,hr_admin' %}
+                    <div class="d-flex justify-content-center gap-2">
+                      <form method="post" action="{% url 'payroll:deduction_rule_seed' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning text-dark fw-semibold d-inline-flex align-items-center gap-1 shadow-sm">
+                          <i class="mdi mdi-auto-fix"></i>
+                          <span>Load Standard Rules Preset</span>
+                        </button>
+                      </form>
+                      <button type="button" class="btn btn-primary text-white d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+                        <i class="mdi mdi-plus-circle"></i>
+                        <span>Add Custom Rule</span>
+                      </button>
+                    </div>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% include 'partials/_pagination.html' %}
+      </div>
+    </div>
+
+    <!-- Executive Interactive Live Simulator Card -->
+    <div class="simulator-container shadow-sm mb-4">
+      <div class="py-3 px-4 bg-white border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #FEF3C7; color: #D97706;">
+            <i class="mdi mdi-flash fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Live Deduction Simulator & Sandbox</h6>
+            <small class="text-muted" style="font-size: 0.75rem;">Simulate how deduction rules calculate other deductions in real-time</small>
+          </div>
+        </div>
+        <span class="badge bg-light text-secondary border font-monospace small px-2 py-1">Interactive Sandbox</span>
+      </div>
+
+      <div class="p-4">
+        <!-- Input Row -->
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-dark">Sample Monthly Salary ($)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light text-muted">$</span>
+              <input type="number" id="simMonthly" class="form-control" value="1000" min="0" step="50">
+            </div>
+          </div>
+          <div class="col-6 col-sm-6 col-md-2">
+            <label class="form-label small fw-semibold text-dark">Workdays in Month</label>
+            <input type="number" id="simWorkdays" class="form-control form-control-sm" value="24" min="15" max="31">
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <label class="form-label small fw-semibold text-dark">Absent Days</label>
+            <input type="number" id="simAbsent" class="form-control form-control-sm" value="1" min="0" step="0.5">
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <label class="form-label small fw-semibold text-dark">Leave Unpaid Days</label>
+            <input type="number" id="simUnpaid" class="form-control form-control-sm" value="1" min="0" step="0.5">
+          </div>
+          <div class="col-6 col-sm-4 col-md-3">
+            <label class="form-label small fw-semibold text-dark">Late Incident Duration</label>
+            <div class="input-group input-group-sm">
+              <input type="number" id="simLateHours" class="form-control" value="1.5" min="0" step="0.25">
+              <span class="input-group-text bg-light text-muted">hours</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Output Dashboard -->
+        <div class="row g-3 align-items-stretch">
+          <div class="col-12 col-lg-4">
+            <div class="sim-metric-pill h-100 d-flex flex-column justify-content-center">
+              <span class="text-muted small fw-semibold text-uppercase tracking-wider d-block mb-1" style="font-size: 0.7rem;">Derived Salary Rates</span>
+              <div class="d-flex align-items-baseline gap-2 mb-1">
+                <span class="text-muted small">Daily Rate:</span>
+                <span id="simDailyOut" class="fs-5 fw-bold text-dark font-monospace">$41.67</span>
+              </div>
+              <div class="d-flex align-items-baseline gap-2">
+                <span class="text-muted small">Hourly Rate:</span>
+                <span id="simHourlyOut" class="fw-bold text-secondary font-monospace">$5.21 / hr</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5">
+            <div class="sim-metric-pill h-100 d-flex flex-column justify-content-center">
+              <span class="text-muted small fw-semibold text-uppercase tracking-wider d-block mb-1" style="font-size: 0.7rem;">Calculated Itemized Breakdown</span>
+              <div id="simBreakdown" class="small text-dark font-monospace">
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                  <span>Absent (1.0d @ 100%):</span>
+                  <span class="text-danger fw-semibold">-$41.67</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                  <span>Leave Unpaid (1.0d @ 100%):</span>
+                  <span class="text-danger fw-semibold">-$41.67</span>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                  <span>Late > 1h (1.5h @ 70%):</span>
+                  <span class="text-danger fw-semibold">-$5.47</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-3">
+            <div class="sim-total-card h-100 d-flex flex-column justify-content-center text-center text-lg-end">
+              <span class="text-danger text-uppercase fw-bold small d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">Total Other Deduction</span>
+              <div id="simTotalOut" class="fs-4 sim-total-amount font-monospace">-$88.81</div>
+              <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Deducted from gross compensation</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Rule Modal -->
+{% if user.role in 'super_admin,hr_admin' %}
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+      <form method="post" action="{% url 'payroll:deduction_rule_create' %}">
+        {% csrf_token %}
+        <div class="modal-header border-bottom py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <div class="stat-icon" style="width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, #4F46E5, #6366F1);">
+              <i class="mdi mdi-plus fs-5"></i>
+            </div>
+            <h5 class="modal-title fw-bold text-dark mb-0">Create New Deduction Rule</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small">Company&nbsp;<span class="text-danger">*</span></label>
+              {{ form.company }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small">Rule Name&nbsp;<span class="text-danger">*</span></label>
+              {{ form.name }}
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small">Category&nbsp;<span class="text-danger">*</span></label>
+              {{ form.category }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small">Condition Unit&nbsp;<span class="text-danger">*</span></label>
+              {{ form.condition_unit }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-nowrap">Condition / Operator&nbsp;<span class="text-danger">*</span></label>
+              {{ form.operator }}
+            </div>
+
+            <div class="col-6 col-md-6">
+              <label class="form-label fw-semibold small">Threshold Min</label>
+              {{ form.threshold_min }}
+            </div>
+            <div class="col-6 col-md-6">
+              <label class="form-label fw-semibold small">Threshold Max</label>
+              {{ form.threshold_max }}
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small">Calculation Type&nbsp;<span class="text-danger">*</span></label>
+              {{ form.calc_type }}
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small">Rate or Amount&nbsp;<span class="text-danger">*</span></label>
+              {{ form.rate_or_amount }}
+              <div class="form-text small" id="rateHelper">Enter 100 for 100% or 5.00 for $5.00</div>
+            </div>
+
+            <div class="col-6 col-md-6">
+              <label class="form-label fw-semibold small">Priority (1 = Highest)</label>
+              {{ form.priority }}
+            </div>
+            <div class="col-6 col-md-6 d-flex align-items-center pt-3">
+              <div class="form-check form-switch">
+                {{ form.is_active }}
+                <label class="form-check-label fw-semibold small ms-2" for="{{ form.is_active.id_for_label }}">Rule is Active</label>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Description / Notes</label>
+              {{ form.description }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top py-2 px-4">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Create Deduction Rule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Preset auto-fill helper in create modal
+  const catSelect = document.getElementById('id_category');
+  const unitSelect = document.getElementById('id_condition_unit');
+  const calcSelect = document.getElementById('id_calc_type');
+  const rateInput = document.getElementById('id_rate_or_amount');
+  const nameInput = document.querySelector('#addRuleModal input[name="name"]');
+
+  if (catSelect) {
+    catSelect.addEventListener('change', function() {
+      const val = this.value;
+      if (val === 'absent') {
+        if (unitSelect) unitSelect.value = 'days';
+        if (calcSelect) calcSelect.value = 'percent_daily';
+        if (rateInput && !rateInput.value) rateInput.value = '100';
+        if (nameInput) nameInput.value = 'Absent (100% Daily Salary)';
+      } else if (val === 'unpaid_leave') {
+        if (unitSelect) unitSelect.value = 'days';
+        if (calcSelect) calcSelect.value = 'percent_daily';
+        if (rateInput && !rateInput.value) rateInput.value = '100';
+        if (nameInput) nameInput.value = 'Leave Unpaid (100% Daily Salary)';
+      } else if (val === 'late') {
+        if (unitSelect) unitSelect.value = 'hours';
+        if (calcSelect) calcSelect.value = 'percent_hourly';
+        if (rateInput && !rateInput.value) rateInput.value = '50';
+        if (nameInput) nameInput.value = 'Late Arrival (50% Hourly Rate)';
+      }
+    });
+  }
+
+  // Live Simulator Engine
+  function runSimulation() {
+    const monthly = parseFloat(document.getElementById('simMonthly').value) || 0;
+    const workdays = parseFloat(document.getElementById('simWorkdays').value) || 24;
+    const absent = parseFloat(document.getElementById('simAbsent').value) || 0;
+    const unpaid = parseFloat(document.getElementById('simUnpaid').value) || 0;
+    const lateHours = parseFloat(document.getElementById('simLateHours').value) || 0;
+
+    const daily = workdays > 0 ? (monthly / workdays) : 0;
+    const hourly = daily / 8.0;
+
+    document.getElementById('simDailyOut').textContent = '$' + daily.toFixed(2);
+    document.getElementById('simHourlyOut').textContent = '$' + hourly.toFixed(2) + ' / hr';
+
+    const absentDed = absent * daily * 1.0;
+    const unpaidDed = unpaid * daily * 1.0;
+
+    // Tiered lateness simulation (<= 1h: 50%, > 1h: 70%)
+    let lateDed = 0;
+    let lateLabel = '';
+    if (lateHours <= 1.0) {
+      lateDed = lateHours * hourly * 0.50;
+      lateLabel = `Late ≤ 1h (${lateHours}h @ 50%)`;
+    } else {
+      lateDed = lateHours * hourly * 0.70;
+      lateLabel = `Late > 1h (${lateHours}h @ 70%)`;
+    }
+
+    const totalDed = absentDed + unpaidDed + lateDed;
+
+    let breakdownHtml = '';
+    if (absent > 0) {
+      breakdownHtml += `<div class="d-flex justify-content-between py-1 border-bottom">
+        <span>Absent (${absent}d @ 100%):</span>
+        <span class="text-danger fw-semibold">-$${absentDed.toFixed(2)}</span>
+      </div>`;
+    }
+    if (unpaid > 0) {
+      breakdownHtml += `<div class="d-flex justify-content-between py-1 border-bottom">
+        <span>Leave Unpaid (${unpaid}d @ 100%):</span>
+        <span class="text-danger fw-semibold">-$${unpaidDed.toFixed(2)}</span>
+      </div>`;
+    }
+    if (lateHours > 0) {
+      breakdownHtml += `<div class="d-flex justify-content-between py-1">
+        <span>${lateLabel}:</span>
+        <span class="text-danger fw-semibold">-$${lateDed.toFixed(2)}</span>
+      </div>`;
+    }
+    if (!breakdownHtml) {
+      breakdownHtml = `<div class="text-muted small py-1">No attendance deductions calculated for these inputs.</div>`;
+    }
+
+    document.getElementById('simBreakdown').innerHTML = breakdownHtml;
+    document.getElementById('simTotalOut').textContent = '-$' + totalDed.toFixed(2);
+  }
+
+  ['simMonthly', 'simWorkdays', 'simAbsent', 'simUnpaid', 'simLateHours'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', runSimulation);
+    }
+  });
+
+  runSimulation();
+});
+</script>
+{% endblock %}

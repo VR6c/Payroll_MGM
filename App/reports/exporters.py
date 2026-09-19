@@ -1814,6 +1814,15 @@ def generate_payslip_pdf(payroll, company=None):
     ]
 
     ot_sub = f"{payroll.overtime_hours} hrs recorded"
+    ded_items = list(payroll.deduction_items.all()) if hasattr(payroll, 'deduction_items') else []
+    if ded_items:
+        items_summary = ", ".join(f"{it.category.replace('_', ' ').title()}: -${it.calculated_amount:,.2f}" for it in ded_items[:2])
+        if len(ded_items) > 2:
+            items_summary += f" (+{len(ded_items)-2} more)"
+        other_ded_sub = items_summary
+    else:
+        other_ded_sub = "Unpaid absence, lateness"
+
     breakdown_rows = [
         [
             [Paragraph(basic_label, earn_label_s), Paragraph("Base monthly compensation", earn_sub_s)],
@@ -1833,7 +1842,7 @@ def generate_payslip_pdf(payroll, company=None):
             [Paragraph("Overtime Compensation", earn_label_s), Paragraph(ot_sub, earn_sub_s)],
             Paragraph(f"${payroll.overtime:,.2f}", earn_amt_s),
             Paragraph("", styles['TableCell']),
-            [Paragraph("Other Deductions", earn_label_s), Paragraph("Unpaid absence, advances", earn_sub_s)],
+            [Paragraph("Other Deductions", earn_label_s), Paragraph(other_ded_sub, earn_sub_s)],
             Paragraph(f"${payroll.other_deduction:,.2f}", ded_amt_s),
         ],
         [

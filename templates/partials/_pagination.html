@@ -1,6 +1,6 @@
 {% load pagination_tags %}
 
-{% if is_paginated %}
+{% if page_obj and page_obj.paginator.count > 0 %}
 <div class="app-pagination-wrap">
   <!-- Left: Informational Record Counter & Page Badge -->
   <div class="pagination-meta">
@@ -8,7 +8,7 @@
       <i class="mdi mdi-layers-outline me-1"></i>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
     </span>
     <span class="pagination-records-text">
-      Showing <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> results
+      Showing <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> result{{ page_obj.paginator.count|pluralize }}
     </span>
   </div>
 

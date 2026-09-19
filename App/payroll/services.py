@@ -3,7 +3,7 @@ from calendar import monthrange
 from datetime import date
 from django.db import transaction
 from config.rules import get_rule
-from .models import Payroll, SalaryStructure
+from .models import Payroll, SalaryStructure, DeductionRule, PayrollDeductionItem
 from employees.models import Employee
 import logging
 
@@ -361,9 +361,11 @@ def calculate_period_attendance_metrics(employee, period_start, period_end):
     att_qs = Attendance.objects.filter(employee=employee, date__gte=period_start, date__lte=period_end)
     attend_count = Decimal('0.0')
     late_hours = Decimal('0.00')
+    late_count = 0
+    late_incidents = []
 
     for a in att_qs:
-        if a.status in ('present', 'late', 'early_leave', 'overtime'):
+        if a.status in ('present', 'late', 'early_leave', 'checkout_early', 'overtime'):
             a_dow = a.date.weekday()
             day_cfg = emp_sched.get(a_dow)
             is_half = day_cfg['is_half_day'] if day_cfg else False
@@ -387,6 +389,8 @@ def calculate_period_attendance_metrics(employee, period_start, period_end):
 
         # Late hours calculation
         if a.status == 'late':
+            late_count += 1
+            cur_late_hrs = Decimal('0.50')
             if a.check_in:
                 a_dow = a.date.weekday()
                 day_cfg = emp_sched.get(a_dow)
@@ -399,22 +403,37 @@ def calculate_period_attendance_metrics(employee, period_start, period_end):
                     exp_dt = timezone.make_aware(exp_dt, timezone.get_current_timezone())
                 diff_sec = (a.check_in - exp_dt).total_seconds()
                 if diff_sec > 0:
-                    late_hours += Decimal(str(round(diff_sec / 3600.0, 2)))
+                    cur_late_hrs = Decimal(str(round(diff_sec / 3600.0, 2)))
                 else:
-                    late_hours += Decimal('0.50')
+                    cur_late_hrs = Decimal('0.50')
             else:
-                late_hours += Decimal('1.00')
+                cur_late_hrs = Decimal('1.00')
+            late_hours += cur_late_hrs
+            late_incidents.append(cur_late_hrs)
 
-    # Leave days
+    # Leave days (distinguish between paid and unpaid leaves)
     leave_qs = LeaveRequest.objects.filter(
         employee=employee,
         status='approved',
         periods__start_date__lte=period_end,
         periods__end_date__gte=period_start
-    ).distinct()
-    leave_days = sum((Decimal(str(l.total_days or 0)) for l in leave_qs), Decimal('0.0'))
+    ).select_related('leave_type').distinct()
 
-    # Absent days
+    paid_leave_days = Decimal('0.0')
+    unpaid_leave_days = Decimal('0.0')
+    unpaid_leave_count = 0
+
+    for l in leave_qs:
+        ldays = Decimal(str(l.total_days or 0))
+        if l.leave_type and not l.leave_type.paid:
+            unpaid_leave_days += ldays
+            unpaid_leave_count += 1
+        else:
+            paid_leave_days += ldays
+
+    leave_days = paid_leave_days + unpaid_leave_days
+
+    # Absent days: missed workdays that are NOT covered by attendance or leave
     absent_count = max(Decimal('0.0'), scheduled_work_days - attend_count - leave_days)
 
     # Overtime hours & pay
@@ -428,12 +447,219 @@ def calculate_period_attendance_metrics(employee, period_start, period_end):
     return {
         'attendance_days': attend_count.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
         'absent_days': absent_count.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
+        'absent_count': absent_count.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
         'late_hours': late_hours.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+        'late_count': Decimal(str(late_count)),
+        'late_incidents': late_incidents,
         'overtime_hours': Decimal(str(overtime_hours)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
         'overtime_pay': Decimal(str(overtime_pay)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
         'leave_days': leave_days.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
+        'paid_leave_days': paid_leave_days.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
+        'unpaid_leave_days': unpaid_leave_days.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
+        'unpaid_leave_count': Decimal(str(unpaid_leave_count)),
         'holiday_days': holiday_days.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP),
     }
+
+
+class DeductionEngine:
+    @staticmethod
+    def evaluate_condition(operator, value, threshold_min=None, threshold_max=None):
+        if operator == DeductionRule.Operator.ALWAYS:
+            return True
+        val = Decimal(str(value))
+        if operator == DeductionRule.Operator.LTE:
+            return threshold_max is not None and val <= threshold_max
+        elif operator == DeductionRule.Operator.LT:
+            return threshold_max is not None and val < threshold_max
+        elif operator == DeductionRule.Operator.GTE:
+            return threshold_min is not None and val >= threshold_min
+        elif operator == DeductionRule.Operator.GT:
+            return threshold_min is not None and val > threshold_min
+        elif operator == DeductionRule.Operator.BETWEEN:
+            if threshold_min is not None and threshold_max is not None:
+                return threshold_min <= val <= threshold_max
+            elif threshold_min is not None:
+                return val >= threshold_min
+            elif threshold_max is not None:
+                return val <= threshold_max
+            return True
+        elif operator == DeductionRule.Operator.EQ:
+            target = threshold_min if threshold_min is not None else threshold_max
+            return target is not None and val == target
+        return True
+
+    @staticmethod
+    def calculate_deductions(employee, daily_salary, monthly_salary, att_metrics, period_start=None, period_end=None):
+        """
+        Evaluates active DeductionRules for the employee's company against period attendance metrics.
+        Returns:
+          - 'items': list of dicts representing calculated line items
+          - 'total_deductions': Decimal total of all calculated items
+        """
+        rules = DeductionRule.objects.filter(
+            company=employee.company, is_active=True
+        ).order_by('category', 'priority', 'id')
+
+        standard_work_hours = get_rule('attendance', 'standard_work_hours_per_day', Decimal('8.0'))
+        if not isinstance(standard_work_hours, Decimal):
+            standard_work_hours = Decimal(str(standard_work_hours))
+        if standard_work_hours <= Decimal('0'):
+            standard_work_hours = Decimal('8.0')
+
+        hourly_salary = (daily_salary / standard_work_hours).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        items = []
+
+        absent_days = att_metrics.get('absent_days', Decimal('0.0'))
+        absent_count = att_metrics.get('absent_count', absent_days)
+        unpaid_leave_days = att_metrics.get('unpaid_leave_days', Decimal('0.0'))
+        unpaid_leave_count = att_metrics.get('unpaid_leave_count', Decimal('0.0'))
+        late_hours = att_metrics.get('late_hours', Decimal('0.00'))
+        late_count = att_metrics.get('late_count', Decimal('0.0'))
+        late_incidents = att_metrics.get('late_incidents', [])
+
+        rules_by_cat = {}
+        for r in rules:
+            rules_by_cat.setdefault(r.category, []).append(r)
+
+        # 1. Evaluate Absent rules
+        for r in rules_by_cat.get(DeductionRule.Category.ABSENT, []):
+            qty = absent_days if r.condition_unit == DeductionRule.ConditionUnit.DAYS else absent_count
+            if qty <= Decimal('0'):
+                continue
+            if DeductionEngine.evaluate_condition(r.operator, qty, r.threshold_min, r.threshold_max):
+                amt, unit_rate, label = DeductionEngine._compute_item_amount(
+                    r, qty, daily_salary, hourly_salary, monthly_salary, standard_work_hours
+                )
+                if amt > Decimal('0'):
+                    items.append({
+                        'rule': r,
+                        'category': r.category,
+                        'name': f"{r.name} ({qty} {r.get_condition_unit_display()} - {label})",
+                        'condition_unit': r.condition_unit,
+                        'quantity': qty,
+                        'unit_rate': unit_rate,
+                        'rate_or_amount': r.rate_or_amount,
+                        'calculated_amount': amt,
+                    })
+
+        # 2. Evaluate Unpaid Leave rules
+        for r in rules_by_cat.get(DeductionRule.Category.UNPAID_LEAVE, []):
+            qty = unpaid_leave_days if r.condition_unit == DeductionRule.ConditionUnit.DAYS else unpaid_leave_count
+            if qty <= Decimal('0'):
+                continue
+            if DeductionEngine.evaluate_condition(r.operator, qty, r.threshold_min, r.threshold_max):
+                amt, unit_rate, label = DeductionEngine._compute_item_amount(
+                    r, qty, daily_salary, hourly_salary, monthly_salary, standard_work_hours
+                )
+                if amt > Decimal('0'):
+                    items.append({
+                        'rule': r,
+                        'category': r.category,
+                        'name': f"{r.name} ({qty} {r.get_condition_unit_display()} - {label})",
+                        'condition_unit': r.condition_unit,
+                        'quantity': qty,
+                        'unit_rate': unit_rate,
+                        'rate_or_amount': r.rate_or_amount,
+                        'calculated_amount': amt,
+                    })
+
+        # 3. Evaluate Late rules (supports per-incident tiering or aggregate hours)
+        late_rules = rules_by_cat.get(DeductionRule.Category.LATE, [])
+        has_incident_tiered_rules = any(
+            r.condition_unit == DeductionRule.ConditionUnit.HOURS and r.operator != DeductionRule.Operator.ALWAYS
+            for r in late_rules
+        )
+
+        if has_incident_tiered_rules and late_incidents:
+            for inc_idx, inc_hrs in enumerate(late_incidents, 1):
+                matched_rule = None
+                for r in late_rules:
+                    if r.condition_unit == DeductionRule.ConditionUnit.HOURS:
+                        if DeductionEngine.evaluate_condition(r.operator, inc_hrs, r.threshold_min, r.threshold_max):
+                            matched_rule = r
+                            break
+                if matched_rule:
+                    if matched_rule.calc_type in (DeductionRule.CalcType.FIXED_PER_UNIT, DeductionRule.CalcType.FIXED_FLAT):
+                        amt = matched_rule.rate_or_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                        unit_rate = matched_rule.rate_or_amount
+                        label = f"${matched_rule.rate_or_amount} fixed"
+                        item_qty = Decimal('1.0')
+                    else:
+                        amt, unit_rate, label = DeductionEngine._compute_item_amount(
+                            matched_rule, inc_hrs, daily_salary, hourly_salary, monthly_salary, standard_work_hours
+                        )
+                        item_qty = inc_hrs
+
+                    if amt > Decimal('0'):
+                        items.append({
+                            'rule': matched_rule,
+                            'category': matched_rule.category,
+                            'name': f"{matched_rule.name} (Late #{inc_idx}: {inc_hrs}h - {label})",
+                            'condition_unit': matched_rule.condition_unit,
+                            'quantity': item_qty,
+                            'unit_rate': unit_rate,
+                            'rate_or_amount': matched_rule.rate_or_amount,
+                            'calculated_amount': amt,
+                        })
+        else:
+            for r in late_rules:
+                qty = late_hours if r.condition_unit == DeductionRule.ConditionUnit.HOURS else late_count
+                if qty <= Decimal('0'):
+                    continue
+                if DeductionEngine.evaluate_condition(r.operator, qty, r.threshold_min, r.threshold_max):
+                    amt, unit_rate, label = DeductionEngine._compute_item_amount(
+                        r, qty, daily_salary, hourly_salary, monthly_salary, standard_work_hours
+                    )
+                    if amt > Decimal('0'):
+                        items.append({
+                            'rule': r,
+                            'category': r.category,
+                            'name': f"{r.name} ({qty} {r.get_condition_unit_display()} - {label})",
+                            'condition_unit': r.condition_unit,
+                            'quantity': qty,
+                            'unit_rate': unit_rate,
+                            'rate_or_amount': r.rate_or_amount,
+                            'calculated_amount': amt,
+                        })
+
+        total = sum((it['calculated_amount'] for it in items), Decimal('0.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return {
+            'items': items,
+            'total_deductions': total
+        }
+
+    @staticmethod
+    def _compute_item_amount(rule, quantity, daily_salary, hourly_salary, monthly_salary, standard_work_hours):
+        rate = rule.rate_or_amount
+        calc = rule.calc_type
+
+        if calc == DeductionRule.CalcType.PERCENT_DAILY:
+            unit_rate = daily_salary
+            amt = (quantity * daily_salary * (rate / Decimal('100.0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            label = f"{rate}% of ${daily_salary}/day"
+        elif calc == DeductionRule.CalcType.PERCENT_HOURLY:
+            unit_rate = hourly_salary
+            amt = (quantity * hourly_salary * (rate / Decimal('100.0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            label = f"{rate}% of ${hourly_salary}/hr"
+        elif calc == DeductionRule.CalcType.PERCENT_MONTHLY:
+            unit_rate = monthly_salary
+            amt = (monthly_salary * (rate / Decimal('100.0'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            label = f"{rate}% of Monthly Basic"
+        elif calc == DeductionRule.CalcType.FIXED_PER_UNIT:
+            unit_rate = rate
+            amt = (quantity * rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            label = f"${rate} per {rule.condition_unit}"
+        elif calc == DeductionRule.CalcType.FIXED_FLAT:
+            unit_rate = rate
+            amt = rate.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            label = f"${rate} flat"
+        else:
+            unit_rate = Decimal('0.00')
+            amt = Decimal('0.00')
+            label = ""
+
+        return amt, unit_rate, label
 
 
 class PayrollCalculator:
@@ -481,12 +707,24 @@ class PayrollCalculator:
         att_metrics = calculate_period_attendance_metrics(employee, period_start, period_end)
         overtime_pay = att_metrics['overtime_pay']
 
+        # Evaluate custom other deductions engine
+        deduction_results = DeductionEngine.calculate_deductions(
+            employee=employee,
+            daily_salary=daily_salary,
+            monthly_salary=prorated_basic,
+            att_metrics=att_metrics,
+            period_start=period_start,
+            period_end=period_end
+        )
+        other_deduction = deduction_results['total_deductions']
+
         gross = prorated_basic + total_allowance + overtime_pay
         tax_rate = get_rule('payroll', 'tax_rate', Decimal('0.10'))
         nssf_rate = get_rule('payroll', 'nssf_rate', Decimal('0.05'))
         tax = (gross * tax_rate).quantize(Decimal('0.01'))
         nssf = (gross * nssf_rate).quantize(Decimal('0.01'))
-        net = gross - tax - nssf
+        total_deduction = tax + nssf + other_deduction
+        net = max(Decimal('0.00'), gross - total_deduction)
 
         payroll, _ = Payroll.objects.update_or_create(
             employee=employee, payroll_period=period_start,
@@ -496,6 +734,7 @@ class PayrollCalculator:
                 'daily_salary_formula': formula_label,
                 'attendance_days': att_metrics['attendance_days'],
                 'absent_days': att_metrics['absent_days'],
+                'unpaid_leave_days': att_metrics['unpaid_leave_days'],
                 'late_hours': att_metrics['late_hours'],
                 'overtime_hours': att_metrics['overtime_hours'],
                 'leave_days': att_metrics['leave_days'],
@@ -505,12 +744,29 @@ class PayrollCalculator:
                 'gross_salary': gross,
                 'tax': tax,
                 'nssf': nssf,
-                'total_deduction': tax + nssf,
+                'other_deduction': other_deduction,
+                'total_deduction': total_deduction,
                 'net_salary': net,
                 'status': Payroll.Status.DRAFT
             }
         )
-        logger.info(f"Payroll generated: {employee.employee_code} | {period_start} | Daily: {daily_salary} ({formula_label}) | Net: {net}")
+
+        # Sync itemized deduction records
+        PayrollDeductionItem.objects.filter(payroll=payroll).delete()
+        for it in deduction_results['items']:
+            PayrollDeductionItem.objects.create(
+                payroll=payroll,
+                rule=it.get('rule'),
+                category=it['category'],
+                name=it['name'],
+                condition_unit=it['condition_unit'],
+                quantity=it['quantity'],
+                unit_rate=it['unit_rate'],
+                rate_or_amount=it['rate_or_amount'],
+                calculated_amount=it['calculated_amount']
+            )
+
+        logger.info(f"Payroll generated: {employee.employee_code} | {period_start} | Daily: {daily_salary} ({formula_label}) | Other Ded: {other_deduction} | Net: {net}")
         return payroll
 
     @staticmethod
@@ -521,7 +777,7 @@ class PayrollCalculator:
         payroll.tax = (payroll.gross_salary * tax_rate).quantize(Decimal('0.01'))
         payroll.nssf = (payroll.gross_salary * nssf_rate).quantize(Decimal('0.01'))
         payroll.total_deduction = payroll.tax + payroll.nssf + payroll.other_deduction
-        payroll.net_salary = payroll.gross_salary - payroll.total_deduction
+        payroll.net_salary = max(Decimal('0.00'), payroll.gross_salary - payroll.total_deduction)
         payroll.save()
         return payroll
 

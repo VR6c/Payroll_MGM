@@ -1,5 +1,99 @@
+import datetime
 from django.db import models
+from django.utils import timezone
 from employees.models import Employee
+
+class LunchBreak(models.Model):
+    class BreakType(models.TextChoices):
+        LUNCH = 'lunch', 'Lunch Break'
+        TEA = 'tea', 'Tea Break'
+        CUSTOM = 'custom', 'Custom Break'
+
+    company = models.ForeignKey(
+        'companies.Company',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='lunch_breaks',
+        help_text="Optional company assignment. If blank, applies to all companies."
+    )
+    name = models.CharField(max_length=100, default='Lunch Break')
+    break_type = models.CharField(max_length=20, choices=BreakType.choices, default=BreakType.LUNCH)
+    start_time = models.TimeField(default=datetime.time(12, 0), help_text="Start time of the break, e.g. 12:00")
+    end_time = models.TimeField(default=datetime.time(13, 0), help_text="End time of the break, e.g. 13:00")
+    duration_minutes = models.PositiveIntegerField(
+        default=60,
+        help_text="Duration in minutes (e.g. 60 for 1 hour)"
+    )
+    auto_deduct = models.BooleanField(
+        default=True,
+        help_text="Automatically deduct this break from working hours if shift overlaps"
+    )
+    min_work_hours = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=4.00,
+        help_text="Minimum elapsed hours worked to qualify for break deduction"
+    )
+    status = models.BooleanField(default=True, help_text="Active / Inactive status")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['start_time', 'name']
+        verbose_name = 'Lunch Break'
+        verbose_name_plural = 'Lunch Breaks'
+
+    def __str__(self):
+        st = self.start_time.strftime('%I:%M %p') if self.start_time else ''
+        et = self.end_time.strftime('%I:%M %p') if self.end_time else ''
+        return f"{self.name} ({st} - {et}, {self.duration_minutes}m)"
+
+    def get_overlap_duration(self, check_in_dt, check_out_dt, target_date=None):
+        """
+        Calculate the exact timedelta overlap between the work interval [check_in_dt, check_out_dt]
+        and this break window on target_date.
+        """
+        if not self.auto_deduct or not self.status:
+            return datetime.timedelta(0)
+        if not check_in_dt or not check_out_dt or check_out_dt <= check_in_dt:
+            return datetime.timedelta(0)
+
+        elapsed = check_out_dt - check_in_dt
+        if self.min_work_hours and (elapsed.total_seconds() / 3600.0) < float(self.min_work_hours):
+            return datetime.timedelta(0)
+
+        if not target_date:
+            target_date = timezone.localdate(check_in_dt) if timezone.is_aware(check_in_dt) else check_in_dt.date()
+
+        tz = check_in_dt.tzinfo if timezone.is_aware(check_in_dt) else None
+
+        if self.start_time and self.end_time:
+            naive_start = datetime.datetime.combine(target_date, self.start_time)
+            naive_end = datetime.datetime.combine(target_date, self.end_time)
+
+            if self.end_time < self.start_time:
+                naive_end += datetime.timedelta(days=1)
+
+            if tz:
+                break_start = timezone.make_aware(naive_start, tz) if timezone.is_naive(naive_start) else naive_start
+                break_end = timezone.make_aware(naive_end, tz) if timezone.is_naive(naive_end) else naive_end
+            else:
+                break_start = naive_start
+                break_end = naive_end
+
+            overlap_start = max(check_in_dt, break_start)
+            overlap_end = min(check_out_dt, break_end)
+
+            if overlap_end > overlap_start:
+                return overlap_end - overlap_start
+            return datetime.timedelta(0)
+        elif self.duration_minutes:
+            break_td = datetime.timedelta(minutes=self.duration_minutes)
+            return min(elapsed, break_td)
+
+        return datetime.timedelta(0)
+
 
 class WorkSchedule(models.Model):
     company = models.ForeignKey('companies.Company', on_delete=models.CASCADE)
@@ -18,7 +112,7 @@ class Attendance(models.Model):
         PRESENT = 'present', 'Present'
         LATE = 'late', 'Late'
         ABSENT = 'absent', 'Absent'
-        EARLY_LEAVE = 'early_leave', 'Early Leave'
+        CHECKOUT_EARLY = 'checkout_early', 'Checkout Early'
         OVERTIME = 'overtime', 'Overtime'
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendances')
@@ -34,11 +128,72 @@ class Attendance(models.Model):
         unique_together = ('employee', 'date')
         indexes = [models.Index(fields=['date', 'status'])]
 
+    @classmethod
+    def calculate_net_working_hours(cls, check_in_dt, check_out_dt, employee=None, date=None):
+        """
+        Calculate working hours between check_in and check_out, subtracting any active
+        lunch break / break time overlap (e.g. 9 hours elapsed - 1 hour lunch = 8 hours).
+        """
+        if not check_in_dt or not check_out_dt or check_out_dt <= check_in_dt:
+            return None
+
+        raw_duration = check_out_dt - check_in_dt
+        if not date:
+            date = timezone.localdate(check_in_dt) if timezone.is_aware(check_in_dt) else check_in_dt.date()
+
+        # Query active breaks
+        breaks_qs = LunchBreak.objects.filter(status=True, auto_deduct=True)
+        if employee and getattr(employee, 'company_id', None):
+            breaks_qs = breaks_qs.filter(
+                models.Q(company_id=employee.company_id) | models.Q(company__isnull=True)
+            )
+        else:
+            breaks_qs = breaks_qs.filter(company__isnull=True)
+
+        breaks = list(breaks_qs)
+        if not breaks:
+            default_break = LunchBreak(
+                name="Lunch Break",
+                start_time=datetime.time(12, 0),
+                end_time=datetime.time(13, 0),
+                duration_minutes=60,
+                auto_deduct=True,
+                status=True
+            )
+            breaks = [default_break]
+
+        total_deduction = datetime.timedelta(0)
+        for b in breaks:
+            deduct = b.get_overlap_duration(check_in_dt, check_out_dt, target_date=date)
+            total_deduction += deduct
+
+        net_duration = raw_duration - total_deduction
+        return max(datetime.timedelta(0), net_duration)
+
+    @property
+    def get_working_hours(self):
+        if self.check_in and self.check_out:
+            return self.calculate_net_working_hours(
+                self.check_in, self.check_out, employee=self.employee, date=self.date
+            )
+        return self.working_hours
+
     def calculate_working_hours(self):
         if self.check_in and self.check_out:
-            self.working_hours = self.check_out - self.check_in
+            self.working_hours = self.calculate_net_working_hours(
+                self.check_in, self.check_out, employee=self.employee, date=self.date
+            )
             if self.pk:
-                self.save(update_fields=['working_hours'])
+                super().save(update_fields=['working_hours'])
+
+    def save(self, *args, **kwargs):
+        if self.check_in and self.check_out:
+            self.working_hours = self.calculate_net_working_hours(
+                self.check_in, self.check_out, employee=self.employee, date=self.date
+            )
+        elif not self.check_in or not self.check_out:
+            self.working_hours = None
+        super().save(*args, **kwargs)
 
 
 class EmployeeSchedule(models.Model):

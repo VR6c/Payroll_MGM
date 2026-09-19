@@ -22,7 +22,7 @@
         <i class="menu-arrow"></i>
       </a>
       <div
-        class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' %}show{% endif %}"
+        class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name == 'lunch_breaks' %}show{% endif %}"
         id="ui-setup">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item"><a
@@ -40,13 +40,16 @@
           <li class="nav-item"><a
               class="nav-link {% if request.resolver_match.url_name == 'schedules' %}active{% endif %}"
               href="{% url 'attendance:schedules' %}">Work Day / Time</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'lunch_breaks' %}active{% endif %}"
+              href="{% url 'attendance:lunch_breaks' %}">Lunch Breaks</a></li>
         </ul>
       </div>
     </li>
 
     <!-- Attendance Collapsible Dropdown -->
     <li
-      class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}active{% endif %}">
+      class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' and request.resolver_match.url_name != 'lunch_breaks' %}active{% endif %}">
       <a class="nav-link" data-bs-toggle="collapse" href="#ui-attendance"
         aria-expanded="{% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}true{% else %}false{% endif %}"
         aria-controls="ui-attendance">
@@ -140,6 +143,9 @@
           <li class="nav-item"><a
               class="nav-link {% if request.resolver_match.url_name == 'allowances' %}active{% endif %}"
               href="{% url 'payroll:allowances' %}">Allowance</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'deduction_rules' %}active{% endif %}"
+              href="{% url 'payroll:deduction_rules' %}">Deductions</a></li>
           <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}"
               href="{% url 'payroll:list' %}">History</a></li>
           <li class="nav-item"><a

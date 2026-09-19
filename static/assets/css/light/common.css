@@ -28064,7 +28064,7 @@ svg {
 
 /* Breadcrumbs */
 .breadcrumb {
-  border: 1px solid #dee2e6;
+  border: none;
 }
 
 .breadcrumb .breadcrumb-item {

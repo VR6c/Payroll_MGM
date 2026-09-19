@@ -223,7 +223,7 @@ class DailyReportView(RoleRequiredMixin, TemplateView):
                 })
 
             # 4. Early Leave List
-            if att and att.status == 'early_leave':
+            if att and att.status in ('early_leave', 'checkout_early'):
                 co_str = timezone.localtime(att.check_out).strftime('%H:%M') if att.check_out else '---'
                 early_note = 'Early Check-out'
                 if att.check_out and sched and sched.end_time:
@@ -256,7 +256,7 @@ class DailyReportView(RoleRequiredMixin, TemplateView):
             # 6. Main Attendance List (List ONLY if employee has attended days)
             if attend_val > 0:
                 dur_label = f"{_fmt_days(attend_val)}d"
-                is_danger = (attend_val < scheduled_day) or (att and att.status in ('late', 'early_leave'))
+                is_danger = (attend_val < scheduled_day) or (att and att.status in ('late', 'early_leave', 'checkout_early'))
 
                 daily_records.append({
                     'no': len(daily_records) + 1,
@@ -275,7 +275,7 @@ class DailyReportView(RoleRequiredMixin, TemplateView):
             present=Count('id', filter=Q(status='present')),
             late=Count('id', filter=Q(status='late')),
             absent=Count('id', filter=Q(status='absent')),
-            early_leave=Count('id', filter=Q(status='early_leave')),
+            early_leave=Count('id', filter=Q(status__in=['early_leave', 'checkout_early'])),
             overtime=Count('id', filter=Q(status='overtime')),
         )
 
@@ -344,7 +344,7 @@ class DailyReportExcelExportView(RoleRequiredMixin, View):
             present=Count('id', filter=Q(status='present')),
             late=Count('id', filter=Q(status='late')),
             absent=Count('id', filter=Q(status='absent')),
-            early_leave=Count('id', filter=Q(status='early_leave')),
+            early_leave=Count('id', filter=Q(status__in=['early_leave', 'checkout_early'])),
             overtime=Count('id', filter=Q(status='overtime')),
         )
 
@@ -408,7 +408,7 @@ class DailyReportPdfExportView(RoleRequiredMixin, View):
             present=Count('id', filter=Q(status='present')),
             late=Count('id', filter=Q(status='late')),
             absent=Count('id', filter=Q(status='absent')),
-            early_leave=Count('id', filter=Q(status='early_leave')),
+            early_leave=Count('id', filter=Q(status__in=['early_leave', 'checkout_early'])),
             overtime=Count('id', filter=Q(status='overtime')),
         )
 
@@ -655,7 +655,7 @@ def _get_attendance_summary_roster(request):
         early_count = 0
         ot_count = 0
         for a in emp_atts:
-            if a.status in ('present', 'late', 'early_leave', 'overtime'):
+            if a.status in ('present', 'late', 'early_leave', 'checkout_early', 'overtime'):
                 a_dow = a.date.weekday()
                 day_cfg = emp_sched.get(a_dow)
                 is_half = day_cfg['is_half_day'] if day_cfg else False
@@ -680,7 +680,7 @@ def _get_attendance_summary_roster(request):
 
             if a.status == 'late':
                 late_count += 1
-            elif a.status == 'early_leave':
+            elif a.status in ('early_leave', 'checkout_early'):
                 early_count += 1
             elif a.status == 'overtime':
                 ot_count += 1

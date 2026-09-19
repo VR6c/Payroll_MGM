@@ -22,7 +22,7 @@ class DashboardView(RoleRequiredMixin, TemplateView):
                 ctx['my_recent_leaves'] = emp.leave_requests.select_related('leave_type').order_by('-created_at')[:5]
         else:
             ctx['total_employees'] = Employee.objects.filter(status='active').count()
-            ctx['present_today'] = Attendance.objects.filter(date=today, status__in=['present', 'late', 'overtime', 'early_leave']).count()
+            ctx['present_today'] = Attendance.objects.filter(date=today, status__in=['present', 'late', 'overtime', 'early_leave', 'checkout_early']).count()
             ctx['late_today'] = Attendance.objects.filter(date=today, status='late').count()
             ctx['pending_leaves'] = LeaveRequest.objects.filter(status='pending').count()
             ctx['recent_activities'] = Activity.objects.select_related('user', 'employee').order_by('-created_at')[:6]

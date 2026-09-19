@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 from datetime import datetime
 from django.db import transaction
 from django.shortcuts import redirect, get_object_or_404
@@ -8,10 +9,10 @@ from django.urls import reverse_lazy
 from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, RedirectView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.mixins import RoleRequiredMixin
-from companies.models import Department
+from companies.models import Department, Company
 from employees.models import Employee
-from .models import Payroll, SalaryStructure
-from .forms import SalaryStructureForm, PayrollForm
+from .models import Payroll, SalaryStructure, DeductionRule, PayrollDeductionItem
+from .forms import SalaryStructureForm, PayrollForm, DeductionRuleForm
 from .services import PayrollCalculator, DAILY_SALARY_FORMULAS
 from reports.exporters import generate_payslip_pdf, generate_payroll_list_excel, generate_detail_report_pdf
 
@@ -37,7 +38,9 @@ class PayslipDetailView(LoginRequiredMixin, DetailView):
     template_name = 'payroll/payslip.html'
 
     def get_queryset(self):
-        qs = Payroll.objects.select_related('employee', 'employee__department', 'employee__position', 'employee__company')
+        qs = Payroll.objects.select_related(
+            'employee', 'employee__department', 'employee__position', 'employee__company'
+        ).prefetch_related('deduction_items')
         if self.request.user.role in ['super_admin', 'hr_admin']:
             return qs.all()
         employee = getattr(self.request.user, 'employee_profile', None)
@@ -305,6 +308,195 @@ class PayrollDeleteView(RoleRequiredMixin, DeleteView):
     def post(self, request, *args, **kwargs):
         messages.success(self.request, "Payroll record deleted successfully!")
         return super().post(request, *args, **kwargs)
+
+
+class DeductionRuleListView(RoleRequiredMixin, ListView):
+    model = DeductionRule
+    template_name = 'payroll/deduction_rules.html'
+    context_object_name = 'rules'
+    paginate_by = 30
+    required_roles = ['super_admin', 'hr_admin']
+
+    def get_queryset(self):
+        qs = DeductionRule.objects.select_related('company').all().order_by('category', 'priority', 'id')
+        category = self.request.GET.get('category')
+        status = self.request.GET.get('status')
+        company_id = self.request.GET.get('company')
+        if category:
+            qs = qs.filter(category=category)
+        if status in ['active', 'inactive']:
+            qs = qs.filter(is_active=(status == 'active'))
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['companies'] = Company.objects.filter(status=True)
+        ctx['categories'] = DeductionRule.Category.choices
+        ctx['selected_category'] = self.request.GET.get('category', '')
+        ctx['selected_status'] = self.request.GET.get('status', '')
+        ctx['selected_company'] = self.request.GET.get('company', '')
+        ctx['form'] = DeductionRuleForm()
+        ctx['total_rules'] = DeductionRule.objects.count()
+        ctx['active_rules'] = DeductionRule.objects.filter(is_active=True).count()
+        ctx['late_rules_count'] = DeductionRule.objects.filter(category=DeductionRule.Category.LATE, is_active=True).count()
+        ctx['absent_rules_count'] = DeductionRule.objects.filter(
+            category__in=[DeductionRule.Category.ABSENT, DeductionRule.Category.UNPAID_LEAVE], is_active=True
+        ).count()
+        return ctx
+
+
+class DeductionRuleCreateView(RoleRequiredMixin, CreateView):
+    model = DeductionRule
+    form_class = DeductionRuleForm
+    success_url = reverse_lazy('payroll:deduction_rules')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Deduction rule '{form.instance.name}' created successfully!")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, f"Error creating deduction rule: {form.errors}")
+        return redirect('payroll:deduction_rules')
+
+
+class DeductionRuleUpdateView(RoleRequiredMixin, UpdateView):
+    model = DeductionRule
+    form_class = DeductionRuleForm
+    success_url = reverse_lazy('payroll:deduction_rules')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Deduction rule '{form.instance.name}' updated successfully!")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, f"Error updating deduction rule: {form.errors}")
+        return redirect('payroll:deduction_rules')
+
+
+class DeductionRuleDeleteView(RoleRequiredMixin, DeleteView):
+    model = DeductionRule
+    success_url = reverse_lazy('payroll:deduction_rules')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def post(self, request, *args, **kwargs):
+        rule = self.get_object()
+        name = rule.name
+        rule.delete()
+        messages.success(request, f"Deduction rule '{name}' deleted successfully!")
+        return redirect(self.success_url)
+
+
+class DeductionRuleToggleView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin']
+
+    def post(self, request, pk, *args, **kwargs):
+        rule = get_object_or_404(DeductionRule, pk=pk)
+        rule.is_active = not rule.is_active
+        rule.save(update_fields=['is_active'])
+        status_label = "activated" if rule.is_active else "deactivated"
+        messages.success(request, f"Rule '{rule.name}' {status_label} successfully!")
+        return redirect('payroll:deduction_rules')
+
+
+class DeductionRuleSeedDefaultsView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin']
+
+    def post(self, request, *args, **kwargs):
+        company_id = request.POST.get('company_id')
+        company = Company.objects.filter(id=company_id).first() if company_id else Company.objects.first()
+        if not company:
+            messages.error(request, "No company found to assign default rules.")
+            return redirect('payroll:deduction_rules')
+
+        default_rules = [
+            {
+                'name': 'Absent (100% Daily Salary)',
+                'category': DeductionRule.Category.ABSENT,
+                'condition_unit': DeductionRule.ConditionUnit.DAYS,
+                'operator': DeductionRule.Operator.ALWAYS,
+                'calc_type': DeductionRule.CalcType.PERCENT_DAILY,
+                'rate_or_amount': Decimal('100.00'),
+                'priority': 1,
+                'description': 'Deducts 100% of daily salary per unexcused absent day.',
+            },
+            {
+                'name': 'Leave Unpaid (100% Daily Salary)',
+                'category': DeductionRule.Category.UNPAID_LEAVE,
+                'condition_unit': DeductionRule.ConditionUnit.DAYS,
+                'operator': DeductionRule.Operator.ALWAYS,
+                'calc_type': DeductionRule.CalcType.PERCENT_DAILY,
+                'rate_or_amount': Decimal('100.00'),
+                'priority': 2,
+                'description': 'Deducts 100% of daily salary per approved unpaid leave day.',
+            },
+            {
+                'name': 'Late ≤ 1 hr (50% Hourly Rate)',
+                'category': DeductionRule.Category.LATE,
+                'condition_unit': DeductionRule.ConditionUnit.HOURS,
+                'operator': DeductionRule.Operator.LTE,
+                'threshold_max': Decimal('1.00'),
+                'calc_type': DeductionRule.CalcType.PERCENT_HOURLY,
+                'rate_or_amount': Decimal('50.00'),
+                'priority': 3,
+                'description': 'Deducts 50% of hourly rate when arriving up to 1 hour late.',
+            },
+            {
+                'name': 'Late > 1 hr (70% Hourly Rate)',
+                'category': DeductionRule.Category.LATE,
+                'condition_unit': DeductionRule.ConditionUnit.HOURS,
+                'operator': DeductionRule.Operator.GT,
+                'threshold_min': Decimal('1.00'),
+                'calc_type': DeductionRule.CalcType.PERCENT_HOURLY,
+                'rate_or_amount': Decimal('70.00'),
+                'priority': 4,
+                'description': 'Deducts 70% of hourly rate when arriving more than 1 hour late.',
+            },
+            {
+                'name': 'Late ≤ 1 hr ($3 Fixed Fine)',
+                'category': DeductionRule.Category.LATE,
+                'condition_unit': DeductionRule.ConditionUnit.HOURS,
+                'operator': DeductionRule.Operator.LTE,
+                'threshold_max': Decimal('1.00'),
+                'calc_type': DeductionRule.CalcType.FIXED_PER_UNIT,
+                'rate_or_amount': Decimal('3.00'),
+                'priority': 5,
+                'is_active': False,
+                'description': 'Alternative fixed fine: $3 per late arrival up to 1 hour.',
+            },
+            {
+                'name': 'Late > 1 hr ($8 Fixed Fine)',
+                'category': DeductionRule.Category.LATE,
+                'condition_unit': DeductionRule.ConditionUnit.HOURS,
+                'operator': DeductionRule.Operator.GT,
+                'threshold_min': Decimal('1.00'),
+                'calc_type': DeductionRule.CalcType.FIXED_PER_UNIT,
+                'rate_or_amount': Decimal('8.00'),
+                'priority': 6,
+                'is_active': False,
+                'description': 'Alternative fixed fine: $8 per late arrival over 1 hour.',
+            },
+        ]
+
+        created_count = 0
+        for r_data in default_rules:
+            obj, created = DeductionRule.objects.get_or_create(
+                company=company,
+                name=r_data['name'],
+                defaults=r_data
+            )
+            if created:
+                created_count += 1
+
+        if created_count > 0:
+            messages.success(request, f"Successfully loaded {created_count} standard deduction rules!")
+        else:
+            messages.info(request, "Standard rules are already present in your company.")
+
+        return redirect('payroll:deduction_rules')
 
 
 
