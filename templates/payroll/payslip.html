@@ -16,6 +16,7 @@
         {% else %}
           <a href="{% url 'payroll:my_payslips' %}" class="btn btn-outline-secondary me-2"><i class="mdi mdi-arrow-left me-1"></i> Back to Payslips</a>
         {% endif %}
+        <a href="{% url 'payroll:payslip_pdf' object.pk %}" class="btn btn-danger text-white shadow-sm me-2"><i class="mdi mdi-file-pdf-box me-1"></i> Download PDF</a>
         <button onclick="window.print()" class="btn btn-primary text-white"><i class="mdi mdi-printer me-1"></i> Print Payslip</button>
       </div>
     </div>

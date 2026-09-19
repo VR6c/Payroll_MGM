@@ -1,97 +1,615 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Daily Attendance & HR Report - Payroll MGM{% endblock %}
+{% block title %}Daily Reports - Payroll MGM{% endblock %}
 
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Page Header (no-print) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2 no-print">
       <div>
-        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-file-chart me-2 text-primary"></i>Daily HR & Attendance Report</h3>
-        <p class="text-muted mb-0">Daily tracking summary for {{ today }}</p>
-      </div>
-      <button class="btn btn-outline-primary" onclick="window.print()"><i class="mdi mdi-printer me-1"></i> Print / Export PDF</button>
-    </div>
-
-    <!-- Summary Widgets -->
-    <div class="row mb-4">
-      <div class="col-md-3">
-        <div class="card bg-primary text-white">
-          <div class="card-body py-3">
-            <h6 class="text-white-50 mb-1">Active Employees</h6>
-            <h3 class="fw-bold mb-0 text-white">{{ total_employees }}</h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-success text-white">
-          <div class="card-body py-3">
-            <h6 class="text-white-50 mb-1">Present Today</h6>
-            <h3 class="fw-bold mb-0 text-white">{{ present_count }}</h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-warning text-dark">
-          <div class="card-body py-3">
-            <h6 class="text-dark-50 mb-1">Late Check-ins</h6>
-            <h3 class="fw-bold mb-0 text-dark">{{ late_count }}</h3>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-danger text-white">
-          <div class="card-body py-3">
-            <h6 class="text-white-50 mb-1">Absent</h6>
-            <h3 class="fw-bold mb-0 text-white">{{ absent_count }}</h3>
-          </div>
-        </div>
+        <h2 class="fw-bold text-dark mb-0" style="font-size: 1.65rem; letter-spacing: -0.02em;">Daily Reports</h2>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title text-dark mb-3">Today's Attendance Logs</h5>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr class="table-light">
-                <th>Employee</th>
-                <th>Check In</th>
-                <th>Check Out</th>
-                <th>Working Hours</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for att in today_attendances %}
-              <tr>
-                <td class="fw-semibold text-dark">{{ att.employee.first_name }} {{ att.employee.last_name }}</td>
-                <td>{{ att.check_in|time:"H:i"|default:"-" }}</td>
-                <td>{{ att.check_out|time:"H:i"|default:"-" }}</td>
-                <td>{{ att.working_hours|default:"-" }}</td>
-                <td>
-                  {% if att.status == 'present' %}
-                  <span class="badge bg-success">Present</span>
-                  {% elif att.status == 'late' %}
-                  <span class="badge bg-warning text-dark">Late</span>
-                  {% elif att.status == 'absent' %}
-                  <span class="badge bg-danger">Absent</span>
-                  {% else %}
-                  <span class="badge bg-info">{{ att.get_status_display }}</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="5" class="text-center py-4 text-muted">No check-in activity recorded today.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    <!-- Filter Control Card (no-print) -->
+    <div class="card border-0 shadow-sm mb-4 no-print" style="background: #fdfdfd;">
+      <div class="card-body p-3 p-md-4">
+        <form method="get" action="{% url 'reports:daily' %}" id="dailyFilterForm">
+          <!-- Row 1: Date, Branch, Department -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-dark small mb-1" style="font-size: 0.78rem;">DATE</label>
+              <div class="input-group">
+                <input type="date" name="date" class="form-control report-date-input" value="{{ report_date_str }}"
+                  style="height: 40px; font-size: 0.88rem; cursor: pointer;"
+                  onclick="if(this.showPicker) this.showPicker();">
+                <span class="input-group-text bg-light text-muted" style="cursor: pointer;"
+                  onclick="var el=this.previousElementSibling; if(el && el.showPicker) el.showPicker();">
+                  <i class="mdi mdi-calendar"></i>
+                </span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-dark small mb-1" style="font-size: 0.78rem;">Branch</label>
+              <select name="branch" class="form-select" style="height: 40px; font-size: 0.88rem;">
+                <option value="">Select an option</option>
+                {% for b in branches %}
+                <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"i" %}selected{% endif %}>
+                  {{ b.name }}{% if b.code %} ({{ b.code }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-dark small mb-1" style="font-size: 0.78rem;">Department</label>
+              <select name="department" class="form-select" style="height: 40px; font-size: 0.88rem;">
+                <option value="">Select an option</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if selected_dept == d.id|stringformat:"i" %}selected{% endif %}>{{ d.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Employee -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-dark small mb-1" style="font-size: 0.78rem;">Employee</label>
+              <select name="employee" class="form-select" style="height: 40px; font-size: 0.88rem;">
+                <option value="">Select Employees</option>
+                {% for emp in all_employees %}
+                <option value="{{ emp.id }}" {% if selected_employee == emp.id|stringformat:"i" %}selected{% endif %}>
+                  {{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_code }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: Action Buttons (Teal, Red, Amber, Green) -->
+          <div class="d-flex flex-wrap gap-2 pt-1">
+            <button type="submit"
+              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
+              style="background-color: #0ea5e9; border: none; font-size: 0.85rem; border-radius: 6px;">
+              <i class="mdi mdi-filter-variant"></i> Filter & View Report
+            </button>
+            <a href="{% url 'reports:daily' %}"
+              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
+              style="background-color: #dc3545; border: none; font-size: 0.85rem; border-radius: 6px;">
+              <i class="mdi mdi-refresh"></i> Clear
+            </a>
+            <button type="button" onclick="window.print()"
+              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
+              style="background-color: #f59e0b; border: none; font-size: 0.85rem; border-radius: 6px;">
+              <i class="mdi mdi-printer"></i> Print
+            </button>
+            <a href="{% url 'reports:daily_excel' %}?date={{ report_date_str }}&department={{ selected_dept }}"
+              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
+              style="background-color: #10b981; border: none; font-size: 0.85rem; border-radius: 6px;">
+              <i class="mdi mdi-download"></i> Export
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Official Report Document Canvas (Printable Sheet) -->
+    <div class="report-paper-container w-100">
+      <div class="report-paper bg-white shadow-sm border p-3 p-sm-4 p-md-5 mb-5 w-100" style="color: #1e293b;">
+
+        <!-- Centered Header & Company Logo -->
+        <div class="text-center mb-4 pb-3 border-bottom">
+          <div class="mb-2">
+            <img src="{% static 'assets/images/salary.png' %}" alt="Company Logo"
+              style="height: 52px; width: auto; object-fit: contain;" class="d-inline-block">
+          </div>
+          <h3 class="fw-bold text-dark mb-1" style="font-size: 22px; letter-spacing: -0.01em;">Daily Attendance Report
+            <span class="d-none">Daily HR &amp; Attendance Report</span>
+          </h3>
+          <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap text-muted mt-2"
+            style="font-size: 13px;">
+            <span>
+              <i class="mdi mdi-calendar-clock text-primary me-1"></i>Date: <strong class="text-dark">{{ report_date_str }}</strong>
+            </span>
+            {% if selected_dept %}
+            {% for d in departments %}
+            {% if selected_dept == d.id|stringformat:"i" %}
+            <span class="text-muted opacity-50">•</span>
+            <span>
+              <i class="mdi mdi-domain text-primary me-1"></i><strong class="text-dark">{{ d.name }}</strong>
+            </span>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if selected_branch %}
+            {% for b in branches %}
+            {% if selected_branch == b.id|stringformat:"i" %}
+            <span class="text-muted opacity-50">•</span>
+            <span>
+              <i class="mdi mdi-office-building text-primary me-1"></i><strong class="text-dark">{{ b.name }}</strong>
+            </span>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+          </div>
         </div>
+
+        <!-- Mobile Scroll Indicator Hint -->
+        <div class="d-md-none text-muted small mb-2 text-end" style="font-size: 11px;">
+          <i class="mdi mdi-arrow-left-right me-1 text-primary"></i>Swipe table horizontally to view all columns
+        </div>
+
+        <!-- Attendance List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #0284c7; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-account-check fs-6"></i> Attendance List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #0284c7 !important;">
+              {{ daily_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 32%;">NAME</th>
+                  <th style="width: 33%;">DEPARTMENT</th>
+                  <th style="width: 30%; text-align: left;">ATTENDANCE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in daily_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ row.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ row.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ row.position }}</div>
+                  </td>
+                  <td>
+                    <div class="text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ row.department }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ row.branch }}</div>
+                  </td>
+                  <td>
+                    <span class="{% if row.is_danger %}text-danger{% else %}text-success{% endif %} fw-semibold"
+                      style="font-size: 11px;">
+                      {{ row.attendance_label }}
+                    </span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No employee roster found for the selected filters.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Late List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #d97706; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-clock-alert-outline fs-6"></i> Late List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #d97706 !important;">
+              {{ late_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 22%;">DEPARTMENT</th>
+                  <th style="width: 15%;">BRANCH</th>
+                  <th style="width: 15%; text-align: center;">CHECK IN</th>
+                  <th style="width: 23%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for l in late_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ l.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ l.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ l.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ l.department }}</td>
+                  <td style="font-size: 11px;">{{ l.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-danger fw-semibold" style="font-size: 11px;">{{ l.check_in }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ l.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No late check-in records on this
+                    date.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Early List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #ea580c; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-clock-fast fs-6"></i> Early List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #ea580c !important;">
+              {{ early_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 22%;">DEPARTMENT</th>
+                  <th style="width: 15%;">BRANCH</th>
+                  <th style="width: 15%; text-align: center;">CHECK OUT</th>
+                  <th style="width: 23%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in early_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ e.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ e.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ e.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ e.department }}</td>
+                  <td style="font-size: 11px;">{{ e.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-dark fw-semibold" style="font-size: 11px;">{{ e.check_out }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ e.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No early leave records on this date.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Leave List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #6366f1; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-calendar-account-outline fs-6"></i> Leave List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #6366f1 !important;">
+              {{ leave_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 15%;">BRANCH</th>
+                  <th style="width: 15%;">LEAVE TYPE</th>
+                  <th style="width: 10%; text-align: center;">DAYS</th>
+                  <th style="width: 15%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lv in leave_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ lv.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ lv.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ lv.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ lv.department }}</td>
+                  <td style="font-size: 11px;">{{ lv.branch }}</td>
+                  <td style="font-size: 11px;">{{ lv.leave_type }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-primary fw-semibold" style="font-size: 11px;">{{ lv.duration }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ lv.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No employee leave records on this date.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Absent List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #dc2626; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-account-remove-outline fs-6"></i> Absent List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #dc2626 !important;">
+              {{ absent_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 15%;">BRANCH</th>
+                  <th style="width: 15%; text-align: center;">ABSENT</th>
+                  <th style="width: 20%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in absent_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ a.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ a.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ a.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ a.department }}</td>
+                  <td style="font-size: 11px;">{{ a.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-danger fw-semibold" style="font-size: 11px;">{{ a.duration }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ a.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No absent employees on this date.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Holiday List Section -->
+        <div class="report-section mb-4">
+          <div
+            class="section-banner holiday-header px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #16a34a; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-beach fs-6"></i> Holiday List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #16a34a !important;">
+              {{ holiday_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 25%;">DEPARTMENT</th>
+                  <th style="width: 20%;">BRANCH</th>
+                  <th style="width: 25%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in holiday_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ h.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ h.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ h.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ h.department }}</td>
+                  <td style="font-size: 11px;">{{ h.branch }}</td>
+                  <td style="font-size: 11px;">{{ h.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No scheduled public holiday or off-duty staff on
+                    this date.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  /* Hide duplicate Chrome/Safari native calendar indicator */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  .report-date-input::-webkit-calendar-picker-indicator {
+    display: none !important;
+    -webkit-appearance: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Refined, Crisp Grid Table for Official Reports */
+  .report-grid-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    min-width: 680px;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff;
+  }
+
+  .report-grid-table th {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    background-color: #f8fafc !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+  }
+
+  .report-grid-table td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 7px 10px !important;
+    vertical-align: middle;
+    color: #334155;
+  }
+
+  .report-grid-table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .section-banner,
+  .holiday-header {
+    letter-spacing: 0.03em;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  .report-paper {
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px !important;
+    transition: box-shadow 0.2s ease;
+  }
+
+  /* Smooth scrolling for responsive tables */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+
+  .table-responsive::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Print Media Query */
+  @media print {
+    body {
+      background: white !important;
+      color: black !important;
+      font-size: 11px !important;
+    }
+
+    .no-print,
+    .navbar,
+    .sidebar,
+    .footer {
+      display: none !important;
+    }
+
+    .main-panel {
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .content-wrapper {
+      padding: 0 !important;
+      background: white !important;
+    }
+
+    .report-paper-container {
+      display: block !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .report-paper {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      min-height: auto !important;
+      border-radius: 0 !important;
+    }
+
+    .report-grid-table {
+      min-width: 100% !important;
+      border: 1.5px solid #000 !important;
+    }
+
+    .report-grid-table th,
+    .report-grid-table td {
+      border: 1px solid #000 !important;
+      color: #000 !important;
+    }
+
+    .report-grid-table tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .report-section {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .section-banner,
+    .holiday-header {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      border-radius: 0 !important;
+    }
+
+    .badge {
+      border: 1px solid #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
+</style>
 {% endblock %}

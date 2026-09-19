@@ -1,16 +1,18 @@
 import logging
 from datetime import datetime
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.mixins import RoleRequiredMixin
 from employees.models import Employee
 from .models import Payroll, SalaryStructure
 from .forms import SalaryStructureForm, PayrollForm
 from .services import PayrollCalculator
+from reports.exporters import generate_payslip_pdf, generate_payroll_list_excel, generate_detail_report_pdf
 
 logger = logging.getLogger('payroll')
 
@@ -41,6 +43,66 @@ class PayslipDetailView(LoginRequiredMixin, DetailView):
         if not employee:
             return qs.none()
         return qs.filter(employee=employee)
+
+
+class PayslipPdfExportView(LoginRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        qs = Payroll.objects.select_related('employee', 'employee__department', 'employee__position', 'employee__company')
+        if request.user.role not in ['super_admin', 'hr_admin']:
+            employee = getattr(request.user, 'employee_profile', None)
+            if not employee:
+                raise Http404("Employee profile not found.")
+            qs = qs.filter(employee=employee)
+
+        payroll = get_object_or_404(qs, pk=pk)
+        pdf_bytes = generate_payslip_pdf(payroll)
+        filename = f"payslip_{payroll.employee.employee_code}_{payroll.payroll_period.strftime('%Y%m')}.pdf"
+        resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
+
+
+class PayrollListExcelExportView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin']
+
+    def get(self, request, *args, **kwargs):
+        qs = Payroll.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-payroll_period')
+        status = request.GET.get('status')
+        period = request.GET.get('period')
+        if status:
+            qs = qs.filter(status=status)
+        if period:
+            qs = qs.filter(payroll_period=period)
+
+        generated_by = request.user.get_full_name() or request.user.username
+        excel_bytes = generate_payroll_list_excel(qs, generated_by=generated_by)
+        filename = f"payroll_records_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        resp = HttpResponse(
+            excel_bytes,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
+
+
+class PayrollListPdfExportView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin']
+
+    def get(self, request, *args, **kwargs):
+        qs = Payroll.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-payroll_period')
+        status = request.GET.get('status')
+        period = request.GET.get('period')
+        if status:
+            qs = qs.filter(status=status)
+        if period:
+            qs = qs.filter(payroll_period=period)
+
+        generated_by = request.user.get_full_name() or request.user.username
+        pdf_bytes = generate_detail_report_pdf('payroll', qs, generated_by=generated_by)
+        filename = f"payroll_records_{datetime.now().strftime('%Y%m%d')}.pdf"
+        resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
 
 
 class PayrollListView(RoleRequiredMixin, ListView):

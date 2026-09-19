@@ -10,11 +10,19 @@
         <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-clock-check-outline text-primary me-2"></i>Attendance Report</h3>
         <p class="text-muted mb-0">View company-wide employee attendance records</p>
       </div>
-      {% if user.role in 'super_admin,hr_admin,manager' %}
-      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
-        <i class="mdi mdi-plus me-1"></i> Mark / Add Attendance
-      </button>
-      {% endif %}
+      <div class="d-flex gap-2">
+        <a href="{% url 'attendance:export_excel' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&date={{ request.GET.date }}" class="btn btn-outline-success shadow-sm">
+          <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
+        </a>
+        <a href="{% url 'attendance:export_pdf' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&date={{ request.GET.date }}" class="btn btn-outline-danger shadow-sm">
+          <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
+        </a>
+        {% if user.role in 'super_admin,hr_admin,manager' %}
+        <button type="button" class="btn btn-primary text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+          <i class="mdi mdi-plus me-1"></i> Mark / Add Attendance
+        </button>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Filter Card -->

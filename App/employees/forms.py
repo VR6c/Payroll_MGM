@@ -6,7 +6,7 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = [
             'employee_code', 'first_name', 'last_name', 'gender', 'date_of_birth',
-            'phone', 'email', 'address', 'photo', 'department', 'position',
+            'phone', 'email', 'address', 'photo', 'branch', 'department', 'position',
             'manager', 'join_date', 'basic_salary', 'status'
         ]
         widgets = {
@@ -17,18 +17,21 @@ class EmployeeForm(forms.ModelForm):
 
 class EmployeeFilterForm(forms.Form):
     search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Search name or code...'}))
+    branch = forms.ModelChoiceField(queryset=None, required=False, empty_label="All Branches")
     department = forms.ModelChoiceField(queryset=None, required=False, empty_label="All Departments")
     status = forms.ChoiceField(choices=[('', 'All Status')] + Employee.Status.choices, required=False)
 
     def __init__(self, *args, company=None, **kwargs):
         super().__init__(*args, **kwargs)
-        from companies.models import Department
+        from companies.models import Department, Branch
         if company:
+            self.fields['branch'].queryset = Branch.objects.filter(company=company, status=True)
             self.fields['department'].queryset = Department.objects.filter(company=company, status=True)
         else:
+            self.fields['branch'].queryset = Branch.objects.filter(status=True)
             self.fields['department'].queryset = Department.objects.filter(status=True)
 
-from companies.models import Department, Position
+from companies.models import Department, Position, Branch
 
 class DepartmentForm(forms.ModelForm):
     class Meta:
@@ -45,6 +48,15 @@ class PositionForm(forms.ModelForm):
         widgets = {
             'description': forms.Textarea(attrs={'rows': 2}),
         }
+
+class BranchForm(forms.ModelForm):
+    class Meta:
+        model = Branch
+        fields = ['company', 'name', 'code', 'phone', 'address', 'status']
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 2}),
+        }
+
 
 
 

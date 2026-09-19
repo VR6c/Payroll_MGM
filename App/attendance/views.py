@@ -14,6 +14,7 @@ from employees.models import Employee
 from .models import Attendance, WorkSchedule, EmployeeSchedule
 from .services import AttendanceService, ScheduleService
 from .forms import AttendanceForm
+from reports.exporters import generate_attendance_list_excel, generate_detail_report_pdf
 
 
 class CheckInView(LoginRequiredMixin, View):
@@ -279,3 +280,68 @@ class AttendanceReportView(RoleRequiredMixin, ListView):
         ctx['employees'] = Employee.objects.filter(status='active').select_related('department', 'position')
         ctx['form'] = AttendanceForm()
         return ctx
+
+
+class AttendanceReportExcelExportView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin', 'manager']
+
+    def get(self, request, *args, **kwargs):
+        qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
+        filter_type = request.GET.get('type')
+        status = request.GET.get('status')
+        date_str = request.GET.get('date')
+
+        if filter_type == 'checkin_early':
+            qs = qs.filter(status='present')
+        elif filter_type == 'checkin_late':
+            qs = qs.filter(status='late')
+        elif filter_type == 'checkout_early':
+            qs = qs.filter(status='early_leave')
+        elif filter_type == 'checkout_late':
+            qs = qs.filter(status='overtime')
+        elif status:
+            qs = qs.filter(status=status)
+
+        if date_str:
+            qs = qs.filter(date=date_str)
+
+        generated_by = request.user.get_full_name() or request.user.username
+        excel_bytes = generate_attendance_list_excel(qs, generated_by=generated_by)
+        filename = f"attendance_records_{datetime.date.today().strftime('%Y%m%d')}.xlsx"
+        resp = HttpResponse(
+            excel_bytes,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
+
+
+class AttendanceReportPdfExportView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin', 'manager']
+
+    def get(self, request, *args, **kwargs):
+        qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
+        filter_type = request.GET.get('type')
+        status = request.GET.get('status')
+        date_str = request.GET.get('date')
+
+        if filter_type == 'checkin_early':
+            qs = qs.filter(status='present')
+        elif filter_type == 'checkin_late':
+            qs = qs.filter(status='late')
+        elif filter_type == 'checkout_early':
+            qs = qs.filter(status='early_leave')
+        elif filter_type == 'checkout_late':
+            qs = qs.filter(status='overtime')
+        elif status:
+            qs = qs.filter(status=status)
+
+        if date_str:
+            qs = qs.filter(date=date_str)
+
+        generated_by = request.user.get_full_name() or request.user.username
+        pdf_bytes = generate_detail_report_pdf('attendance', qs, generated_by=generated_by)
+        filename = f"attendance_records_{datetime.date.today().strftime('%Y%m%d')}.pdf"
+        resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp

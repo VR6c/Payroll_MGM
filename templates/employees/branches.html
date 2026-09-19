@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Branches - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-source-branch me-2 text-primary"></i>Branch Management</h3>
+        <p class="text-muted mb-0">Overview of organizational branches, offices, and work locations</p>
+      </div>
+      {% if user.role in 'super_admin,hr_admin' %}
+      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+        <i class="mdi mdi-plus me-1"></i> Add New Branch
+      </button>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                <th>Branch Code</th>
+                <th>Branch Name</th>
+                <th>Company</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th class="text-end" style="width: 160px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for branch in branches %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <span class="badge bg-light text-dark border fw-bold">{{ branch.code|default:"-" }}</span>
+                </td>
+                <td class="fw-semibold text-dark">{{ branch.name }}</td>
+                <td>{{ branch.company.name }}</td>
+                <td>{{ branch.phone|default:"-" }}</td>
+                <td>{{ branch.address|default:"-" }}</td>
+                <td>
+                  {% if branch.status %}
+                  <span class="badge bg-success">Active</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editBranchModal{{ branch.id }}">
+                    <i class="mdi mdi-pencil"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBranchModal{{ branch.id }}">
+                    <i class="mdi mdi-trash-can-outline"></i> Delete
+                  </button>
+
+                  <!-- Edit Modal -->
+                  <div class="modal fade text-start" id="editBranchModal{{ branch.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'employees:branch_update' branch.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Branch</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Company</label>
+                              <select name="company" class="form-select" required>
+                                {% for comp in companies %}
+                                <option value="{{ comp.id }}" {% if comp.id == branch.company.id %}selected{% endif %}>{{ comp.name }}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Branch Name</label>
+                              <input type="text" name="name" class="form-control" value="{{ branch.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Branch Code</label>
+                              <input type="text" name="code" class="form-control" value="{{ branch.code }}" placeholder="e.g. F1, F2, HQ">
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Phone</label>
+                              <input type="text" name="phone" class="form-control" value="{{ branch.phone }}">
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Address</label>
+                              <textarea name="address" class="form-control" rows="2">{{ branch.address }}</textarea>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" name="status" id="branchStatus{{ branch.id }}" {% if branch.status %}checked{% endif %}>
+                              <label class="form-check-label fw-bold" for="branchStatus{{ branch.id }}">Active</label>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade text-start" id="deleteBranchModal{{ branch.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'employees:branch_delete' branch.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle-outline me-1"></i> Delete Branch</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p>Are you sure you want to delete the branch <strong>{{ branch.name }} ({{ branch.code }})</strong>?</p>
+                            <p class="text-muted small mb-0">Employees currently associated with this branch will have their branch reference set to unassigned.</p>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Confirm Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="mdi mdi-source-branch fs-1 d-block mb-2 text-muted opacity-50"></i>
+                  <h6>No Branches Found</h6>
+                  <p class="small text-muted mb-0">Click "Add New Branch" above to register organizational branches.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Branch Modal -->
+{% if user.role in 'super_admin,hr_admin' %}
+<div class="modal fade" id="addBranchModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'employees:branch_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-plus-circle me-1 text-primary"></i> Add New Branch</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Company</label>
+            <select name="company" class="form-select" required>
+              {% for comp in companies %}
+              <option value="{{ comp.id }}">{{ comp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Branch Name</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Floor 2 Branch, Head Office" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Branch Code</label>
+            <input type="text" name="code" class="form-control" placeholder="e.g. F1, F2, HQ">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Phone</label>
+            <input type="text" name="phone" class="form-control" placeholder="Contact number">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Address</label>
+            <textarea name="address" class="form-control" rows="2" placeholder="Physical location / building"></textarea>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="status" id="newBranchStatus" checked>
+            <label class="form-check-label fw-bold" for="newBranchStatus">Active</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Create Branch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

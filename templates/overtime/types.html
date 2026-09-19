@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Overtime Types - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">
+          <i class="mdi mdi-tune me-2 text-primary"></i>Overtime Types & Rates
+        </h3>
+        <p class="text-muted mb-0">Configure overtime policies, hourly multipliers, and premium rate tiers</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'overtime:list' %}" class="btn btn-outline-secondary">
+          <i class="mdi mdi-arrow-left me-1"></i> Back to Overtime Records
+        </a>
+        {% if user.role in 'super_admin,hr_admin' %}
+        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal"
+          data-bs-target="#addOvertimeTypeModal">
+          <i class="mdi mdi-plus me-1"></i> Add Overtime Type
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Types Table Card -->
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                <th>Overtime Type Name</th>
+                <th>Company</th>
+                <th style="white-space: nowrap;">Rate Multiplier</th>
+                <th style="min-width: 200px;">Description</th>
+                <th style="width: 100px;">Status</th>
+                <th class="text-end" style="min-width: 160px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ot in overtime_types %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-bold text-dark">{{ ot.name }}</td>
+                <td>{{ ot.company.name }}</td>
+                <td>
+                  <span class="badge bg-light text-dark border fw-bold px-2 py-1">
+                    {{ ot.rate_multiplier }}&times; Base Wage
+                  </span>
+                </td>
+                <td class="text-muted small" style="max-width: 280px; white-space: normal; line-height: 1.4;">
+                  {{ ot.description|default:"Standard policy applies" }}
+                </td>
+                <td>
+                  {% if ot.status %}
+                  <span class="badge bg-success">Active</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <div class="d-flex justify-content-end align-items-center gap-1">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                      data-bs-target="#editTypeModal{{ ot.id }}">
+                      <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                      data-bs-target="#deleteTypeModal{{ ot.id }}">
+                      <i class="mdi mdi-trash-can-outline"></i> Delete
+                    </button>
+                  </div>
+
+                  <!-- Edit Type Modal -->
+                  <div class="modal fade text-start" id="editTypeModal{{ ot.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'overtime:type_update' ot.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i>
+                              Edit Overtime Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Company</label>
+                              <select name="company" class="form-select" required>
+                                {% for comp in companies %}
+                                <option value="{{ comp.id }}" {% if comp.id == ot.company.id %}selected{% endif %}>{{ comp.name }}</option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Policy Name</label>
+                              <input type="text" name="name" class="form-control" value="{{ ot.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Rate Multiplier (e.g. 1.5, 2.0)</label>
+                              <input type="number" step="0.1" min="1.0" name="rate_multiplier" class="form-control"
+                                value="{{ ot.rate_multiplier }}" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Description</label>
+                              <textarea name="description" class="form-control" rows="3">{{ ot.description }}</textarea>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                              <input class="form-check-input" type="checkbox" name="status" id="otStatus{{ ot.id }}" {% if ot.status %}checked{% endif %}>
+                              <label class="form-check-label fw-bold" for="otStatus{{ ot.id }}">Active Policy</label>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Type Modal -->
+                  <div class="modal fade text-start" id="deleteTypeModal{{ ot.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'overtime:type_delete' ot.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete
+                              Overtime Type</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to delete the overtime policy <strong>{{ ot.name }}</strong> ({{ ot.rate_multiplier }}x)?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="mdi mdi-tune fs-1 text-muted d-block mb-2"></i>
+                  No overtime types configured yet.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Overtime Type Modal -->
+{% if user.role in 'super_admin,hr_admin' %}
+<div class="modal fade" id="addOvertimeTypeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'overtime:type_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-plus-circle me-1 text-primary"></i> Add Overtime
+            Type</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Company</label>
+            <select name="company" class="form-select" required>
+              {% for comp in companies %}
+              <option value="{{ comp.id }}">{{ comp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Policy / Type Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Weekend Overtime (2.0x)" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Rate Multiplier <span class="text-danger">*</span></label>
+            <input type="number" step="0.1" min="1.0" name="rate_multiplier" class="form-control" value="1.5" required>
+            <div class="form-text small">Multiplier applied against hourly base wage (e.g., 1.5, 2.0, 3.0)</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Description</label>
+            <textarea name="description" class="form-control" rows="3"
+              placeholder="Specify applicable days, conditions, or shifts..."></textarea>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="status" id="newOtStatus" checked>
+            <label class="form-check-label fw-bold" for="newOtStatus">Active</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Save Type</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

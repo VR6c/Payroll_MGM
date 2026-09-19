@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'activities.apps.ActivitiesConfig',
     'dashboard.apps.DashboardConfig',
     'reports.apps.ReportsConfig',
+    'overtime.apps.OvertimeConfig',
 ]
 
 MIDDLEWARE = [

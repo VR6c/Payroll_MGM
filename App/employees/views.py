@@ -3,10 +3,10 @@ from django.urls import reverse_lazy
 from django.db.models import Q
 from django.contrib import messages
 from accounts.mixins import RoleRequiredMixin, FieldPermissionMixin
-from companies.models import Company, Department, Position
+from companies.models import Company, Department, Position, Branch
 from companies.services import get_default_company
 from .models import Employee
-from .forms import EmployeeForm, EmployeeFilterForm, PositionForm, DepartmentForm
+from .forms import EmployeeForm, EmployeeFilterForm, PositionForm, DepartmentForm, BranchForm
 
 
 class EmployeeListView(RoleRequiredMixin, ListView):
@@ -17,12 +17,14 @@ class EmployeeListView(RoleRequiredMixin, ListView):
     required_roles = ['super_admin', 'hr_admin', 'manager']
 
     def get_queryset(self):
-        qs = Employee.objects.select_related('company', 'department', 'position', 'manager', 'user').all()
+        qs = Employee.objects.select_related('company', 'branch', 'department', 'position', 'manager', 'user').all()
         form = EmployeeFilterForm(self.request.GET)
         if form.is_valid():
             if form.cleaned_data.get('search'):
                 s = form.cleaned_data['search']
                 qs = qs.filter(Q(first_name__icontains=s) | Q(last_name__icontains=s) | Q(employee_code__icontains=s))
+            if form.cleaned_data.get('branch'):
+                qs = qs.filter(branch=form.cleaned_data['branch'])
             if form.cleaned_data.get('department'):
                 qs = qs.filter(department=form.cleaned_data['department'])
             if form.cleaned_data.get('status'):
@@ -189,6 +191,56 @@ class DepartmentDeleteView(RoleRequiredMixin, DeleteView):
     def post(self, request, *args, **kwargs):
         messages.success(self.request, "Department deleted successfully!")
         return super().post(request, *args, **kwargs)
+
+
+class BranchListView(RoleRequiredMixin, ListView):
+    model = Branch
+    template_name = 'employees/branches.html'
+    context_object_name = 'branches'
+    paginate_by = 20
+    required_roles = ['super_admin', 'hr_admin', 'manager']
+
+    def get_queryset(self):
+        return Branch.objects.select_related('company').all()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['form'] = BranchForm()
+        ctx['companies'] = Company.objects.all()
+        return ctx
+
+
+class BranchCreateView(DefaultCompanyFormMixin, RoleRequiredMixin, CreateView):
+    model = Branch
+    form_class = BranchForm
+    success_url = reverse_lazy('employees:branches')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def form_valid(self, form):
+        messages.success(self.request, "Branch created successfully!")
+        return super().form_valid(form)
+
+
+class BranchUpdateView(DefaultCompanyFormMixin, RoleRequiredMixin, UpdateView):
+    model = Branch
+    form_class = BranchForm
+    success_url = reverse_lazy('employees:branches')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def form_valid(self, form):
+        messages.success(self.request, "Branch updated successfully!")
+        return super().form_valid(form)
+
+
+class BranchDeleteView(RoleRequiredMixin, DeleteView):
+    model = Branch
+    success_url = reverse_lazy('employees:branches')
+    required_roles = ['super_admin', 'hr_admin']
+
+    def post(self, request, *args, **kwargs):
+        messages.success(self.request, "Branch deleted successfully!")
+        return super().post(request, *args, **kwargs)
+
 
 
 

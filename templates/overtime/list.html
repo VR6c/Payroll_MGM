@@ -1,0 +1,554 @@
+{% extends "base.html" %}
+
+{% block title %}Overtime Management - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-clock-fast text-primary me-2"></i>Overtime Management</h3>
+        <p class="text-muted mb-0">Record, review, and manage employee overtime records and payroll compensation</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'overtime:types' %}" class="btn btn-outline-primary">
+          <i class="mdi mdi-tune me-1"></i> Overtime Types
+        </a>
+        {% if user.role in 'super_admin,hr_admin' %}
+        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addOvertimeModal">
+          <i class="mdi mdi-plus me-1"></i> Add Overtime Record
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #eef2ff; color: #1F3BB3;">
+                <i class="mdi mdi-clock-time-four-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Hours</p>
+                <h4 class="fw-bold mb-0 text-dark">{{ total_hours }} <span class="fs-6 text-muted fw-normal">hrs</span></h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #e8f8f0; color: #198754;">
+                <i class="mdi mdi-cash-multiple fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Estimated Pay</p>
+                <h4 class="fw-bold mb-0 text-success">${{ total_amount|floatformat:2 }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #fff8eb; color: #d97706;">
+                <i class="mdi mdi-clock-alert-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Pending Approvals</p>
+                <h4 class="fw-bold mb-0 text-warning">{{ pending_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #e6f9fc; color: #0891b2;">
+                <i class="mdi mdi-check-decagram-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Approved Records</p>
+                <h4 class="fw-bold mb-0 text-dark">{{ approved_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-12 col-md-6 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Search Employee</label>
+            <input type="text" name="search" class="form-control" placeholder="Name or code..." value="{{ request.GET.search }}">
+          </div>
+          <div class="col-6 col-md-3 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Department</label>
+            <select name="department" class="form-select">
+              <option value="">-- All Departments --</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {% if request.GET.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Status</label>
+            <select name="status" class="form-select">
+              <option value="">-- All Statuses --</option>
+              <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+              <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-4 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">From Date</label>
+            <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
+          </div>
+          <div class="col-6 col-md-4 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">To Date</label>
+            <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
+          </div>
+          <div class="col-12 col-md-4 col-xl-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary text-white flex-fill px-3" title="Filter">
+              <i class="mdi mdi-magnify me-1"></i> Filter
+            </button>
+            <a href="{% url 'overtime:list' %}" class="btn btn-outline-secondary flex-fill px-3" title="Reset">
+              <i class="mdi mdi-refresh me-1"></i> Reset
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Records Table Card -->
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>#</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Date & Shift</th>
+                <th>Policy / Type</th>
+                <th>Hours</th>
+                <th>Hourly Rate</th>
+                <th>Overtime Pay</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ot in overtimes %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ ot.employee.first_name }} {{ ot.employee.last_name }}</div>
+                  <small class="text-muted">{{ ot.employee.employee_code }} &bull; {{ ot.employee.position.name|default:"Staff" }}</small>
+                </td>
+                <td>{{ ot.employee.department.name|default:"-" }}</td>
+                <td>
+                  <div class="fw-semibold">{{ ot.date|date:"M d, Y" }}</div>
+                  <small class="text-muted">
+                    {% if ot.start_time and ot.end_time %}
+                      {{ ot.start_time|time:"H:i" }} &ndash; {{ ot.end_time|time:"H:i" }}
+                    {% else %}
+                      Flexible Hours
+                    {% endif %}
+                  </small>
+                </td>
+                <td>
+                  {% if ot.overtime_type %}
+                    <span class="badge bg-light text-dark border">{{ ot.overtime_type.name }}</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark border">Standard ({{ ot.rate_multiplier }}x)</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-light text-primary border fw-bold">{{ ot.hours }} hrs</span>
+                </td>
+                <td class="text-muted small">${{ ot.hourly_rate }}</td>
+                <td>
+                  <span class="fw-bold text-success">${{ ot.overtime_amount|floatformat:2 }}</span>
+                </td>
+                <td>
+                  {% if ot.status == 'approved' %}
+                    <span class="badge bg-success">Approved</span>
+                  {% elif ot.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% elif ot.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% elif ot.status == 'cancelled' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ ot.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end align-items-center gap-1">
+                    {% if ot.status == 'pending' and user.role in 'super_admin,hr_admin,manager' %}
+                      <!-- Quick Approve -->
+                      <form method="post" action="{% url 'overtime:approve' ot.id %}" class="d-inline m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Approve Overtime">
+                          <i class="mdi mdi-check"></i>
+                        </button>
+                      </form>
+                      <!-- Quick Reject Modal Trigger -->
+                      <button type="button" class="btn btn-sm btn-outline-warning text-dark" data-bs-toggle="modal" data-bs-target="#rejectOtModal{{ ot.id }}" title="Reject Overtime">
+                        <i class="mdi mdi-close"></i>
+                      </button>
+                    {% endif %}
+
+                    {% if user.role in 'super_admin,hr_admin' %}
+                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editOtModal{{ ot.id }}" title="Edit">
+                        <i class="mdi mdi-pencil"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteOtModal{{ ot.id }}" title="Delete">
+                        <i class="mdi mdi-trash-can-outline"></i>
+                      </button>
+                    {% endif %}
+                  </div>
+
+                  <!-- Reject Modal -->
+                  <div class="modal fade text-start" id="rejectOtModal{{ ot.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'overtime:reject' ot.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-close-circle-outline me-1"></i> Reject Overtime Request</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p>Reject overtime for <strong>{{ ot.employee }}</strong> on <strong>{{ ot.date|date:"M d, Y" }}</strong> ({{ ot.hours }} hrs)?</p>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Reason for Rejection</label>
+                              <textarea name="rejection_reason" class="form-control" rows="3" placeholder="Reason for rejecting request..."></textarea>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Confirm Rejection</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Edit Modal -->
+                  {% if user.role in 'super_admin,hr_admin' %}
+                  <div class="modal fade text-start" id="editOtModal{{ ot.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'overtime:edit' ot.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Overtime Record</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="row g-3">
+                              <div class="col-md-6">
+                                <label class="form-label fw-bold">Employee</label>
+                                <select name="employee" class="form-select" required>
+                                  {% for e in employees %}
+                                  <option value="{{ e.id }}" {% if e.id == ot.employee.id %}selected{% endif %}>
+                                    {{ e.employee_code }} - {{ e.first_name }} {{ e.last_name }} ({{ e.department.name|default:"-" }})
+                                  </option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <div class="col-md-6">
+                                <label class="form-label fw-bold">Overtime Policy / Type</label>
+                                <select name="overtime_type" class="form-select">
+                                  <option value="">-- Standard Policy --</option>
+                                  {% for opt in overtime_types %}
+                                  <option value="{{ opt.id }}" {% if ot.overtime_type and opt.id == ot.overtime_type.id %}selected{% endif %}>
+                                    {{ opt.name }} ({{ opt.rate_multiplier }}x)
+                                  </option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">Date</label>
+                                <input type="date" name="date" class="form-control" value="{{ ot.date|date:'Y-m-d' }}" required>
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">Start Time</label>
+                                <input type="time" name="start_time" class="form-control" value="{{ ot.start_time|time:'H:i' }}">
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">End Time</label>
+                                <input type="time" name="end_time" class="form-control" value="{{ ot.end_time|time:'H:i' }}">
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">Hours</label>
+                                <input type="number" step="0.25" name="hours" class="form-control" value="{{ ot.hours }}" required>
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">Multiplier</label>
+                                <input type="number" step="0.1" name="rate_multiplier" class="form-control" value="{{ ot.rate_multiplier }}" required>
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label fw-bold">Hourly Rate ($)</label>
+                                <input type="number" step="0.01" name="hourly_rate" class="form-control" value="{{ ot.hourly_rate }}" required>
+                              </div>
+                              <div class="col-md-6">
+                                <label class="form-label fw-bold">Total Overtime Pay ($)</label>
+                                <input type="number" step="0.01" name="overtime_amount" class="form-control" value="{{ ot.overtime_amount }}" required>
+                              </div>
+                              <div class="col-md-6">
+                                <label class="form-label fw-bold">Status</label>
+                                <select name="status" class="form-select" required>
+                                  <option value="pending" {% if ot.status == 'pending' %}selected{% endif %}>Pending</option>
+                                  <option value="approved" {% if ot.status == 'approved' %}selected{% endif %}>Approved</option>
+                                  <option value="rejected" {% if ot.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                  <option value="cancelled" {% if ot.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                              </div>
+                              <div class="col-12">
+                                <label class="form-label fw-bold">Reason / Notes</label>
+                                <textarea name="reason" class="form-control" rows="2">{{ ot.reason }}</textarea>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade text-start" id="deleteOtModal{{ ot.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'overtime:delete' ot.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Record</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to delete overtime record for <strong>{{ ot.employee }}</strong> on <strong>{{ ot.date|date:"M d, Y" }}</strong> ({{ ot.hours }} hrs)?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="10" class="text-center py-4 text-muted">No overtime records found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% include 'partials/_pagination.html' %}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Overtime Modal (Admin) -->
+{% if user.role in 'super_admin,hr_admin' %}
+<div class="modal fade text-start" id="addOvertimeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="post" action="{% url 'overtime:create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark">
+            <i class="mdi mdi-plus me-1 text-primary"></i> Add Overtime Record
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Employee <span class="text-danger">*</span></label>
+              <select name="employee" class="form-select select2" required id="id_employee_select">
+                <option value="">-- Choose Employee --</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" data-salary="{{ e.basic_salary }}">
+                  {{ e.employee_code }} - {{ e.first_name }} {{ e.last_name }} ({{ e.department.name|default:"-" }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Overtime Policy / Type</label>
+              <select name="overtime_type" class="form-select" id="id_overtime_type_select">
+                <option value="" data-multiplier="1.5">Standard Overtime (1.5x)</option>
+                {% for opt in overtime_types %}
+                <option value="{{ opt.id }}" data-multiplier="{{ opt.rate_multiplier }}">{{ opt.name }} ({{ opt.rate_multiplier }}x)</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+              <input type="date" name="date" class="form-control" required id="id_ot_date">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Start Time</label>
+              <input type="time" name="start_time" class="form-control" id="id_start_time">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">End Time</label>
+              <input type="time" name="end_time" class="form-control" id="id_end_time">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Hours <span class="text-danger">*</span></label>
+              <input type="number" step="0.25" name="hours" class="form-control" placeholder="e.g. 2.50" id="id_hours_input" value="0.00" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Rate Multiplier</label>
+              <input type="number" step="0.1" name="rate_multiplier" class="form-control" value="1.5" id="id_multiplier_input" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Hourly Rate ($)</label>
+              <input type="number" step="0.01" name="hourly_rate" class="form-control" value="0.00" id="id_hourly_rate_input">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Total Overtime Pay ($)</label>
+              <input type="number" step="0.01" name="overtime_amount" class="form-control" value="0.00" id="id_total_amount_input">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Status</label>
+              <select name="status" class="form-select">
+                <option value="approved" selected>Approved</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Reason</label>
+              <textarea name="reason" class="form-control" rows="2" placeholder="Task details, shift cover, project deployment..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  var empMap = JSON.parse('{{ employees_calc_json|escapejs }}');
+  var typeMap = JSON.parse('{{ types_calc_json|escapejs }}');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var otDateInput = document.getElementById('id_ot_date');
+    if (otDateInput && !otDateInput.value) {
+      otDateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    var empSelect = document.getElementById('id_employee_select');
+    var typeSelect = document.getElementById('id_overtime_type_select');
+    var stInput = document.getElementById('id_start_time');
+    var etInput = document.getElementById('id_end_time');
+    var hrsInput = document.getElementById('id_hours_input');
+    var multInput = document.getElementById('id_multiplier_input');
+    var rateInput = document.getElementById('id_hourly_rate_input');
+    var amountInput = document.getElementById('id_total_amount_input');
+
+    function updateCalculations() {
+      // 1. Time difference to hours
+      if (stInput && etInput && stInput.value && etInput.value) {
+        var s = stInput.value.split(':');
+        var e = etInput.value.split(':');
+        var sm = parseInt(s[0]) * 60 + parseInt(s[1]);
+        var em = parseInt(e[0]) * 60 + parseInt(e[1]);
+        if (em < sm) { em += 24 * 60; }
+        var diffHours = ((em - sm) / 60.0).toFixed(2);
+        if (hrsInput) {
+          hrsInput.value = diffHours;
+        }
+      }
+
+      // 2. Base hourly rate from employee salary
+      if (empSelect && rateInput) {
+        var empId = empSelect.value;
+        if (empId && empMap[empId] && (!rateInput.value || parseFloat(rateInput.value) === 0)) {
+          rateInput.value = empMap[empId].hourly_rate.toFixed(2);
+        }
+      }
+
+      // 3. Multiplier from type
+      if (typeSelect && multInput) {
+        var opt = typeSelect.options[typeSelect.selectedIndex];
+        var m = opt ? opt.getAttribute('data-multiplier') : '1.5';
+        if (m) {
+          multInput.value = m;
+        }
+      }
+
+      // 4. Overtime amount
+      var h = parseFloat(hrsInput ? hrsInput.value : 0) || 0;
+      var r = parseFloat(rateInput ? rateInput.value : 0) || 0;
+      var mVal = parseFloat(multInput ? multInput.value : 1.5) || 1.5;
+      if (amountInput) {
+        amountInput.value = (h * r * mVal).toFixed(2);
+      }
+    }
+
+    if (stInput && etInput) {
+      stInput.addEventListener('change', updateCalculations);
+      etInput.addEventListener('change', updateCalculations);
+    }
+    if (empSelect) {
+      empSelect.addEventListener('change', function() {
+        var empId = this.value;
+        if (empId && empMap[empId] && rateInput) {
+          rateInput.value = empMap[empId].hourly_rate.toFixed(2);
+        }
+        updateCalculations();
+      });
+    }
+    if (typeSelect) {
+      typeSelect.addEventListener('change', updateCalculations);
+    }
+    if (hrsInput) {
+      hrsInput.addEventListener('input', updateCalculations);
+    }
+    if (rateInput) {
+      rateInput.addEventListener('input', updateCalculations);
+    }
+    if (multInput) {
+      multInput.addEventListener('input', updateCalculations);
+    }
+  });
+</script>
+{% endblock %}

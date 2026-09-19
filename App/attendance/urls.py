@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
-    CheckInView, CheckOutView, MyAttendanceView, AttendanceReportView, WorkScheduleListView,
-    SaveEmployeeScheduleView, GetEmployeeScheduleView, ExportScheduleView,
+    CheckInView, CheckOutView, MyAttendanceView, AttendanceReportView,
+    AttendanceReportExcelExportView, AttendanceReportPdfExportView,
+    WorkScheduleListView, SaveEmployeeScheduleView, GetEmployeeScheduleView, ExportScheduleView,
     AttendanceCreateView, AttendanceUpdateView, AttendanceDeleteView
 )
 
@@ -16,6 +17,8 @@ urlpatterns = [
     path('schedules/api/get/<int:emp_id>/', GetEmployeeScheduleView.as_view(), name='get_schedule'),
     path('schedules/export/', ExportScheduleView.as_view(), name='export_schedules'),
     path('report/', AttendanceReportView.as_view(), name='report'),
+    path('report/export/excel/', AttendanceReportExcelExportView.as_view(), name='export_excel'),
+    path('report/export/pdf/', AttendanceReportPdfExportView.as_view(), name='export_pdf'),
     path('create/', AttendanceCreateView.as_view(), name='create'),
     path('<int:pk>/edit/', AttendanceUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', AttendanceDeleteView.as_view(), name='delete'),

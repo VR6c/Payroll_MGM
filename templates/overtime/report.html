@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Overtime Report - Payroll MGM{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+
+    <!-- Header Row -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 no-print">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">
+          <i class="mdi mdi-chart-box-outline text-primary me-2"></i>Overtime Report
+        </h3>
+        <p class="text-muted mb-0">Analytics, department distributions, employee summaries, and compensation logs</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" onclick="window.print()" class="btn btn-outline-secondary shadow-sm">
+          <i class="mdi mdi-printer me-1"></i> Print
+        </button>
+        <a href="{% url 'overtime:report_excel' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
+          class="btn btn-outline-success shadow-sm">
+          <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
+        </a>
+        <a href="{% url 'overtime:report_pdf' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
+          class="btn btn-outline-danger shadow-sm">
+          <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                style="width: 48px; height: 48px; background-color: #eef2ff; color: #1F3BB3;">
+                <i class="mdi mdi-clock-time-four-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Hours</p>
+                <h4 class="fw-bold mb-0 text-dark">{{ total_hours }} <span class="fs-6 text-muted fw-normal">hrs</span></h4>
+                <small class="text-muted">{{ approved_hours }} hrs approved</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                style="width: 48px; height: 48px; background-color: #e8f8f0; color: #198754;">
+                <i class="mdi mdi-cash-multiple fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Overtime Pay</p>
+                <h4 class="fw-bold mb-0 text-success">${{ total_amount|floatformat:2 }}</h4>
+                <small class="text-muted">${{ approved_amount|floatformat:2 }} approved</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                style="width: 48px; height: 48px; background-color: #e6f9fc; color: #0891b2;">
+                <i class="mdi mdi-check-decagram-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Approved Sessions</p>
+                <h4 class="fw-bold mb-0 text-dark">{{ approved_count }} <span class="fs-6 text-muted fw-normal">/ {{ total_requests }}</span></h4>
+                <small class="text-muted">{{ avg_hours|floatformat:1 }} hrs avg / session</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                style="width: 48px; height: 48px; background-color: #fff8eb; color: #d97706;">
+                <i class="mdi mdi-clock-alert-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Pending Approvals</p>
+                <h4 class="fw-bold mb-0 text-warning">{{ pending_count }}</h4>
+                <small class="text-muted">{{ pending_hours }} hrs pending</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Card (no-print) -->
+    <div class="card shadow-sm border-0 mb-4 no-print">
+      <div class="card-body">
+        <form method="get" action="{% url 'overtime:report' %}" class="row g-3 align-items-end">
+          <div class="col-12 col-md-6 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">From Date</label>
+            <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+          </div>
+          <div class="col-12 col-md-6 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">To Date</label>
+            <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+          </div>
+          <div class="col-6 col-md-3 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Department</label>
+            <select name="department" class="form-select">
+              <option value="">-- All Departments --</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {% if selected_dept == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Employee</label>
+            <select name="employee" class="form-select">
+              <option value="">-- All Employees --</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}" {% if selected_employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                {{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-xl">
+            <label class="form-label text-muted mb-1 small fw-bold">Status</label>
+            <select name="status" class="form-select">
+              <option value="">-- All Statuses --</option>
+              <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>Approved Only</option>
+              <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>Rejected</option>
+              <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-4 col-xl-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary text-white flex-fill px-3" title="Apply Filter">
+              <i class="mdi mdi-magnify me-1"></i> Filter
+            </button>
+            <a href="{% url 'overtime:report' %}" class="btn btn-outline-secondary flex-fill px-3" title="Reset">
+              <i class="mdi mdi-refresh me-1"></i> Reset
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Section 1: Department Breakdown Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0 fw-bold text-dark">
+            <i class="mdi mdi-domain text-primary me-2"></i>1. Department Overtime Distribution
+          </h5>
+          <span class="badge bg-light text-dark border">{{ dept_breakdown|length }} Departments</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                <th>Department</th>
+                <th class="text-center">Employees</th>
+                <th class="text-center">Sessions</th>
+                <th class="text-end">Total Hours</th>
+                <th class="text-end">Total Overtime Pay</th>
+                <th style="min-width: 140px;">Cost Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dept_breakdown %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-bold text-dark">{{ d.dept_name }}</td>
+                <td class="text-center">
+                  <span class="badge bg-light text-dark border">{{ d.emp_count }}</span>
+                </td>
+                <td class="text-center">{{ d.session_count }}</td>
+                <td class="text-end fw-semibold">{{ d.total_hours|floatformat:2 }} hrs</td>
+                <td class="text-end fw-bold text-success">${{ d.total_amount|floatformat:2 }}</td>
+                <td>
+                  <span class="badge bg-light text-primary border fw-bold">
+                    {% widthratio d.total_amount total_amount 100 %}%
+                  </span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No department overtime data available.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Employee Summary Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0 fw-bold text-dark">
+            <i class="mdi mdi-account-group text-primary me-2"></i>2. Employee Overtime Summary
+          </h5>
+          <span class="badge bg-light text-dark border">{{ employee_breakdown|length }} Employees</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                <th>Code</th>
+                <th>Employee Name</th>
+                <th>Department</th>
+                <th class="text-center">Approved Sessions</th>
+                <th class="text-end">Total Hours</th>
+                <th class="text-end">Overtime Pay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for emp in employee_breakdown %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><span class="badge bg-light text-dark border">{{ emp.emp_code }}</span></td>
+                <td class="fw-bold text-dark">{{ emp.emp_name }}</td>
+                <td>{{ emp.dept_name }}</td>
+                <td class="text-center">
+                  <span class="badge bg-light text-success border fw-bold">{{ emp.approved_count }} / {{ emp.session_count }}</span>
+                </td>
+                <td class="text-end fw-semibold">{{ emp.total_hours|floatformat:2 }} hrs</td>
+                <td class="text-end fw-bold text-success fs-6">${{ emp.total_amount|floatformat:2 }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No employee overtime data found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Detailed Activity Log Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0 fw-bold text-dark">
+            <i class="mdi mdi-format-list-bulleted text-primary me-2"></i>3. Detailed Overtime Activity Log
+          </h5>
+          <span class="badge bg-light text-dark border">{{ records|length }} Records</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Policy / Type</th>
+                <th class="text-end">Hours</th>
+                <th class="text-end">Hourly Rate</th>
+                <th class="text-end">Total Pay</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ot in records %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold text-dark">{{ ot.date|date:"M d, Y" }}</td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ ot.employee.first_name }} {{ ot.employee.last_name }}</div>
+                  <small class="text-muted">{{ ot.employee.employee_code }}</small>
+                </td>
+                <td>{{ ot.employee.department.name|default:"-" }}</td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    {% if ot.overtime_type %}{{ ot.overtime_type.name }}{% else %}Standard ({{ ot.rate_multiplier }}x){% endif %}
+                  </span>
+                </td>
+                <td class="text-end fw-semibold">{{ ot.hours }} hrs</td>
+                <td class="text-end text-muted small">${{ ot.hourly_rate }}</td>
+                <td class="text-end fw-bold text-success">${{ ot.overtime_amount|floatformat:2 }}</td>
+                <td class="text-center">
+                  {% if ot.status == 'approved' %}
+                    <span class="badge bg-success">Approved</span>
+                  {% elif ot.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% elif ot.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% elif ot.status == 'cancelled' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ ot.get_status_display }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="text-center py-4 text-muted">No overtime activity records found for the selected period.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @media print {
+    .no-print,
+    .navbar,
+    .sidebar,
+    .footer {
+      display: none !important;
+    }
+    .main-panel,
+    .content-wrapper {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+    .card {
+      border: 1px solid #dee2e6 !important;
+      box-shadow: none !important;
+      margin-bottom: 20px !important;
+      page-break-inside: avoid;
+    }
+  }
+</style>
+{% endblock %}

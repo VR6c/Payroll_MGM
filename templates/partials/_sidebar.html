@@ -35,6 +35,9 @@
               class="nav-link {% if request.resolver_match.url_name == 'departments' %}active{% endif %}"
               href="{% url 'employees:departments' %}">Departments</a></li>
           <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'branches' %}active{% endif %}"
+              href="{% url 'employees:branches' %}">Branches</a></li>
+          <li class="nav-item"><a
               class="nav-link {% if request.resolver_match.url_name == 'schedules' %}active{% endif %}"
               href="{% url 'attendance:schedules' %}">Work Day / Time</a></li>
         </ul>
@@ -89,6 +92,30 @@
           <li class="nav-item"><a
               class="nav-link {% if request.resolver_match.url_name == 'type_groups' %}active{% endif %}"
               href="{% url 'leave:type_groups' %}">Type Group</a></li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Overtime Collapsible Dropdown -->
+    <li class="nav-item {% if request.resolver_match.app_name == 'overtime' %}active{% endif %}">
+      <a class="nav-link" data-bs-toggle="collapse" href="#ui-overtime"
+        aria-expanded="{% if request.resolver_match.app_name == 'overtime' %}true{% else %}false{% endif %}"
+        aria-controls="ui-overtime">
+        <i class="menu-icon mdi mdi-clock-fast"></i>
+        <span class="menu-title">Overtime</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse {% if request.resolver_match.app_name == 'overtime' %}show{% endif %}" id="ui-overtime">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'list' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              href="{% url 'overtime:list' %}">Records</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'types' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              href="{% url 'overtime:types' %}">Types & Rates</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name in 'report,report_excel,report_pdf' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              href="{% url 'overtime:report' %}">Overtime Report</a></li>
         </ul>
       </div>
     </li>
@@ -156,6 +183,12 @@
       <a class="nav-link" href="{% url 'leave:my_leaves' %}">
         <i class="menu-icon mdi mdi-calendar-clock"></i>
         <span class="menu-title">My Leave Requests</span>
+      </a>
+    </li>
+    <li class="nav-item {% if request.resolver_match.app_name == 'overtime' %}active{% endif %}">
+      <a class="nav-link" href="{% url 'overtime:my_overtime' %}">
+        <i class="menu-icon mdi mdi-clock-fast"></i>
+        <span class="menu-title">My Overtime</span>
       </a>
     </li>
     <li class="nav-item {% if request.resolver_match.url_name == 'my_payslips' %}active{% endif %}">

@@ -10,6 +10,14 @@
         <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-cash-multiple text-primary me-2"></i>Payroll Management</h3>
         <p class="text-muted mb-0">Company payroll history, salary breakdowns, and payslips</p>
       </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'payroll:export_excel' %}?status={{ request.GET.status }}&period={{ request.GET.period }}" class="btn btn-outline-success shadow-sm">
+          <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
+        </a>
+        <a href="{% url 'payroll:export_pdf' %}?status={{ request.GET.status }}&period={{ request.GET.period }}" class="btn btn-outline-danger shadow-sm">
+          <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
+        </a>
+      </div>
     </div>
 
     <!-- Filter Card -->

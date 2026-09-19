@@ -34,7 +34,14 @@ class PayrollCalculator:
         allowances = [structure.transportation, structure.housing, structure.meal_allowance, structure.other_allowance]
         total_allowance = sum(PayrollCalculator._prorate_amount(a, employee.join_date, period_start, period_end) for a in allowances)
 
-        gross = prorated_basic + total_allowance
+        # Include approved overtime for the payroll period
+        try:
+            from overtime.services import OvertimeService
+            overtime_pay = OvertimeService.get_monthly_overtime_total(employee, period_start, period_end)
+        except Exception:
+            overtime_pay = Decimal('0.00')
+
+        gross = prorated_basic + total_allowance + overtime_pay
         tax_rate = get_rule('payroll', 'tax_rate', Decimal('0.10'))
         nssf_rate = get_rule('payroll', 'nssf_rate', Decimal('0.05'))
         tax = (gross * tax_rate).quantize(Decimal('0.01'))
@@ -45,6 +52,7 @@ class PayrollCalculator:
             employee=employee, payroll_period=period_start,
             defaults={
                 'basic_salary': prorated_basic, 'allowance': total_allowance,
+                'overtime': overtime_pay,
                 'gross_salary': gross, 'tax': tax, 'nssf': nssf,
                 'total_deduction': tax + nssf, 'net_salary': net,
                 'status': Payroll.Status.DRAFT

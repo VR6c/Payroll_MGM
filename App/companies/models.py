@@ -44,3 +44,20 @@ class Position(models.Model):
         if self.department:
             return f"{self.name} ({self.department.name})"
         return self.name
+
+
+class Branch(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='branches')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=50, blank=True, help_text="e.g. F1, F2, HQ")
+    address = models.TextField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name

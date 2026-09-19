@@ -21,7 +21,7 @@ class LeaveRequest(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     reason = models.TextField()
-    total_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    total_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     approved_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
@@ -36,15 +36,15 @@ class LeavePeriod(models.Model):
     leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='periods')
     start_date = models.DateField()
     end_date = models.DateField()
-    days = models.DecimalField(max_digits=5, decimal_places=1)
+    days = models.DecimalField(max_digits=6, decimal_places=2)
 
 class LeaveBalance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_balances')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     year = models.IntegerField()
-    allocated_days = models.DecimalField(max_digits=6, decimal_places=1, default=0)
-    used_days = models.DecimalField(max_digits=6, decimal_places=1, default=0)
-    remaining_days = models.DecimalField(max_digits=6, decimal_places=1, default=0)
+    allocated_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    used_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    remaining_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ('employee', 'leave_type', 'year')
