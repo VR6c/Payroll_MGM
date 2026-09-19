@@ -14,8 +14,10 @@ class PayrollForm(forms.ModelForm):
     class Meta:
         model = Payroll
         fields = [
-            'employee', 'payroll_period', 'basic_salary', 'overtime', 'allowance',
-            'bonus', 'gross_salary', 'tax', 'nssf', 'other_deduction', 'total_deduction', 'net_salary', 'status'
+            'employee', 'payroll_period', 'basic_salary', 'daily_salary', 'daily_salary_formula',
+            'attendance_days', 'absent_days', 'late_hours', 'overtime_hours', 'leave_days', 'holiday_days',
+            'overtime', 'allowance', 'bonus', 'gross_salary', 'tax', 'nssf', 'other_deduction',
+            'total_deduction', 'net_salary', 'status'
         ]
         widgets = {
             'payroll_period': forms.DateInput(attrs={'type': 'date'}),

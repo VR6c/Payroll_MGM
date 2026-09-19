@@ -4,7 +4,7 @@ from .views import (
     PayrollListView, PayrollListExcelExportView, PayrollListPdfExportView,
     PayrollDeleteView,
     SalarySetupView, SalaryStructureCreateView, SalaryStructureUpdateView, SalaryStructureDeleteView,
-    BonusIncentiveView, BonusAddView, AllowanceView, NewPayrollView
+    BonusIncentiveView, BonusAddView, AllowanceView, NewPayrollView, FormulaGuideView
 )
 
 app_name = 'payroll'
@@ -21,6 +21,7 @@ urlpatterns = [
     path('bonuses/<int:pk>/add/', BonusAddView.as_view(), name='bonus_add'),
     path('allowances/', AllowanceView.as_view(), name='allowances'),
     path('new-payroll/', NewPayrollView.as_view(), name='new_payroll'),
+    path('formula-guide/', FormulaGuideView.as_view(), name='formula_guide'),
     path('my/', MyPayslipListView.as_view(), name='my_payslips'),
     path('<int:pk>/payslip/', PayslipDetailView.as_view(), name='payslip'),
     path('<int:pk>/payslip/pdf/', PayslipPdfExportView.as_view(), name='payslip_pdf'),

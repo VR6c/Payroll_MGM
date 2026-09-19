@@ -5,13 +5,14 @@ from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, RedirectView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.mixins import RoleRequiredMixin
+from companies.models import Department
 from employees.models import Employee
 from .models import Payroll, SalaryStructure
 from .forms import SalaryStructureForm, PayrollForm
-from .services import PayrollCalculator
+from .services import PayrollCalculator, DAILY_SALARY_FORMULAS
 from reports.exporters import generate_payslip_pdf, generate_payroll_list_excel, generate_detail_report_pdf
 
 logger = logging.getLogger('payroll')
@@ -218,32 +219,77 @@ class AllowanceView(RoleRequiredMixin, ListView):
         return ctx
 
 
+class FormulaGuideView(RoleRequiredMixin, RedirectView):
+    pattern_name = 'payroll:new_payroll'
+    permanent = False
+    required_roles = ['super_admin', 'hr_admin']
+
+
 class NewPayrollView(RoleRequiredMixin, ListView):
     model = Payroll
     template_name = 'payroll/new_payroll.html'
     context_object_name = 'payrolls'
     required_roles = ['super_admin', 'hr_admin']
 
+    def get_queryset(self):
+        return Payroll.objects.select_related('employee', 'employee__department').order_by('-payroll_period', '-id')
+
+    def get_context_data(self, **kwargs):
+        from django.db.models import Prefetch
+        ctx = super().get_context_data(**kwargs)
+        ctx['daily_salary_formulas'] = DAILY_SALARY_FORMULAS
+        active_structures = SalaryStructure.objects.filter(status=True).order_by('-effective_date')
+        ctx['employees'] = (
+            Employee.objects.filter(status='active')
+            .select_related('department', 'position')
+            .prefetch_related(Prefetch('salary_structures', queryset=active_structures, to_attr='active_salary_structures'))
+            .order_by('employee_code')
+        )
+        ctx['departments'] = Department.objects.all()
+        return ctx
+
     def post(self, request, *args, **kwargs):
         period_str = request.POST.get('payroll_period')
+        formula_code = request.POST.get('formula_code', 'formula_1')
+        selected_employee_ids = request.POST.getlist('selected_employees')
+
+        if not selected_employee_ids:
+            messages.error(request, "Please select at least one employee to generate payroll.")
+            return redirect('payroll:new_payroll')
+
+        formula_params = {
+            'workdays_per_week': request.POST.get('workdays_per_week'),
+            'days_off_per_week': request.POST.get('days_off_per_week'),
+            'days_in_month': request.POST.get('days_in_month'),
+            'workdays_in_month': request.POST.get('workdays_in_month'),
+        }
+
         if period_str:
             try:
                 period_date = datetime.strptime(period_str + '-01', '%Y-%m-%d').date()
-                employees = Employee.objects.filter(status='active')
+                employees = Employee.objects.filter(id__in=selected_employee_ids, status='active')
                 created_count = 0
                 failed_count = 0
 
                 for emp in employees:
                     try:
                         with transaction.atomic():
-                            PayrollCalculator.generate_for_employee(emp, period_date)
+                            PayrollCalculator.generate_for_employee(
+                                emp, period_date, formula_code=formula_code, formula_params=formula_params
+                            )
                             created_count += 1
                     except Exception as err:
                         failed_count += 1
                         logger.warning(f"Payroll generation skipped for {emp}: {err}")
 
+                formula_meta = DAILY_SALARY_FORMULAS.get(formula_code, {})
+                formula_display_name = formula_meta.get('short_name', formula_code)
+
                 if created_count > 0:
-                    messages.success(request, f"Payroll successfully generated for {created_count} employee(s) for period {period_str}.")
+                    messages.success(
+                        request,
+                        f"Payroll successfully generated for {created_count} employee(s) for period {period_str} using {formula_display_name}."
+                    )
                 if failed_count > 0:
                     messages.warning(request, f"Skipped {failed_count} employee(s) without an active salary structure or valid inputs.")
             except Exception as e:

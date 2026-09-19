@@ -12,10 +12,10 @@
         <h2 class="fw-bold text-dark mb-0" style="font-size: 1.65rem; letter-spacing: -0.02em;">Detail Reports</h2>
       </div>
       <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0 bg-transparent p-0" style="font-size: 0.85rem;">
-          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"
-              class="text-primary text-decoration-none">Dashboard</a></li>
-          <li class="breadcrumb-item active text-muted" aria-current="page">Detail Reports</li>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+          <li class="breadcrumb-item text-muted">Report</li>
+          <li class="breadcrumb-item active" aria-current="page">Detail Reports</li>
         </ol>
       </nav>
     </div>
@@ -84,26 +84,19 @@
             </div>
           </div>
 
-          <!-- Row 3: Action Buttons (Filter, Clear, Print, Export) -->
+          <!-- Row 3: Action Buttons -->
           <div class="d-flex flex-wrap gap-2 pt-1">
-            <button type="submit"
-              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
-              style="background-color: #0ea5e9; border: none; font-size: 0.85rem; border-radius: 6px;">
+            <button type="submit" class="btn btn-primary shadow-sm">
               <i class="mdi mdi-filter-variant"></i> Filter & View Report
             </button>
-            <a href="{% url 'reports:detail' %}"
-              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
-              style="background-color: #dc3545; border: none; font-size: 0.85rem; border-radius: 6px;">
+            <a href="{% url 'reports:detail' %}" class="btn btn-outline-secondary shadow-sm">
               <i class="mdi mdi-refresh"></i> Clear
             </a>
-            <button type="button" onclick="window.print()"
-              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
-              style="background-color: #f59e0b; border: none; font-size: 0.85rem; border-radius: 6px;">
+            <button type="button" onclick="window.print()" class="btn btn-warning shadow-sm">
               <i class="mdi mdi-printer"></i> Print
             </button>
             <a href="{% url 'reports:detail_excel' %}?department={{ selected_dept }}&status={{ selected_status }}"
-              class="btn text-white px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm"
-              style="background-color: #10b981; border: none; font-size: 0.85rem; border-radius: 6px;">
+              class="btn btn-success shadow-sm">
               <i class="mdi mdi-download"></i> Export
             </a>
           </div>

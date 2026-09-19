@@ -8,25 +8,34 @@
   <div class="col-12">
 
     <!-- Header Row -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 no-print">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 no-print">
       <div>
         <h3 class="fw-bold text-dark mb-1">
           <i class="mdi mdi-chart-box-outline text-primary me-2"></i>Overtime Report
         </h3>
         <p class="text-muted mb-0">Analytics, department distributions, employee summaries, and compensation logs</p>
       </div>
-      <div class="d-flex gap-2 flex-wrap">
-        <button type="button" onclick="window.print()" class="btn btn-outline-secondary shadow-sm">
-          <i class="mdi mdi-printer me-1"></i> Print
-        </button>
-        <a href="{% url 'overtime:report_excel' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
-          class="btn btn-outline-success shadow-sm">
-          <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
-        </a>
-        <a href="{% url 'overtime:report_pdf' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
-          class="btn btn-outline-danger shadow-sm">
-          <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
-        </a>
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Overtime</li>
+            <li class="breadcrumb-item active" aria-current="page">Overtime Report</li>
+          </ol>
+        </nav>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" onclick="window.print()" class="btn btn-outline-secondary shadow-sm">
+            <i class="mdi mdi-printer me-1"></i> Print
+          </button>
+          <a href="{% url 'overtime:report_excel' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
+            class="btn btn-outline-success shadow-sm">
+            <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
+          </a>
+          <a href="{% url 'overtime:report_pdf' %}?from_date={{ from_date }}&to_date={{ to_date }}&department={{ selected_dept }}&employee={{ selected_employee }}&overtime_type={{ selected_type }}&status={{ selected_status }}"
+            class="btn btn-outline-danger shadow-sm">
+            <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
+          </a>
+        </div>
       </div>
     </div>
 
@@ -144,13 +153,16 @@
               <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
             </select>
           </div>
-          <div class="col-12 col-md-4 col-xl-auto d-flex gap-2">
-            <button type="submit" class="btn btn-primary text-white flex-fill px-3" title="Apply Filter">
-              <i class="mdi mdi-magnify me-1"></i> Filter
-            </button>
-            <a href="{% url 'overtime:report' %}" class="btn btn-outline-secondary flex-fill px-3" title="Reset">
-              <i class="mdi mdi-refresh me-1"></i> Reset
-            </a>
+          <div class="col-12 col-md-4 col-xl-auto">
+            <label class="form-label text-muted mb-1 small fw-semibold">&nbsp;</label>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary text-white flex-fill px-3" title="Apply Filter">
+                <i class="mdi mdi-magnify me-1"></i> Filter
+              </button>
+              <a href="{% url 'overtime:report' %}" class="btn btn-outline-secondary flex-fill px-3" title="Reset">
+                <i class="mdi mdi-refresh me-1"></i> Reset
+              </a>
+            </div>
           </div>
         </form>
       </div>

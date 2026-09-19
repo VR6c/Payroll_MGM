@@ -47,6 +47,23 @@ class Employee(models.Model):
     def __str__(self):
         return f"{self.employee_code} - {self.first_name} {self.last_name}"
 
+    @property
+    def current_salary_structure(self):
+        """Returns the latest active SalaryStructure for this employee."""
+        if hasattr(self, 'active_salary_structures'):
+            return self.active_salary_structures[0] if self.active_salary_structures else None
+        if hasattr(self, 'salary_structures'):
+            return self.salary_structures.filter(status=True).order_by('-effective_date').first()
+        return None
+
+    @property
+    def current_basic_salary(self):
+        """Returns the basic salary from active Setup Salary, falling back to employee.basic_salary."""
+        struct = self.current_salary_structure
+        if struct and struct.basic_salary is not None:
+            return struct.basic_salary
+        return self.basic_salary
+
     def soft_delete(self):
         self.deleted_at = timezone.now()
         self.status = 'terminated'

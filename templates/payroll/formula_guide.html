@@ -1,0 +1,401 @@
+{% load static %}
+<!-- Formula Guide Modal Component -->
+<style>
+  /* Responsive modal width for desktop, tablet, mobile */
+  #formulaGuideModal .modal-dialog {
+    max-width: 1140px !important;
+    width: 95% !important;
+    margin: 1.75rem auto;
+  }
+  @media (max-width: 991.98px) {
+    #formulaGuideModal .modal-dialog {
+      max-width: 96% !important;
+      width: 96% !important;
+      margin: 1rem auto;
+    }
+  }
+  @media (max-width: 575.98px) {
+    #formulaGuideModal .modal-dialog {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0.5rem;
+    }
+  }
+
+  #formulaGuideModal .modal-content {
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12) !important;
+    overflow: hidden;
+  }
+
+  #formulaGuideModal .modal-header {
+    background: #ffffff;
+    border-bottom: 1px solid #edf2f7;
+    padding: 1.1rem 1.5rem;
+  }
+
+  #formulaGuideModal .modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid #edf2f7;
+    padding: 0.9rem 1.5rem;
+  }
+
+  /* Formula Card Item Styling */
+  .formula-card-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    transition: all 0.2s ease-in-out;
+    padding: 1.25rem;
+  }
+  .formula-card-item:hover {
+    border-color: #1F3BB3;
+    box-shadow: 0 6px 18px rgba(31, 59, 179, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .formula-badge-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(31, 59, 179, 0.1);
+    color: #1F3BB3;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .math-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.86rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    color: #0f172a;
+  }
+
+  .math-result {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.82rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    color: #15803d;
+    font-weight: 600;
+  }
+
+  @media print {
+    body > *:not(.modal) { display: none !important; }
+    .modal { position: static !important; display: block !important; overflow: visible !important; }
+    .modal-dialog { max-width: 100% !important; width: 100% !important; margin: 0 !important; }
+    .modal-header .btn-close, .modal-footer, .no-print { display: none !important; }
+  }
+</style>
+
+<div class="modal fade" id="formulaGuideModal" tabindex="-1" aria-labelledby="formulaGuideModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      
+      <!-- Modal Header -->
+      <div class="modal-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(31, 59, 179, 0.1); color: #1F3BB3; flex-shrink: 0;">
+            <i class="mdi mdi-book-open-page-variant fs-4"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0" id="formulaGuideModalLabel" style="font-size: 1.1rem; letter-spacing: -0.01em;">
+              Daily Salary Calculation Formulas — Specification &amp; Guide
+            </h5>
+            <small class="text-muted">Standard Operating Procedure &amp; Documentation</small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge px-3 py-2 rounded-pill fw-semibold" style="background: rgba(31, 59, 179, 0.08); color: #1F3BB3; border: 1px solid rgba(31, 59, 179, 0.2); font-size: 0.82rem;">
+            <i class="mdi mdi-check-circle me-1"></i> 16 Formulas Available
+          </span>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 shadow-none d-none d-sm-inline-flex align-items-center gap-1" onclick="window.print()">
+            <i class="mdi mdi-printer"></i> Print
+          </button>
+          <button type="button" class="btn-close shadow-none ms-1" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Official Document Content) -->
+      <div class="modal-body p-3 p-md-4 p-lg-5 bg-white">
+        
+        <!-- Complete List of 16 Standard Formulas -->
+        <div>
+          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <h6 class="fw-bold text-dark mb-0 text-uppercase" style="letter-spacing: 0.03em; font-size: 0.92rem;">
+              <i class="mdi mdi-format-list-numbered text-primary me-2 fs-5"></i>Comprehensive Specifications of All 16 Formulas
+            </h6>
+            <span class="badge bg-secondary text-white fw-semibold">16 Formulas</span>
+          </div>
+
+          <div class="row g-3">
+            <!-- Formula 1 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">1</span>
+                    <strong class="text-dark">1st Formula: Weekly Standard</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = (Monthly Salary × 12) / (52 × Workdays per Week)</div>
+                  <p class="text-muted small mb-2">12 months/yr, 52 weeks/yr. Workdays: Mon-Fri = 5, Mon-Half Sat = 5.5, Mon-Sat = 6.</p>
+                </div>
+                <div class="math-result">Example: $1000, 5.5 workdays =&gt; 12000 / 286 = $41.96 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 2 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">2</span>
+                    <strong class="text-dark">2nd Formula: 30-Day Adjusted</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / [30 - (Days off per week × 4)]</div>
+                  <p class="text-muted small mb-2">Days off: Mon-Fri = 2, Mon-Half Sat = 1.5, Mon-Sat = 1.</p>
+                </div>
+                <div class="math-result">Example: $1000, 1.5 days off =&gt; 1000 / (30 - 6) = $41.67 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 3 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">3</span>
+                    <strong class="text-dark">3rd Formula: Calendar Days Minus Days Off</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / [Days in Month - (Days off per week × 4)]</div>
+                  <p class="text-muted small mb-2">Uses actual calendar days in month (28–31) minus days off.</p>
+                </div>
+                <div class="math-result">Example: $1000, 31 days, 1.5 days off =&gt; 1000 / 25 = $40.00 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 4 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">4</span>
+                    <strong class="text-dark">4th Formula: Calendar Month (No Holiday)</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / Days in the month</div>
+                  <p class="text-muted small mb-2">All days in the month, including days off are considered paid.</p>
+                </div>
+                <div class="math-result">Example: $1000, 31 calendar days =&gt; 1000 / 31 = $32.26 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 5 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">5</span>
+                    <strong class="text-dark">5th Formula: Fixed 30 Days (No Holiday)</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 30</div>
+                  <p class="text-muted small mb-2">Standard commercial 30-day month convention.</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 30 = $33.33 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 6 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">6</span>
+                    <strong class="text-dark">6th Formula: Fixed 26 Workdays</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 26</div>
+                  <p class="text-muted small mb-2">Standard 6-day work week (Monday through Saturday).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 26 = $38.46 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 7 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">7</span>
+                    <strong class="text-dark">7th Formula: Fixed 27 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 27</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 27 workdays.</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 27 = $37.04 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 8 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">8</span>
+                    <strong class="text-dark">8th Formula: Fixed 24 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 24</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 24 workdays (4 weeks × 6 days).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 24 = $41.67 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 9 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">9</span>
+                    <strong class="text-dark">9th Formula: Fixed 28 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 28</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 28 days (4 standard weeks).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 28 = $35.71 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 10 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">10</span>
+                    <strong class="text-dark">10th Formula: Fixed 20 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 20</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 20 workdays (4 weeks × 5 days).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 20 = $50.00 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 11 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">11</span>
+                    <strong class="text-dark">11th Formula: Fixed 25 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 25</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 25 workdays.</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 25 = $40.00 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 12 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">12</span>
+                    <strong class="text-dark">12th Formula: Fixed 22 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 22</div>
+                  <p class="text-muted small mb-2">Standard 5-day work week (Monday through Friday).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 22 = $45.45 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 13 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">13</span>
+                    <strong class="text-dark">13th Formula: Fixed 29 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 29</div>
+                  <p class="text-muted small mb-2">Fixed divisor of 29 days.</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 29 = $34.48 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 14 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">14</span>
+                    <strong class="text-dark">14th Formula: Workdays in Month</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / Workdays in the month</div>
+                  <p class="text-muted small mb-2">Actual working days count in the specific payroll month.</p>
+                </div>
+                <div class="math-result">Example: $1000, 21 workdays =&gt; 1000 / 21 = $47.62 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 15 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">15</span>
+                    <strong class="text-dark">15th Formula: Fixed 15 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 15</div>
+                  <p class="text-muted small mb-2">Semi-monthly basis (half month wage rate).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 15 = $66.67 / day</div>
+              </div>
+            </div>
+
+            <!-- Formula 16 -->
+            <div class="col-12 col-md-6">
+              <div class="formula-card-item h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="formula-badge-num me-2">16</span>
+                    <strong class="text-dark">16th Formula: Fixed 22.5 Days</strong>
+                  </div>
+                  <div class="math-code mb-2">Daily Salary = Monthly Salary / 22.5</div>
+                  <p class="text-muted small mb-2">Standard 5.5-day work week (Mon-Fri + Saturday morning).</p>
+                </div>
+                <div class="math-result">Example: $1000 =&gt; 1000 / 22.5 = $44.44 / day</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small">
+          <i class="mdi mdi-shield-check text-success me-1"></i>Payroll MGM • Enterprise HR &amp; Compensation Management
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 shadow-none" onclick="window.print()">
+            <i class="mdi mdi-printer me-1"></i> Print Guide
+          </button>
+          <button type="button" class="btn btn-light border btn-sm px-4 shadow-none" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

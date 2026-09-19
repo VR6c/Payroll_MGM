@@ -61,22 +61,238 @@
       letter-spacing: -0.01em;
     }
 
-    /* Buttons & Interactive Elements */
+    /* ==========================================================
+       Universal Button Design System
+       ========================================================== */
     .btn {
+      font-family: var(--font-family-base) !important;
       font-weight: 500;
+      font-size: 0.875rem;
       border-radius: 8px;
-      transition: all 0.2s ease-in-out;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      line-height: 1.4;
+      border: 1px solid transparent;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      text-decoration: none !important;
+      vertical-align: middle;
+      white-space: nowrap;
     }
 
+    .btn:active {
+      transform: translateY(0) !important;
+    }
+
+    .btn i,
+    .btn [class^="mdi-"],
+    .btn [class*=" mdi-"],
+    .btn [class^="ti-"],
+    .btn [class^="feather-"] {
+      font-size: 1.1em;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Primary Variant */
     .btn-primary {
-      background-color: var(--primary-color) !important;
-      border-color: var(--primary-color) !important;
+      background-color: var(--primary-color, #1F3BB3) !important;
+      border-color: var(--primary-color, #1F3BB3) !important;
+      color: #ffffff !important;
     }
 
     .btn-primary:hover, .btn-primary:focus {
-      background-color: var(--primary-hover) !important;
-      border-color: var(--primary-hover) !important;
-      box-shadow: 0 4px 12px rgba(31, 59, 179, 0.25) !important;
+      background-color: var(--primary-hover, #172d8a) !important;
+      border-color: var(--primary-hover, #172d8a) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(31, 59, 179, 0.28) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Secondary & Light Variants (Soft Neutral for Cancel / Back / Dismiss) */
+    .btn-secondary,
+    .btn-light {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+      color: #475569 !important;
+    }
+
+    .btn-secondary:hover, .btn-secondary:focus,
+    .btn-light:hover, .btn-light:focus {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Danger Variant (Delete / Terminate / Reject) */
+    .btn-danger {
+      background-color: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+    }
+
+    .btn-danger:hover, .btn-danger:focus {
+      background-color: #b91c1c !important;
+      border-color: #b91c1c !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Success Variant (Export / Approve / Check In) */
+    .btn-success {
+      background-color: #10b981 !important;
+      border-color: #10b981 !important;
+      color: #ffffff !important;
+    }
+
+    .btn-success:hover, .btn-success:focus {
+      background-color: #059669 !important;
+      border-color: #059669 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Warning Variant (Print / Check Out / Alert) */
+    .btn-warning {
+      background-color: #f59e0b !important;
+      border-color: #f59e0b !important;
+      color: #ffffff !important;
+    }
+
+    .btn-warning:hover, .btn-warning:focus {
+      background-color: #d97706 !important;
+      border-color: #d97706 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Info Variant (Filter / Notice) */
+    .btn-info {
+      background-color: #0ea5e9 !important;
+      border-color: #0ea5e9 !important;
+      color: #ffffff !important;
+    }
+
+    .btn-info:hover, .btn-info:focus {
+      background-color: #0284c7 !important;
+      border-color: #0284c7 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.28) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Outline Variants */
+    .btn-outline-primary {
+      background-color: transparent !important;
+      border-color: var(--primary-color, #1F3BB3) !important;
+      color: var(--primary-color, #1F3BB3) !important;
+    }
+
+    .btn-outline-primary:hover, .btn-outline-primary:focus {
+      background-color: var(--primary-color, #1F3BB3) !important;
+      border-color: var(--primary-color, #1F3BB3) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(31, 59, 179, 0.22) !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-secondary {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #475569 !important;
+    }
+
+    .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+      background-color: #f8fafc !important;
+      border-color: #94a3b8 !important;
+      color: #1e293b !important;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06) !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-danger {
+      background-color: transparent !important;
+      border-color: #fca5a5 !important;
+      color: #dc2626 !important;
+    }
+
+    .btn-outline-danger:hover, .btn-outline-danger:focus {
+      background-color: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.22) !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-success {
+      background-color: transparent !important;
+      border-color: #86efac !important;
+      color: #16a34a !important;
+    }
+
+    .btn-outline-success:hover, .btn-outline-success:focus {
+      background-color: #16a34a !important;
+      border-color: #16a34a !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.22) !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-warning {
+      background-color: transparent !important;
+      border-color: #fde68a !important;
+      color: #d97706 !important;
+    }
+
+    .btn-outline-warning:hover, .btn-outline-warning:focus {
+      background-color: #f59e0b !important;
+      border-color: #f59e0b !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.22) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Sizing Standards */
+    .btn-sm {
+      padding: 0.32rem 0.65rem !important;
+      font-size: 0.8rem !important;
+      border-radius: 6px !important;
+      min-height: auto !important;
+      line-height: 1.4 !important;
+      gap: 0.25rem !important;
+    }
+
+    .btn-lg {
+      padding: 0.75rem 1.5rem !important;
+      font-size: 1rem !important;
+      border-radius: 10px !important;
+    }
+
+    /* Filter Form Button Alignment — prevent button from stretching when
+       adjacent columns contain labels (align-items-end row layout) */
+    .row.align-items-end .btn:not(.btn-sm) {
+      height: 42px;
+      min-height: 42px;
+      max-height: 42px;
+    }
+
+    /* Filter form label spacer utility */
+    .filter-btn-label {
+      display: block;
+      visibility: hidden;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
     }
 
     /* Table Styles */
@@ -426,12 +642,9 @@
         font-size: 0.8rem !important;
       }
 
-      .btn {
+      .btn:not(.btn-sm):not(.btn-xs):not(.page-link) {
         font-size: 0.85rem !important;
         min-height: 42px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
       }
 
       /* Mobile Form Action Stack */
@@ -460,6 +673,47 @@
     .table-responsive {
       -webkit-overflow-scrolling: touch;
       overflow-x: auto;
+    }
+
+    /* ==========================================================
+       Universal Breadcrumb Navigation Component
+       ========================================================== */
+    .breadcrumb {
+      margin-bottom: 0;
+      background: transparent !important;
+      padding: 0 !important;
+      font-size: 0.84rem;
+      font-weight: 500;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .breadcrumb-item {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .breadcrumb-item a {
+      color: var(--primary-color, #1F3BB3) !important;
+      text-decoration: none !important;
+      transition: color 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    }
+
+    .breadcrumb-item a:hover {
+      color: var(--primary-hover, #172d8a) !important;
+      text-decoration: underline !important;
+    }
+
+    .breadcrumb-item.active {
+      color: #64748b !important;
+      font-weight: 500;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+      color: #94a3b8 !important;
+      padding-left: 0.45rem;
+      padding-right: 0.45rem;
     }
   </style>
 

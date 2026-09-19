@@ -5,16 +5,25 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
         <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-gift-outline me-2 text-primary"></i>Bonus & Incentive Management</h3>
         <p class="text-muted mb-0">Track performance bonuses, incentives, and special rewards</p>
       </div>
-      {% if user.role in 'super_admin,hr_admin' %}
-      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addBonusModal">
-        <i class="mdi mdi-plus me-1"></i> Add Bonus / Incentive
-      </button>
-      {% endif %}
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Payroll</li>
+            <li class="breadcrumb-item active" aria-current="page">Bonus & Incentive</li>
+          </ol>
+        </nav>
+        {% if user.role in 'super_admin,hr_admin' %}
+        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addBonusModal">
+          <i class="mdi mdi-plus me-1"></i> Add Bonus / Incentive
+        </button>
+        {% endif %}
+      </div>
     </div>
 
     <div class="card">
@@ -42,7 +51,7 @@
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
                   <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editBonusModal{{ p.id }}">
-                    <i class="mdi mdi-pencil"></i> Edit Bonus
+                    <i class="mdi mdi-pencil"></i> Edit
                   </button>
                   <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBonusModal{{ p.id }}">
                     <i class="mdi mdi-trash-can-outline"></i> Delete

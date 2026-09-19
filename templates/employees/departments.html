@@ -5,16 +5,25 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
         <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-office-building me-2 text-primary"></i>Department Management</h3>
         <p class="text-muted mb-0">Overview of organizational departments and units</p>
       </div>
-      {% if user.role in 'super_admin,hr_admin' %}
-      <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
-        <i class="mdi mdi-plus me-1"></i> Add New Department
-      </button>
-      {% endif %}
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Setup</li>
+            <li class="breadcrumb-item active" aria-current="page">Departments</li>
+          </ol>
+        </nav>
+        {% if user.role in 'super_admin,hr_admin' %}
+        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+          <i class="mdi mdi-plus me-1"></i> Add New Department
+        </button>
+        {% endif %}
+      </div>
     </div>
 
     <div class="card">

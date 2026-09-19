@@ -1,68 +1,739 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}New Payroll Generation - Payroll MGM{% endblock %}
+{% block title %}Generate New Payroll - Payroll MGM{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Clean, uncluttered styling consistent with Payroll MGM */
+  .clean-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03) !important;
+  }
+
+  .clean-card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #edf2f7;
+    padding: 1.1rem 1.35rem;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+
+  .clean-toolbar {
+    background-color: #ffffff !important;
+    border-color: #edf2f7 !important;
+  }
+
+  .clean-footer {
+    background-color: #ffffff !important;
+    border-color: #edf2f7 !important;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  /* Fix calendar input to prevent double icon */
+  input[type="month"].clean-month-input {
+    height: 42px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e293b;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background-color: #ffffff;
+    cursor: pointer;
+  }
+
+  input[type="month"].clean-month-input:focus {
+    border-color: #1F3BB3;
+    box-shadow: 0 0 0 3px rgba(31, 59, 179, 0.15);
+  }
+
+  .param-chip {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid #dee2e6;
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  .param-chip.active {
+    background: #1F3BB3 !important;
+    color: #ffffff !important;
+    border-color: #1F3BB3 !important;
+    box-shadow: 0 2px 6px rgba(31, 59, 179, 0.25);
+  }
+
+  .param-chip:hover:not(.active) {
+    background: #eef2f7;
+    color: #1F3BB3;
+    border-color: #cbd5e1;
+  }
+
+  .emp-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #1F3BB3;
+  }
+
+  .emp-row {
+    transition: background-color 0.15s ease;
+  }
+
+  .emp-row.selected-row {
+    background-color: rgba(31, 59, 179, 0.04) !important;
+  }
+
+  .emp-row.selected-row:hover {
+    background-color: rgba(31, 59, 179, 0.07) !important;
+  }
+
+  .emp-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #1F3BB3;
+    font-weight: 700;
+    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dept-filter-wrap {
+    width: 200px;
+  }
+
+  .dept-filter-wrap .select2-container {
+    width: 100% !important;
+  }
+
+  .dept-filter-wrap .select2-container--default .select2-selection--single {
+    height: 38px !important;
+    padding: 4px 10px !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px !important;
+  }
+
+  .dept-filter-wrap .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 28px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .dept-filter-wrap .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+  }
+
+  .emp-search-wrap {
+    width: 230px;
+  }
+
+  @media (max-width: 767.98px) {
+
+    .dept-filter-wrap,
+    .emp-search-wrap {
+      width: 100% !important;
+    }
+  }
+
+  .formula-select-wrapper .select2-container {
+    width: 100% !important;
+  }
+
+  .formula-select-wrapper .select2-container--default .select2-selection--single {
+    height: 42px !important;
+    padding: 6px 14px !important;
+  }
+
+  .formula-select-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 28px !important;
+  }
+
+  .formula-select-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px !important;
+  }
+
+  /* Modal Formula Document Styles */
+  .formula-card-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .formula-card-item:hover {
+    border-color: #1F3BB3;
+    box-shadow: 0 4px 12px rgba(31, 59, 179, 0.08);
+  }
+
+  .formula-badge-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(31, 59, 179, 0.1);
+    color: #1F3BB3;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .math-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.88rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    color: #0f172a;
+  }
+
+  .math-result {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.83rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    color: #15803d;
+    font-weight: 600;
+  }
+
+  .math-steps {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.83rem;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .preview-box-doc {
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .preview-box-doc::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-color, #1F3BB3);
+  }
+
+  .param-badge-active {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+  }
+
+  .param-badge-inactive {
+    background-color: #f8fafc !important;
+    border: 1px solid #dee2e6 !important;
+    color: #475569 !important;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
-        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-calculator me-2 text-primary"></i>Generate New Payroll</h3>
-        <p class="text-muted mb-0">Run monthly payroll processing, calculate gross & net salary, and emit payslips</p>
+        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.01em;">
+          <i class="mdi mdi-calculator text-primary me-2"></i>Generate New Payroll
+        </h3>
+        <p class="text-muted mb-0 small">
+          Select payroll period, daily salary formula, and choose specific employees to process
+        </p>
+      </div>
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Payroll</li>
+            <li class="breadcrumb-item"><a href="{% url 'payroll:list' %}">Payroll Records</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Generate New Payroll</li>
+          </ol>
+        </nav>
+        <div class="d-flex align-items-center gap-2">
+          <a href="{% url 'payroll:list' %}" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
+            <i class="mdi mdi-format-list-bulleted me-1"></i> Payroll Records
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <h5 class="card-title text-dark mb-3"><i class="mdi mdi-calendar-clock me-2 text-primary"></i>Payroll Period Setup</h5>
-        <form method="post" action="{% url 'payroll:new_payroll' %}" class="row g-3 align-items-end">
-          {% csrf_token %}
-          <div class="col-md-5">
-            <label class="form-label fw-bold">Select Month & Year</label>
-            <input type="month" name="payroll_period" class="form-control" value="2026-09" required>
+    <!-- Main Payroll Run Form -->
+    <form method="post" action="{% url 'payroll:new_payroll' %}" id="payrollGenForm">
+      {% csrf_token %}
+
+      <!-- Step 1: Configuration Card (Period & Formula) -->
+      <div class="card clean-card mb-4">
+        <div class="clean-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle p-2 me-2 d-flex align-items-center justify-content-center"
+              style="width: 34px; height: 34px; background: rgba(31, 59, 179, 0.1); color: #1F3BB3;">
+              <i class="mdi mdi-tune fs-5"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-0" style="font-size: 0.98rem;">1. Payroll Period &amp; Daily Salary
+                Formula</h5>
+              <small class="text-muted">Specify cycle period and calculation formula</small>
+            </div>
           </div>
-          <div class="col-md-7">
-            <button type="submit" class="btn btn-primary text-white w-100">
-              <i class="mdi mdi-play-circle-outline me-1"></i> Calculate & Generate Payroll Run
+          <button type="button" class="btn btn-sm btn-light border px-3 py-1 rounded-pill fw-semibold text-primary"
+            data-bs-toggle="modal" data-bs-target="#formulaGuideModal">
+            <i class="mdi mdi-information-outline me-1"></i> 16 Formulas Available
+          </button>
+        </div>
+
+        <div class="card-body p-3 p-md-4">
+          <div class="row g-3">
+            <!-- Period Input (clean, single calendar icon) -->
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold text-dark small mb-1">
+                <i class="mdi mdi-calendar-month text-primary me-1"></i>PAYROLL PERIOD
+              </label>
+              <input type="month" name="payroll_period" id="payrollPeriod" class="form-control clean-month-input w-100"
+                value="2026-09" required>
+            </div>
+
+            <!-- Formula Dropdown -->
+            <div class="col-12 col-md-8 formula-select-wrapper">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold text-dark small mb-0">
+                  <i class="mdi mdi-function-variant text-primary me-1"></i>DAILY SALARY FORMULA
+                </label>
+                <button type="button" class="btn btn-link p-0 small text-primary text-decoration-none fw-semibold"
+                  data-bs-toggle="modal" data-bs-target="#formulaGuideModal">
+                  <i class="mdi mdi-book-open-page-variant me-1"></i>View Full Document
+                </button>
+              </div>
+              <select name="formula_code" id="formulaSelect" class="form-select"
+                style="height: 42px; font-size: 0.9rem;" required>
+                <optgroup label="Weekly &amp; Annualized Standard">
+                  <option value="formula_1" selected>1st Formula: (Monthly Salary × 12) / (52 × Workdays/Week)</option>
+                </optgroup>
+                <optgroup label="Days Off Adjusted Formulas">
+                  <option value="formula_2">2nd Formula: Monthly Salary / [30 - (Days Off/Week × 4)]</option>
+                  <option value="formula_3">3rd Formula: Monthly Salary / [Days in Month - (Days Off/Week × 4)]</option>
+                </optgroup>
+                <optgroup label="Calendar &amp; Workdays in Month">
+                  <option value="formula_4">4th Formula (No Holiday): Monthly Salary / Days in Month</option>
+                  <option value="formula_14">14th Formula: Monthly Salary / Workdays in Month</option>
+                </optgroup>
+                <optgroup label="Fixed Divisors (Standard Cambodian Practices)">
+                  <option value="formula_5">5th Formula (No Holiday): Monthly Salary / 30</option>
+                  <option value="formula_6">6th Formula: Monthly Salary / 26 (Standard 6-day week)</option>
+                  <option value="formula_7">7th Formula: Monthly Salary / 27</option>
+                  <option value="formula_8">8th Formula: Monthly Salary / 24</option>
+                  <option value="formula_9">9th Formula: Monthly Salary / 28</option>
+                  <option value="formula_10">10th Formula: Monthly Salary / 20 (Standard 4w × 5d)</option>
+                  <option value="formula_11">11th Formula: Monthly Salary / 25</option>
+                  <option value="formula_12">12th Formula: Monthly Salary / 22 (Standard 5-day week)</option>
+                  <option value="formula_13">13th Formula: Monthly Salary / 29</option>
+                  <option value="formula_15">15th Formula: Monthly Salary / 15 (Semi-monthly)</option>
+                  <option value="formula_16">16th Formula: Monthly Salary / 22.5 (Standard 5.5-day week)</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <!-- Dynamic Parameter Controls Row (clean and compact) -->
+          <div id="dynamicParamsContainer" class="mt-3 pt-3 border-top">
+            <!-- Param 1: Workdays per week -->
+            <div id="paramWorkdaysPerWeek" class="param-row">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="text-dark fw-bold small text-uppercase me-1">Workdays Per Week:</span>
+                  <span class="param-chip" data-target="workdaysInput" data-val="5">Mon to Fri (5 days)</span>
+                  <span class="param-chip active" data-target="workdaysInput" data-val="5.5">Mon to Half Sat (5.5
+                    days)</span>
+                  <span class="param-chip" data-target="workdaysInput" data-val="6">Mon to Sat (6 days)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="small text-muted">Custom:</span>
+                  <input type="number" step="0.5" min="1" max="7" name="workdays_per_week" id="workdaysInput"
+                    class="form-control form-control-sm text-center fw-semibold" style="width: 75px;" value="5.5">
+                  <span class="small text-muted">days/wk</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Param 2: Days off per week -->
+            <div id="paramDaysOffPerWeek" class="param-row d-none">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="text-dark fw-bold small text-uppercase me-1">Days Off Per Week:</span>
+                  <span class="param-chip" data-target="daysOffInput" data-val="1">Mon to Sat (1 day off)</span>
+                  <span class="param-chip active" data-target="daysOffInput" data-val="1.5">Mon to Half Sat (1.5 days
+                    off)</span>
+                  <span class="param-chip" data-target="daysOffInput" data-val="2">Mon to Fri (2 days off)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="small text-muted">Custom:</span>
+                  <input type="number" step="0.5" min="0" max="7" name="days_off_per_week" id="daysOffInput"
+                    class="form-control form-control-sm text-center fw-semibold" style="width: 75px;" value="1.5">
+                  <span class="small text-muted">days off/wk</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Param 3: Days in month -->
+            <div id="paramDaysInMonth" class="param-row d-none mt-2">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="text-dark fw-bold small text-uppercase me-1">Total Calendar Days:</span>
+                  <input type="number" min="28" max="31" name="days_in_month" id="daysInMonthInput"
+                    class="form-control form-control-sm text-center fw-semibold" style="width: 75px;" value="30">
+                  <span class="small text-muted">days in this month</span>
+                </div>
+                <small class="text-muted">Auto-detected from selected month</small>
+              </div>
+            </div>
+
+            <!-- Param 4: Workdays in month -->
+            <div id="paramWorkdaysInMonth" class="param-row d-none">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="text-dark fw-bold small text-uppercase me-1">Workdays in Month:</span>
+                  <span class="param-chip active" data-target="workdaysInMonthInput" data-val="21">21 Workdays</span>
+                  <span class="param-chip" data-target="workdaysInMonthInput" data-val="22">22 Workdays</span>
+                  <span class="param-chip" data-target="workdaysInMonthInput" data-val="20">20 Workdays</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="small text-muted">Custom:</span>
+                  <input type="number" min="1" max="31" name="workdays_in_month" id="workdaysInMonthInput"
+                    class="form-control form-control-sm text-center fw-semibold" style="width: 75px;" value="21">
+                  <span class="small text-muted">working days</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixed Divisor Info -->
+            <div id="paramFixedInfo" class="param-row d-none">
+              <div class="d-flex align-items-center text-muted small">
+                <i class="mdi mdi-information-outline text-primary me-2 fs-5"></i>
+                <span id="fixedDivisorText" class="fw-semibold text-dark">This formula divides monthly salary by a fixed
+                  divisor.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Employee Selection Table Card -->
+      <div class="card clean-card mb-4">
+        <div class="clean-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle p-2 me-2 d-flex align-items-center justify-content-center"
+              style="width: 36px; height: 36px; background: rgba(31, 59, 179, 0.1); color: #1F3BB3; flex-shrink: 0;">
+              <i class="mdi mdi-account-multiple-check fs-5"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">2. Select Employees for Payroll Generation
+              </h5>
+              <small class="text-muted">Choose all or select specific employees to process in this payroll run</small>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary text-white px-3 py-2 rounded-pill fw-bold shadow-sm"
+              style="font-size: 0.85rem;">
+              <i class="mdi mdi-check-circle-outline me-1"></i>
+              <span id="selectedCounter">{{ employees|length }}</span> of {{ employees|length }} Selected
+            </span>
+          </div>
+        </div>
+
+        <!-- Filter & Selection Bar -->
+        <div
+          class="p-3 bg-white clean-toolbar border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+          style="background-color: #ffffff !important; border-bottom: 1px solid #edf2f7 !important;">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <!-- Select All Checkbox -->
+            <div class="form-check d-flex align-items-center mb-0 ps-0">
+              <input class="form-check-input emp-checkbox me-2 ms-0 mt-0" type="checkbox" id="selectAllCheckbox"
+                checked>
+              <label class="form-check-label fw-bold text-dark user-select-none mb-0" for="selectAllCheckbox"
+                style="font-size: 0.88rem; cursor: pointer;">
+                Select All
+              </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-1 shadow-none" id="deselectAllBtn">
+              <i class="mdi mdi-checkbox-blank-outline me-1"></i> Deselect All
             </button>
           </div>
-        </form>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title text-muted mb-3"><i class="mdi mdi-history me-1"></i>Generated Payroll Records</h5>
+          <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
+            <!-- Department Quick Filter -->
+            <div class="dept-filter-wrap">
+              <select id="deptFilterSelect" class="form-select form-select-sm"
+                style="height: 38px; font-size: 0.85rem;">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.name }}">{{ d.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Search Employee Input -->
+            <div class="input-group input-group-sm emp-search-wrap">
+              <span class="input-group-text bg-white border-end-0"><i class="mdi mdi-magnify text-muted"></i></span>
+              <input type="text" id="empSearchInput" class="form-control border-start-0"
+                placeholder="Search employee..." style="height: 38px; font-size: 0.85rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Employees Table -->
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 440px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0" id="employeeSelectTable">
+              <thead class="table-light sticky-top" style="z-index: 5; background-color: #f8fafc;">
+                <tr>
+                  <th class="ps-4 text-center" style="width: 48px;">
+                    <span class="visually-hidden">Select</span>
+                  </th>
+                  <th style="width: 130px;">Code</th>
+                  <th>Employee Name</th>
+                  <th>Department</th>
+                  <th>Position</th>
+                  <th style="width: 140px;">Basic Salary</th>
+                  <th class="text-end pe-4" style="width: 100px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for emp in employees %}
+                <tr class="emp-row selected-row" data-emp-id="{{ emp.id }}"
+                  data-dept="{{ emp.department.name|default:'' }}"
+                  data-search="{{ emp.employee_code|lower }} {{ emp.first_name|lower }} {{ emp.last_name|lower }}">
+                  <td class="ps-4 text-center">
+                    <input type="checkbox" name="selected_employees" value="{{ emp.id }}"
+                      class="emp-checkbox single-emp-cb" checked>
+                  </td>
+                  <td>
+                    <span class="text-dark" style="font-size: 0.82rem;">
+                      {{ emp.employee_code }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <span class="emp-avatar me-2">
+                        {{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}
+                      </span>
+                      <div>
+                        <div class="fw-semibold text-dark" style="font-size: 0.88rem;">
+                          {{ emp.first_name }} {{ emp.last_name }}
+                        </div>
+                        <small class="text-muted" style="font-size: 0.78rem;">{{ emp.email }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-dark">{{ emp.department.name|default:"-" }}</span>
+                  </td>
+                  <td class="text-muted">{{ emp.position.name|default:"-" }}</td>
+                  <td>
+                    {% if emp.current_salary_structure %}
+                    <span class="fw-bold text-dark" style="font-size: 0.92rem;">
+                      ${{ emp.current_basic_salary }}
+                    </span>
+                    {% elif emp.basic_salary %}
+                    <span class="fw-bold text-dark" style="font-size: 0.92rem;">
+                      ${{ emp.basic_salary }}
+                    </span>
+                    <small class="text-muted d-block" style="font-size: 0.70rem;">Default</small>
+                    {% else %}
+                    <span class="badge bg-warning text-dark" style="font-size: 0.75rem;" title="Configure in Setup Salary">
+                      No Setup
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end pe-4">
+                    <span class="badge bg-success">Active</span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="mdi mdi-account-off-outline fs-1 d-block text-secondary mb-2"></i>
+                    No active employees found. Please register active employees first.
+                  </td>
+                </tr>
+                {% endfor %}
+                <tr id="noEmpMatchRow" style="display: none;">
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="mdi mdi-account-search-outline fs-1 d-block text-secondary mb-2"></i>
+                    No employees match your search or department filter.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Action Footer -->
+        <div
+          class="p-3 bg-white clean-footer border-top d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3"
+          style="background-color: #ffffff !important; border-top: 1px solid #edf2f7 !important;">
+          <div class="small text-muted d-flex align-items-center">
+            <i class="mdi mdi-check-circle text-success me-2 fs-5"></i>
+            <span id="footerSelectedSummary" class="fw-semibold">
+              Selected {{ employees|length }} of {{ employees|length }} employee(s) ready for payroll processing.
+            </span>
+          </div>
+          <button type="submit"
+            class="btn btn-primary text-white px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm"
+            id="btnSubmitPayroll">
+            <i class="mdi mdi-play-circle-outline fs-5"></i> Calculate &amp; Generate Payroll Run
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Generated Payroll Records History Table -->
+    <div class="card clean-card">
+      <div class="clean-card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="mdi mdi-history text-primary me-2 fs-5"></i>
+          <h5 class="card-title text-dark mb-0 fw-bold" style="font-size: 0.98rem;">Generated Payroll Records</h5>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-1">{{ payrolls|length }} Record(s)</span>
+      </div>
+      <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle mb-0">
             <thead>
               <tr class="table-light">
-                <th>Period</th>
+                <th class="ps-4">Period</th>
                 <th>Employee</th>
                 <th>Basic Salary</th>
+                <th>Daily Salary</th>
+                <th class="text-center">Attendance</th>
+                <th class="text-center">Absent</th>
+                <th class="text-center">Late</th>
+                <th class="text-center">Overtime</th>
+                <th class="text-center">Leave</th>
+                <th class="text-center">Holiday</th>
                 <th>Gross Salary</th>
                 <th>Deductions</th>
                 <th>Net Salary</th>
                 <th>Status</th>
-                <th class="text-end">Actions</th>
+                <th class="text-end pe-4">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for p in payrolls %}
               <tr>
-                <td>{{ p.payroll_period|date:"F Y" }}</td>
-                <td class="fw-semibold text-dark">{{ p.employee.first_name }} {{ p.employee.last_name }}</td>
-                <td>${{ p.basic_salary }}</td>
-                <td>${{ p.gross_salary }}</td>
-                <td><span class="badge bg-light text-danger border">-${{ p.total_deduction }}</span></td>
-                <td><span class="badge bg-success text-white fw-bold">${{ p.net_salary }}</span></td>
-                <td><span class="badge bg-primary">{{ p.get_status_display }}</span></td>
-                <td class="text-end">
-                  {% if user.role in 'super_admin,hr_admin' %}
-                  <a href="{% url 'payroll:payslip' p.id %}" class="btn btn-sm btn-outline-primary me-1" title="View Payslip">
-                    <i class="mdi mdi-eye"></i> Payslip
+                <td class="ps-4 fw-semibold text-secondary">{{ p.payroll_period|date:"F Y" }}</td>
+                <td>
+                  <div class="fw-bold text-dark">
+                    {{ p.employee.first_name }} {{ p.employee.last_name }}
+                  </div>
+                  <small class="text-muted">
+                    {{ p.employee.employee_code }} • {{ p.employee.department.name|default:"General" }}
+                  </small>
+                </td>
+                <td class="fw-semibold">${{ p.basic_salary }}</td>
+                <td class="fw-semibold text-dark">${{ p.daily_salary }}</td>
+                <td class="text-center">
+                  <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold px-2 py-1"
+                    style="font-size: 0.8rem;">
+                    <i class="mdi mdi-calendar-check me-1"></i>{{ p.attendance_days }}d
+                  </span>
+                </td>
+                <td class="text-center">
+                  {% if p.absent_days > 0 %}
+                  <span class="text-danger" style="font-size: 0.82rem;">
+                    {{ p.absent_days }}d
+                  </span>
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.82rem;">0d</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if p.late_hours > 0 %}
+                  <span class="text-warning-emphasis" style="font-size: 0.82rem;">
+                    {{ p.late_hours }}h
+                  </span>
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.82rem;">0h</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if p.overtime_hours > 0 or p.overtime > 0 %}
+                  <div>
+                    <span class="text-primary" style="font-size: 0.82rem;">
+                      {{ p.overtime_hours }}h
+                    </span>
+                    {% if p.overtime > 0 %}
+                    <small class="text-success fw-semibold d-block" style="font-size: 0.75rem;">+${{ p.overtime }}</small>
+                    {% endif %}
+                  </div>
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.82rem;">0h</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if p.leave_days > 0 %}
+                  <span class="text-info-emphasis" style="font-size: 0.82rem;">
+                    {{ p.leave_days }}d
+                  </span>
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.82rem;">0d</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if p.holiday_days > 0 %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold px-2 py-1"
+                    style="font-size: 0.80rem;">
+                    <i class="mdi mdi-palm-tree me-1"></i>{{ p.holiday_days }}d
+                  </span>
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.82rem;">0d</span>
+                  {% endif %}
+                </td>
+                <td class="fw-semibold">${{ p.gross_salary }}</td>
+                <td class="text-danger">-${{ p.total_deduction }}</td>
+                <td class="fw-bold text-success fs-6">${{ p.net_salary }}</td>
+                <td>
+                  {% if p.status == 'paid' %}
+                  <span class="badge bg-success">Paid</span>
+                  {% elif p.status == 'approved' %}
+                  <span class="badge bg-info">Approved</span>
+                  {% elif p.status == 'processing' %}
+                  <span class="badge bg-warning text-dark">Processing</span>
+                  {% elif p.status == 'draft' %}
+                  <span class="badge bg-secondary">Draft</span>
+                  {% else %}
+                  <span class="badge bg-danger">{{ p.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end pe-4">
+                  <a href="{% url 'payroll:payslip' p.pk %}" class="btn btn-sm btn-outline-primary" title="View Payslip">
+                    <i class="mdi mdi-file-document-outline"></i>
                   </a>
-                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePayrollModal{{ p.id }}">
+                  {% if p.status == 'draft' %}
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                    data-bs-target="#deletePayrollModal{{ p.id }}" title="Delete Record">
                     <i class="mdi mdi-trash-can-outline"></i>
                   </button>
 
@@ -73,11 +744,14 @@
                         <form method="post" action="{% url 'payroll:delete' p.id %}">
                           {% csrf_token %}
                           <div class="modal-header">
-                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Payroll Record</h5>
+                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete
+                              Payroll Record</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
                           <div class="modal-body">
-                            Are you sure you want to delete payroll record for <strong>{{ p.employee.first_name }} {{ p.employee.last_name }}</strong> for period {{ p.payroll_period|date:"F Y" }}?
+                            Are you sure you want to delete payroll record for
+                            <strong>{{ p.employee.first_name }} {{ p.employee.last_name }}</strong>
+                            for period {{ p.payroll_period|date:"F Y" }}?
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -92,7 +766,11 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="8" class="text-center py-4 text-muted">No payroll cycles executed yet. Click "Calculate & Generate Payroll Run" above to initiate a cycle.</td>
+                <td colspan="15" class="text-center py-5 text-muted">
+                  <i class="mdi mdi-calendar-blank-outline fs-1 d-block mb-2 text-secondary"></i>
+                  No payroll cycles executed yet. Select a month, formula, and employees above, then click
+                  <strong>"Calculate &amp; Generate Payroll Run"</strong>.
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -102,4 +780,285 @@
     </div>
   </div>
 </div>
+
+<!-- Include Formula Guide Modal Component -->
+{% include "payroll/formula_guide.html" %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  $(document).ready(function () {
+    const $formulaSelect = $('#formulaSelect');
+    const $payrollPeriod = $('#payrollPeriod');
+    const $formulaShortDesc = $('#formulaShortDesc');
+
+    const $paramWorkdaysPerWeek = $('#paramWorkdaysPerWeek');
+    const $paramDaysOffPerWeek = $('#paramDaysOffPerWeek');
+    const $paramDaysInMonth = $('#paramDaysInMonth');
+    const $paramWorkdaysInMonth = $('#paramWorkdaysInMonth');
+    const $paramFixedInfo = $('#paramFixedInfo');
+    const $fixedDivisorText = $('#fixedDivisorText');
+
+    const $workdaysInput = $('#workdaysInput');
+    const $daysOffInput = $('#daysOffInput');
+    const $daysInMonthInput = $('#daysInMonthInput');
+    const $workdaysInMonthInput = $('#workdaysInMonthInput');
+
+    // Employee Selection elements
+    const $selectAllCheckbox = $('#selectAllCheckbox');
+    const $deselectAllBtn = $('#deselectAllBtn');
+    const $singleEmpCbs = $('.single-emp-cb');
+    const $selectedCounter = $('#selectedCounter');
+    const $footerSelectedSummary = $('#footerSelectedSummary');
+    const $empSearchInput = $('#empSearchInput');
+    const $deptFilterSelect = $('#deptFilterSelect');
+    const $btnSubmitPayroll = $('#btnSubmitPayroll');
+
+    // Preset chips handler
+    $('.param-chip').on('click', function () {
+      const targetId = $(this).attr('data-target');
+      const val = $(this).attr('data-val');
+      const $targetInput = $('#' + targetId);
+
+      if ($targetInput.length) {
+        $targetInput.val(val);
+        $(this).siblings('.param-chip').removeClass('active');
+        $(this).addClass('active');
+      }
+    });
+
+    // Calculate days in month from payrollPeriod
+    function getDaysInPeriodMonth(periodVal) {
+      if (!periodVal) return 30;
+      const parts = periodVal.split('-');
+      if (parts.length === 2) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        return new Date(year, month, 0).getDate();
+      }
+      return 30;
+    }
+
+    function updateDaysInMonthFromPeriod() {
+      const days = getDaysInPeriodMonth($payrollPeriod.val());
+      $daysInMonthInput.val(days);
+    }
+
+    $payrollPeriod.on('change', function () {
+      updateDaysInMonthFromPeriod();
+    });
+
+    // Formula switcher for main form
+    function updateFormulaUI() {
+      const formula = $formulaSelect.val() || 'formula_1';
+
+      $paramWorkdaysPerWeek.addClass('d-none');
+      $paramDaysOffPerWeek.addClass('d-none');
+      $paramDaysInMonth.addClass('d-none');
+      $paramWorkdaysInMonth.addClass('d-none');
+      $paramFixedInfo.addClass('d-none');
+
+      let desc = '';
+
+      switch (formula) {
+        case 'formula_1':
+          $paramWorkdaysPerWeek.removeClass('d-none');
+          desc = 'Daily Salary = (Monthly Salary × 12) / (52 × Workdays per Week)';
+          break;
+
+        case 'formula_2':
+          $paramDaysOffPerWeek.removeClass('d-none');
+          desc = 'Daily Salary = Monthly Salary / [30 - (Days off per week × 4)]';
+          break;
+
+        case 'formula_3':
+          $paramDaysOffPerWeek.removeClass('d-none');
+          $paramDaysInMonth.removeClass('d-none');
+          desc = 'Daily Salary = Monthly Salary / [Days in Month - (Days off per week × 4)]';
+          break;
+
+        case 'formula_4':
+          $paramDaysInMonth.removeClass('d-none');
+          desc = 'Daily Salary = Monthly Salary / Days in the month (All days considered paid)';
+          break;
+
+        case 'formula_5':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('5th Formula: Fixed divisor of 30 days. All days in month considered paid.');
+          desc = 'Daily Salary = Monthly Salary / 30';
+          break;
+
+        case 'formula_6':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('6th Formula: Fixed divisor of 26 workdays (Standard 6-day work week).');
+          desc = 'Daily Salary = Monthly Salary / 26';
+          break;
+
+        case 'formula_7':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('7th Formula: Fixed divisor of 27 workdays.');
+          desc = 'Daily Salary = Monthly Salary / 27';
+          break;
+
+        case 'formula_8':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('8th Formula: Fixed divisor of 24 workdays.');
+          desc = 'Daily Salary = Monthly Salary / 24';
+          break;
+
+        case 'formula_9':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('9th Formula: Fixed divisor of 28 days.');
+          desc = 'Daily Salary = Monthly Salary / 28';
+          break;
+
+        case 'formula_10':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('10th Formula: Fixed divisor of 20 workdays (4 weeks × 5 days).');
+          desc = 'Daily Salary = Monthly Salary / 20';
+          break;
+
+        case 'formula_11':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('11th Formula: Fixed divisor of 25 workdays.');
+          desc = 'Daily Salary = Monthly Salary / 25';
+          break;
+
+        case 'formula_12':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('12th Formula: Fixed divisor of 22 workdays (Standard 5-day work week).');
+          desc = 'Daily Salary = Monthly Salary / 22';
+          break;
+
+        case 'formula_13':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('13th Formula: Fixed divisor of 29 days.');
+          desc = 'Daily Salary = Monthly Salary / 29';
+          break;
+
+        case 'formula_14':
+          $paramWorkdaysInMonth.removeClass('d-none');
+          desc = 'Daily Salary = Monthly Salary / Workdays in the month';
+          break;
+
+        case 'formula_15':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('15th Formula: Fixed divisor of 15 days (Semi-monthly).');
+          desc = 'Daily Salary = Monthly Salary / 15';
+          break;
+
+        case 'formula_16':
+          $paramFixedInfo.removeClass('d-none');
+          $fixedDivisorText.text('16th Formula: Fixed divisor of 22.5 workdays (Standard 5.5-day work week).');
+          desc = 'Daily Salary = Monthly Salary / 22.5';
+          break;
+      }
+
+      $formulaShortDesc.text(desc);
+    }
+
+    $formulaSelect.on('change select2:select', updateFormulaUI);
+
+    // -------------------------------------------------------------
+    // Employee Selection Logic (+Select All, +Select Multiple, Filter)
+    // -------------------------------------------------------------
+    function updateSelectedCount() {
+      const totalVisible = $('.emp-row:visible').length;
+      const selectedCount = $('.single-emp-cb:checked').length;
+      const totalEmps = $singleEmpCbs.length;
+
+      $selectedCounter.text(selectedCount);
+      $footerSelectedSummary.text(`Selected ${selectedCount} of ${totalEmps} employee(s) ready for payroll processing.`);
+
+      // Update Select All checkbox state
+      if (selectedCount === 0) {
+        $selectAllCheckbox.prop('checked', false);
+        $selectAllCheckbox.prop('indeterminate', false);
+        $btnSubmitPayroll.prop('disabled', true).addClass('opacity-50');
+      } else if (selectedCount === totalEmps) {
+        $selectAllCheckbox.prop('checked', true);
+        $selectAllCheckbox.prop('indeterminate', false);
+        $btnSubmitPayroll.prop('disabled', false).removeClass('opacity-50');
+      } else {
+        $selectAllCheckbox.prop('checked', false);
+        $selectAllCheckbox.prop('indeterminate', true);
+        $btnSubmitPayroll.prop('disabled', false).removeClass('opacity-50');
+      }
+
+      // Toggle row background
+      $('.emp-row').each(function () {
+        const isChecked = $(this).find('.single-emp-cb').is(':checked');
+        $(this).toggleClass('selected-row', isChecked);
+      });
+    }
+
+    // Select All Toggle
+    $selectAllCheckbox.on('change', function () {
+      const isChecked = $(this).is(':checked');
+      const $targetCbs = $('.emp-row:visible .single-emp-cb');
+      $targetCbs.prop('checked', isChecked);
+      updateSelectedCount();
+    });
+
+    // Deselect All Button
+    $deselectAllBtn.on('click', function () {
+      $singleEmpCbs.prop('checked', false);
+      updateSelectedCount();
+    });
+
+    // Single Checkbox Toggle
+    $(document).on('change', '.single-emp-cb', function () {
+      updateSelectedCount();
+    });
+
+    // Real-time Search and Department Filter
+    function filterEmployees() {
+      const query = $empSearchInput.val().toLowerCase().trim();
+      const dept = $deptFilterSelect.val().toLowerCase().trim();
+      let visibleCount = 0;
+
+      $('.emp-row').each(function () {
+        const searchData = $(this).attr('data-search') || '';
+        const deptData = ($(this).attr('data-dept') || '').toLowerCase();
+
+        const matchesSearch = !query || searchData.indexOf(query) !== -1;
+        const matchesDept = !dept || deptData === dept;
+
+        if (matchesSearch && matchesDept) {
+          $(this).show();
+          visibleCount++;
+        } else {
+          $(this).hide();
+        }
+      });
+
+      if (visibleCount === 0) {
+        $('#noEmpMatchRow').show();
+      } else {
+        $('#noEmpMatchRow').hide();
+      }
+
+      updateSelectedCount();
+    }
+
+    $empSearchInput.on('input', filterEmployees);
+    $deptFilterSelect.on('change select2:select', filterEmployees);
+
+    // Form submission validation
+    $('#payrollGenForm').on('submit', function (e) {
+      const selectedCount = $('.single-emp-cb:checked').length;
+      if (selectedCount === 0) {
+        e.preventDefault();
+        alert('Please select at least one employee to generate payroll.');
+        return false;
+      }
+    });
+
+    // Initial runs
+    updateDaysInMonthFromPeriod();
+    updateFormulaUI();
+    updateSelectedCount();
+  });
+</script>
 {% endblock %}

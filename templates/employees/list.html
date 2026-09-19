@@ -6,40 +6,66 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
         <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-account-group-outline me-2 text-primary"></i>Employee Management</h3>
         <p class="text-muted mb-0">Manage employee records, roles, and status</p>
       </div>
-      {% if user.role in 'super_admin,hr_admin' %}
-      <a href="{% url 'employees:create' %}" class="btn btn-primary text-white">
-        <i class="mdi mdi-account-plus me-1"></i> Add New Employee
-      </a>
-      {% endif %}
+      <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item text-muted">Setup</li>
+            <li class="breadcrumb-item active" aria-current="page">Employees</li>
+          </ol>
+        </nav>
+        {% if user.role in 'super_admin,hr_admin' %}
+        <a href="{% url 'employees:create' %}" class="btn btn-primary text-white">
+          <i class="mdi mdi-account-plus me-1"></i> Add New Employee
+        </a>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Filter Card -->
     <div class="card mb-4">
       <div class="card-body">
         <h5 class="card-title text-muted mb-3"><i class="mdi mdi-filter-variant me-1"></i>Filter Employees</h5>
-        <form method="get" class="row g-3 align-items-end">
+        <form method="get" class="row g-2 align-items-end">
           <div class="col-md-5">
-            {{ filter_form.search|as_crispy_field }}
+            <label class="form-label small fw-semibold text-muted mb-1">Search</label>
+            <input type="text" name="search" class="form-control"
+              placeholder="Search name or code..."
+              value="{{ request.GET.search }}">
           </div>
           <div class="col-md-3">
-            {{ filter_form.department|as_crispy_field }}
+            <label class="form-label small fw-semibold text-muted mb-1">Department</label>
+            <select name="department" class="form-select">
+              <option value="">All Departments</option>
+              {% for dept in filter_form.department.field.queryset %}
+              <option value="{{ dept.pk }}" {% if request.GET.department == dept.pk|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+              {% endfor %}
+            </select>
           </div>
           <div class="col-md-2">
-            {{ filter_form.status|as_crispy_field }}
+            <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+            <select name="status" class="form-select">
+              <option value="">All Status</option>
+              {% for val, label in filter_form.status.field.choices %}
+              {% if val %}<option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>{% endif %}
+              {% endfor %}
+            </select>
           </div>
           <div class="col-md-2">
-            <button type="submit" class="btn btn-primary text-white w-100 mb-3">
+            <label class="form-label small fw-semibold text-muted mb-1">&nbsp;</label>
+            <button type="submit" class="btn btn-primary text-white w-100">
               <i class="mdi mdi-magnify me-1"></i> Filter
             </button>
           </div>
         </form>
       </div>
     </div>
+
 
     <!-- Employee Table Card -->
     <div class="card">
@@ -91,7 +117,7 @@
                     <i class="mdi mdi-eye"></i>
                   </a>
                   {% if user.role in 'super_admin,hr_admin,manager' %}
-                  <a href="{% url 'employees:update' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit Employee">
+                  <a href="{% url 'employees:update' emp.pk %}" class="btn btn-sm btn-outline-primary" title="Edit Employee">
                     <i class="mdi mdi-pencil"></i>
                   </a>
                   {% endif %}
