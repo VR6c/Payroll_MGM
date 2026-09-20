@@ -143,6 +143,38 @@
   }
 
   /* ==========================================================
+     Modal Layout & Responsive Scroll Container
+     ========================================================== */
+  .modal-dialog-scroll-fixed {
+    max-height: calc(100vh - 2.5rem);
+  }
+  .modal-content-scroll-fixed {
+    max-height: calc(100vh - 2.5rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-body-scrollable {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: calc(100vh - 13rem) !important;
+  }
+  .modal-body-scrollable::-webkit-scrollbar {
+    width: 6px;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-track {
+    background: #f8fafc;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* ==========================================================
      Responsive Media Queries
      ========================================================== */
   @media (max-width: 767.98px) {
@@ -471,18 +503,18 @@
 
                 <!-- Edit User Modal -->
                 <div class="modal fade text-start" id="editUserModal{{ u.id }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ u.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-                      <form method="post" action="{% url 'accounts:user_update' u.id %}">
+                  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable modal-dialog-scroll-fixed">
+                    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
+                      <form method="post" action="{% url 'accounts:user_update' u.id %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
                         {% csrf_token %}
-                        <div class="modal-header border-bottom py-3 px-4">
+                        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
                           <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editUserModalLabel{{ u.id }}">
                             <i class="mdi mdi-account-edit-outline text-primary fs-5"></i>
                             <span>Edit User: {{ u.username }}</span>
                           </h5>
                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-4">
+                        <div class="modal-body modal-body-scrollable p-4">
                           <div class="row g-3">
                             <div class="col-md-6">
                               <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Username <span class="text-danger">*</span></label>
@@ -540,7 +572,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="modal-footer border-top px-4 py-3 bg-light">
+                        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
                           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-primary text-white px-4">Save Changes</button>
                         </div>
@@ -573,7 +605,7 @@
                             <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password" minlength="6" required>
                           </div>
                         </div>
-                        <div class="modal-footer border-top px-4 py-3 bg-light">
+                        <div class="modal-footer border-top px-4 py-3">
                           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-warning text-dark fw-semibold px-4">Reset Password</button>
                         </div>
@@ -603,7 +635,7 @@
                             If linked to an employee profile, the employee record will remain safe, but their login credentials will be removed.
                           </div>
                         </div>
-                        <div class="modal-footer border-top px-4 py-3 bg-light">
+                        <div class="modal-footer border-top px-4 py-3">
                           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-danger text-white px-4">Permanently Delete</button>
                         </div>
@@ -662,18 +694,18 @@
 
 <!-- Add New User Modal -->
 <div class="modal fade text-start" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-      <form method="post" action="{% url 'accounts:user_create' %}">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable modal-dialog-scroll-fixed">
+    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
+      <form method="post" action="{% url 'accounts:user_create' %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
         {% csrf_token %}
-        <div class="modal-header border-bottom py-3 px-4">
+        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
           <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="addUserModalLabel">
             <i class="mdi mdi-account-plus text-primary fs-5"></i>
             <span>Create New User Account</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-4">
+        <div class="modal-body modal-body-scrollable p-4">
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Username <span class="text-danger">*</span></label>
@@ -738,7 +770,7 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer border-top px-4 py-3 bg-light">
+        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary text-white px-4"><i class="mdi mdi-check"></i> Create User</button>
         </div>

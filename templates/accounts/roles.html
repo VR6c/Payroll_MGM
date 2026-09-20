@@ -144,6 +144,72 @@
     transition: all 0.15s ease-in-out;
   }
 
+  /* ==========================================================
+     Modal Layout & Responsive Scroll Container
+     ========================================================== */
+  .modal-dialog-scroll-fixed {
+    max-height: calc(100vh - 2.5rem);
+  }
+  .modal-content-scroll-fixed {
+    max-height: calc(100vh - 2.5rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-body-scrollable {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: calc(100vh - 13rem) !important;
+  }
+  .modal-body-scrollable::-webkit-scrollbar {
+    width: 6px;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-track {
+    background: #f8fafc;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .modal-body-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Filter Pills in Modal */
+  .filter-pills-scroll {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+  .mod-pill-btn {
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .mod-pill-btn:hover {
+    background: #eef2ff;
+    color: #1F3BB3;
+    border-color: #c7d2fe;
+  }
+  .mod-pill-btn.active {
+    background: #1F3BB3;
+    color: #ffffff !important;
+    border-color: #1F3BB3;
+    box-shadow: 0 2px 6px rgba(31, 59, 179, 0.25);
+  }
+
   /* Matrix Card in Modals */
   .matrix-module-card {
     border: 1px solid #e2e8f0;
@@ -151,10 +217,11 @@
     background: #ffffff;
     overflow: hidden;
     height: 100%;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .matrix-module-card:hover {
     border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   }
   .matrix-module-header {
     background: #f8fafc;
@@ -162,7 +229,7 @@
     padding: 9px 12px;
   }
   .perm-item-row {
-    padding: 7px 10px;
+    padding: 6px 10px;
     border-radius: 6px;
     transition: background 0.12s ease;
   }
@@ -273,7 +340,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Total Roles</span>
-              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ total_roles }}</h4>
+              <h4 class="fw-bold mb-0 text-dark">{{ total_roles }}</h4>
             </div>
           </div>
         </div>
@@ -288,7 +355,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">System Roles</span>
-              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ system_roles_count }}</h4>
+              <h4 class="fw-bold mb-0 text-dark">{{ system_roles_count }}</h4>
             </div>
           </div>
         </div>
@@ -303,7 +370,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Custom Roles</span>
-              <h4 class="fw-bold mb-0 text-success counter-value" data-counter>{{ custom_roles_count }}</h4>
+              <h4 class="fw-bold mb-0 text-success">{{ custom_roles_count }}</h4>
             </div>
           </div>
         </div>
@@ -318,7 +385,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Assigned Users</span>
-              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ total_assigned_users }}</h4>
+              <h4 class="fw-bold mb-0 text-dark">{{ total_assigned_users }}</h4>
             </div>
           </div>
         </div>
@@ -443,18 +510,18 @@
 
                 <!-- Edit Role Modal -->
                 <div class="modal fade text-start" id="editRoleModal{{ role.id }}" tabindex="-1" aria-labelledby="editRoleModalLabel{{ role.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-                    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-                      <form method="post" action="{% url 'accounts:role_update' role.id %}">
+                  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable modal-dialog-scroll-fixed">
+                    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
+                      <form method="post" action="{% url 'accounts:role_update' role.id %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
                         {% csrf_token %}
-                        <div class="modal-header border-bottom py-3 px-4">
+                        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
                           <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editRoleModalLabel{{ role.id }}">
                             <i class="mdi mdi-pencil-box-outline text-primary fs-5"></i>
                             <span>Edit Role: {{ role.name }}</span>
                           </h5>
                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-4" style="max-height: 72vh; overflow-y: auto;">
+                        <div class="modal-body modal-body-scrollable p-4">
                           <!-- Basic Info -->
                           <div class="row g-3 mb-4">
                             <div class="col-md-6">
@@ -476,9 +543,9 @@
                             </div>
                           </div>
 
-                          <hr class="my-4">
+                          <hr class="my-3">
 
-                          <!-- Permissions Matrix -->
+                          <!-- Permissions Matrix Controls -->
                           <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
                             <div>
                               <h6 class="fw-bold text-dark mb-0">
@@ -488,10 +555,11 @@
                             </div>
 
                             {% if role.code != 'super_admin' %}
-                            <div class="d-flex align-items-center gap-2">
-                              <div class="input-group input-group-sm" style="width: 220px;">
-                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="mdi mdi-magnify"></i></span>
-                                <input type="text" class="form-control border-start-0" placeholder="Filter permissions..." onkeyup="filterPerms('edit_{{ role.id }}', this.value)">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                              <!-- Live Search with internal positioned icon -->
+                              <div class="position-relative" style="min-width: 190px;">
+                                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; z-index: 5;"></i>
+                                <input type="text" class="form-control form-control-sm" style="padding-left: 30px !important; border-radius: 8px; height: 32px;" placeholder="Filter permissions..." onkeyup="filterPerms('edit_{{ role.id }}', this.value)">
                               </div>
                               <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-outline-primary" onclick="toggleAllPerms('edit_{{ role.id }}', true)">
@@ -514,28 +582,43 @@
                             </div>
                           </div>
                           {% else %}
+                          <!-- Module Filter Category Pills -->
+                          <div class="d-flex align-items-center gap-1 filter-pills-scroll mb-3">
+                            <button type="button" class="btn btn-sm mod-pill-btn active" onclick="filterModulePill('edit_{{ role.id }}', 'all', this)">
+                              <i class="mdi mdi-view-grid-outline me-1"></i>All Modules (36)
+                            </button>
+                            {% for mod_key, mod_info in permission_catalog.items %}
+                            <button type="button" class="btn btn-sm mod-pill-btn" onclick="filterModulePill('edit_{{ role.id }}', '{{ mod_key }}', this)">
+                              <i class="mdi {{ mod_info.icon }} me-1"></i>{{ mod_info.short_name }} ({{ mod_info.permissions|length }})
+                            </button>
+                            {% endfor %}
+                          </div>
+
                           <div class="row g-3">
                             {% for mod_key, mod_info in permission_catalog.items %}
-                            <div class="col-12 col-xl-6 perm-card-container-edit_{{ role.id }}">
+                            <div class="col-12 col-xl-6 perm-card-container-edit_{{ role.id }}" data-module="{{ mod_key }}">
                               <div class="matrix-module-card">
                                 <div class="matrix-module-header d-flex justify-content-between align-items-center">
-                                  <span class="fw-bold text-dark small">
-                                    <i class="mdi {{ mod_info.icon }} me-1 text-primary"></i>{{ mod_info.name }}
+                                  <span class="fw-bold text-dark small d-flex align-items-center gap-1">
+                                    <i class="mdi {{ mod_info.icon }} text-primary fs-6"></i>
+                                    <span>{{ mod_info.name }}</span>
+                                    <span class="badge bg-light text-muted border ms-1" style="font-size: 0.68rem;">{{ mod_info.permissions|length }}</span>
                                   </span>
-                                  <div>
-                                    <button type="button" class="btn btn-link text-primary text-decoration-none p-0 me-2 small" style="font-size: 0.75rem;" onclick="toggleModuleGroup('edit_{{ role.id }}_{{ mod_key }}', true)">All</button>
-                                    <button type="button" class="btn btn-link text-muted text-decoration-none p-0 small" style="font-size: 0.75rem;" onclick="toggleModuleGroup('edit_{{ role.id }}_{{ mod_key }}', false)">None</button>
+                                  <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-link text-primary text-decoration-none p-0 fw-semibold" style="font-size: 0.75rem;" onclick="toggleModuleGroup('edit_{{ role.id }}_{{ mod_key }}', true)">All</button>
+                                    <span class="text-muted" style="font-size: 0.7rem;">|</span>
+                                    <button type="button" class="btn btn-link text-muted text-decoration-none p-0" style="font-size: 0.75rem;" onclick="toggleModuleGroup('edit_{{ role.id }}_{{ mod_key }}', false)">None</button>
                                   </div>
                                 </div>
                                 <div class="p-2">
                                   {% for perm_code, perm_name, perm_desc in mod_info.permissions %}
                                   <div class="perm-item-row perm-item-edit_{{ role.id }}" data-search="{{ perm_name|lower }} {{ perm_desc|lower }}">
-                                    <div class="form-check mb-0">
-                                      <input class="form-check-input perm-group-edit_{{ role.id }} perm-module-edit_{{ role.id }}_{{ mod_key }}" type="checkbox" name="permissions" value="{{ perm_code }}" id="edit_{{ role.id }}_{{ perm_code }}" {% if perm_code in role.permissions or mod_key in role.permissions %}checked{% endif %}>
-                                      <label class="form-check-label small fw-semibold text-dark d-block cursor-pointer" for="edit_{{ role.id }}_{{ perm_code }}">
-                                        {{ perm_name }}
+                                    <div class="form-check mb-0 d-flex align-items-start gap-2 ps-0">
+                                      <input class="form-check-input ms-0 mt-1 flex-shrink-0 perm-group-edit_{{ role.id }} perm-module-edit_{{ role.id }}_{{ mod_key }}" type="checkbox" name="permissions" value="{{ perm_code }}" id="edit_{{ role.id }}_{{ perm_code }}" {% if perm_code in role.permissions or mod_key in role.permissions %}checked{% endif %}>
+                                      <label class="form-check-label d-block cursor-pointer flex-grow-1" for="edit_{{ role.id }}_{{ perm_code }}">
+                                        <span class="small fw-semibold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">{{ perm_name }}</span>
+                                        <span class="text-muted d-block" style="font-size: 0.7rem; line-height: 1.25;">{{ perm_desc }}</span>
                                       </label>
-                                      <small class="text-muted d-block" style="font-size: 0.72rem; line-height: 1.2;">{{ perm_desc }}</small>
                                     </div>
                                   </div>
                                   {% endfor %}
@@ -546,7 +629,7 @@
                           </div>
                           {% endif %}
                         </div>
-                        <div class="modal-footer border-top px-4 py-3 bg-light">
+                        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
                           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-primary text-white px-4">Save Changes</button>
                         </div>
@@ -575,7 +658,7 @@
                             This action cannot be undone. Users will no longer be assigned to this role.
                           </div>
                         </div>
-                        <div class="modal-footer border-top px-4 py-3 bg-light">
+                        <div class="modal-footer border-top px-4 py-3">
                           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-danger text-white px-4">Permanently Delete</button>
                         </div>
@@ -604,18 +687,18 @@
 
 <!-- Add New Role Modal -->
 <div class="modal fade text-start" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-      <form method="post" action="{% url 'accounts:role_create' %}">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable modal-dialog-scroll-fixed">
+    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
+      <form method="post" action="{% url 'accounts:role_create' %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
         {% csrf_token %}
-        <div class="modal-header border-bottom py-3 px-4">
+        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
           <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="addRoleModalLabel">
             <i class="mdi mdi-shield-plus text-primary fs-5"></i>
             <span>Create New Access Role (RBAC)</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-4" style="max-height: 72vh; overflow-y: auto;">
+        <div class="modal-body modal-body-scrollable p-4">
           <!-- Basic Info -->
           <div class="row g-3 mb-4">
             <div class="col-md-6">
@@ -634,9 +717,9 @@
             </div>
           </div>
 
-          <hr class="my-4">
+          <hr class="my-3">
 
-          <!-- Granular Permissions Matrix -->
+          <!-- Granular Permissions Matrix Header -->
           <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
             <div>
               <h6 class="fw-bold text-dark mb-0">
@@ -644,10 +727,11 @@
               </h6>
               <small class="text-muted">Select specific actions allowed for this role</small>
             </div>
-            <div class="d-flex align-items-center gap-2">
-              <div class="input-group input-group-sm" style="width: 220px;">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="mdi mdi-magnify"></i></span>
-                <input type="text" class="form-control border-start-0" placeholder="Filter permissions..." onkeyup="filterPerms('add', this.value)">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <!-- Live Search with internal positioned icon -->
+              <div class="position-relative" style="min-width: 190px;">
+                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; z-index: 5;"></i>
+                <input type="text" class="form-control form-control-sm" style="padding-left: 30px !important; border-radius: 8px; height: 32px;" placeholder="Filter permissions..." onkeyup="filterPerms('add', this.value)">
               </div>
               <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-outline-primary" onclick="toggleAllPerms('add', true)">
@@ -660,28 +744,43 @@
             </div>
           </div>
 
+          <!-- Module Filter Category Pills -->
+          <div class="d-flex align-items-center gap-1 filter-pills-scroll mb-3">
+            <button type="button" class="btn btn-sm mod-pill-btn active" onclick="filterModulePill('add', 'all', this)">
+              <i class="mdi mdi-view-grid-outline me-1"></i>All Modules (36)
+            </button>
+            {% for mod_key, mod_info in permission_catalog.items %}
+            <button type="button" class="btn btn-sm mod-pill-btn" onclick="filterModulePill('add', '{{ mod_key }}', this)">
+              <i class="mdi {{ mod_info.icon }} me-1"></i>{{ mod_info.short_name }} ({{ mod_info.permissions|length }})
+            </button>
+            {% endfor %}
+          </div>
+
           <div class="row g-3">
             {% for mod_key, mod_info in permission_catalog.items %}
-            <div class="col-12 col-xl-6 perm-card-container-add">
+            <div class="col-12 col-xl-6 perm-card-container-add" data-module="{{ mod_key }}">
               <div class="matrix-module-card">
                 <div class="matrix-module-header d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark small">
-                    <i class="mdi {{ mod_info.icon }} me-1 text-primary"></i>{{ mod_info.name }}
+                  <span class="fw-bold text-dark small d-flex align-items-center gap-1">
+                    <i class="mdi {{ mod_info.icon }} text-primary fs-6"></i>
+                    <span>{{ mod_info.name }}</span>
+                    <span class="badge bg-light text-muted border ms-1" style="font-size: 0.68rem;">{{ mod_info.permissions|length }}</span>
                   </span>
-                  <div>
-                    <button type="button" class="btn btn-link text-primary text-decoration-none p-0 me-2 small" style="font-size: 0.75rem;" onclick="toggleModuleGroup('add_{{ mod_key }}', true)">All</button>
-                    <button type="button" class="btn btn-link text-muted text-decoration-none p-0 small" style="font-size: 0.75rem;" onclick="toggleModuleGroup('add_{{ mod_key }}', false)">None</button>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-link text-primary text-decoration-none p-0 fw-semibold" style="font-size: 0.75rem;" onclick="toggleModuleGroup('add_{{ mod_key }}', true)">All</button>
+                    <span class="text-muted" style="font-size: 0.7rem;">|</span>
+                    <button type="button" class="btn btn-link text-muted text-decoration-none p-0" style="font-size: 0.75rem;" onclick="toggleModuleGroup('add_{{ mod_key }}', false)">None</button>
                   </div>
                 </div>
                 <div class="p-2">
                   {% for perm_code, perm_name, perm_desc in mod_info.permissions %}
                   <div class="perm-item-row perm-item-add" data-search="{{ perm_name|lower }} {{ perm_desc|lower }}">
-                    <div class="form-check mb-0">
-                      <input class="form-check-input perm-group-add perm-module-add_{{ mod_key }}" type="checkbox" name="permissions" value="{{ perm_code }}" id="add_perm_{{ perm_code }}">
-                      <label class="form-check-label small fw-semibold text-dark d-block cursor-pointer" for="add_perm_{{ perm_code }}">
-                        {{ perm_name }}
+                    <div class="form-check mb-0 d-flex align-items-start gap-2 ps-0">
+                      <input class="form-check-input ms-0 mt-1 flex-shrink-0 perm-group-add perm-module-add_{{ mod_key }}" type="checkbox" name="permissions" value="{{ perm_code }}" id="add_perm_{{ perm_code }}">
+                      <label class="form-check-label d-block cursor-pointer flex-grow-1" for="add_perm_{{ perm_code }}">
+                        <span class="small fw-semibold text-dark d-block" style="font-size: 0.82rem; line-height: 1.2;">{{ perm_name }}</span>
+                        <span class="text-muted d-block" style="font-size: 0.7rem; line-height: 1.25;">{{ perm_desc }}</span>
                       </label>
-                      <small class="text-muted d-block" style="font-size: 0.72rem; line-height: 1.2;">{{ perm_desc }}</small>
                     </div>
                   </div>
                   {% endfor %}
@@ -691,7 +790,7 @@
             {% endfor %}
           </div>
         </div>
-        <div class="modal-footer border-top px-4 py-3 bg-light">
+        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
           <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary text-white px-4"><i class="mdi mdi-check"></i> Create Role</button>
         </div>
@@ -715,16 +814,54 @@
     });
   }
 
+  function filterModulePill(prefix, modKey, btn) {
+    var pills = btn.parentElement.querySelectorAll('.mod-pill-btn');
+    pills.forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+
+    var cards = document.querySelectorAll('.perm-card-container-' + prefix);
+    cards.forEach(function(card) {
+      if (modKey === 'all' || card.getAttribute('data-module') === modKey) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
   function filterPerms(prefix, query) {
     var q = query.trim().toLowerCase();
     var items = document.querySelectorAll('.perm-item-' + prefix);
-    items.forEach(function(item) {
-      var text = item.getAttribute('data-search') || '';
-      if (!q || text.indexOf(q) !== -1) {
-        item.style.display = '';
-      } else {
-        item.style.display = 'none';
-      }
+    var cards = document.querySelectorAll('.perm-card-container-' + prefix);
+
+    if (!q) {
+      // Find active pill
+      var activePill = document.querySelector('#' + (prefix.startsWith('edit') ? prefix : 'addRoleModal') + ' .mod-pill-btn.active');
+      var activeMod = activePill ? activePill.getAttribute('onclick').split("'")[3] : 'all';
+      items.forEach(function(item) { item.style.display = ''; });
+      cards.forEach(function(card) {
+        if (!activeMod || activeMod === 'all' || card.getAttribute('data-module') === activeMod) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      return;
+    }
+
+    cards.forEach(function(card) {
+      var cardItems = card.querySelectorAll('.perm-item-' + prefix);
+      var hasMatch = false;
+      cardItems.forEach(function(item) {
+        var text = item.getAttribute('data-search') || '';
+        if (text.indexOf(q) !== -1) {
+          item.style.display = '';
+          hasMatch = true;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      card.style.display = hasMatch ? '' : 'none';
     });
   }
 </script>
