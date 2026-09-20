@@ -542,6 +542,10 @@ def _get_attendance_summary_roster(request):
     req = request
     from_date_str = req.GET.get('from_date', '').strip()
     to_date_str = req.GET.get('to_date', '').strip()
+    date_param = req.GET.get('date', '').strip()
+    if date_param and not from_date_str and not to_date_str:
+        from_date_str = date_param
+        to_date_str = date_param
 
     today = timezone.now().date()
     default_from = today.replace(day=1)
@@ -794,12 +798,30 @@ class SummaryReportPdfExportView(RoleRequiredMixin, View):
 def _get_detail_data(request):
     tab = request.GET.get('tab', 'employees')
     dept_id = request.GET.get('department')
+    branch_id = request.GET.get('branch')
+    emp_id = request.GET.get('employee')
     status = request.GET.get('status')
     q = request.GET.get('q', '').strip()
 
-    emp_qs = Employee.objects.select_related('department', 'position').all().order_by('first_name')
+    from_date_str = request.GET.get('from_date', '').strip()
+    to_date_str = request.GET.get('to_date', '').strip()
+    date_param = request.GET.get('date', '').strip()
+    if date_param and not from_date_str and not to_date_str:
+        from_date_str = date_param
+        to_date_str = date_param
+
+    from_date = _parse_report_date(from_date_str, None) if from_date_str else None
+    to_date = _parse_report_date(to_date_str, None) if to_date_str else None
+    if from_date and to_date and from_date > to_date:
+        from_date, to_date = to_date, from_date
+
+    emp_qs = Employee.objects.select_related('department', 'position', 'branch').all().order_by('first_name')
     if dept_id:
         emp_qs = emp_qs.filter(department_id=dept_id)
+    if branch_id:
+        emp_qs = emp_qs.filter(branch_id=branch_id)
+    if emp_id:
+        emp_qs = emp_qs.filter(id=emp_id)
     if status:
         emp_qs = emp_qs.filter(status=status)
     if q:
@@ -810,11 +832,19 @@ def _get_detail_data(request):
             Q(email__icontains=q)
         )
 
-    pay_qs = Payroll.objects.select_related('employee', 'employee__department').all().order_by('-payroll_period')
+    pay_qs = Payroll.objects.select_related('employee', 'employee__department', 'employee__branch').all().order_by('-payroll_period')
     if dept_id:
         pay_qs = pay_qs.filter(employee__department_id=dept_id)
+    if branch_id:
+        pay_qs = pay_qs.filter(employee__branch_id=branch_id)
+    if emp_id:
+        pay_qs = pay_qs.filter(employee_id=emp_id)
     if status:
         pay_qs = pay_qs.filter(status=status)
+    if from_date:
+        pay_qs = pay_qs.filter(payroll_period__gte=from_date)
+    if to_date:
+        pay_qs = pay_qs.filter(payroll_period__lte=to_date)
     if q:
         pay_qs = pay_qs.filter(
             Q(employee__first_name__icontains=q) |
@@ -822,11 +852,19 @@ def _get_detail_data(request):
             Q(employee__employee_code__icontains=q)
         )
 
-    att_qs = Attendance.objects.select_related('employee', 'employee__department').all().order_by('-date')
+    att_qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__branch', 'employee__position').all().order_by('-date')
     if dept_id:
         att_qs = att_qs.filter(employee__department_id=dept_id)
+    if branch_id:
+        att_qs = att_qs.filter(employee__branch_id=branch_id)
+    if emp_id:
+        att_qs = att_qs.filter(employee_id=emp_id)
     if status:
         att_qs = att_qs.filter(status=status)
+    if from_date:
+        att_qs = att_qs.filter(date__gte=from_date)
+    if to_date:
+        att_qs = att_qs.filter(date__lte=to_date)
     if q:
         att_qs = att_qs.filter(
             Q(employee__first_name__icontains=q) |
@@ -836,6 +874,14 @@ def _get_detail_data(request):
 
     departments = Department.objects.filter(status=True)
 
+    date_range_display = ""
+    if from_date and to_date:
+        date_range_display = f"{from_date.strftime('%d-%m-%Y')} to {to_date.strftime('%d-%m-%Y')}"
+    elif from_date:
+        date_range_display = f"From {from_date.strftime('%d-%m-%Y')}"
+    elif to_date:
+        date_range_display = f"Up to {to_date.strftime('%d-%m-%Y')}"
+
     return {
         'tab': tab,
         'employees': emp_qs,
@@ -843,8 +889,277 @@ def _get_detail_data(request):
         'attendances': att_qs,
         'departments': departments,
         'selected_dept': dept_id or '',
+        'selected_branch': branch_id or '',
+        'selected_employee': emp_id or '',
         'selected_status': status or '',
         'search_query': q,
+        'from_date': from_date,
+        'to_date': to_date,
+        'from_date_str': from_date_str,
+        'to_date_str': to_date_str,
+        'date_range_display': date_range_display,
+    }
+
+
+def _get_detail_daily_records(employees, from_date, to_date):
+    emp_ids = [e.id for e in employees]
+    if not emp_ids:
+        return {
+            'daily_records': [],
+            'late_records': [],
+            'early_records': [],
+            'leave_records': [],
+            'absent_records': [],
+            'holiday_records': [],
+            'present_count': 0,
+            'late_count': 0,
+            'early_leave_count': 0,
+            'leave_count': 0,
+            'absent_count': 0,
+            'holiday_count': 0,
+        }
+
+    # Query attendance records in date range
+    att_qs = Attendance.objects.filter(
+        employee_id__in=emp_ids,
+        date__gte=from_date,
+        date__lte=to_date
+    ).select_related('employee', 'employee__department', 'employee__position', 'employee__branch').order_by('date', 'employee__first_name')
+
+    att_map = {(a.employee_id, a.date): a for a in att_qs}
+
+    # Query leave periods covering the date range
+    leave_periods = LeavePeriod.objects.filter(
+        leave_request__employee_id__in=emp_ids,
+        leave_request__status='approved',
+        start_date__lte=to_date,
+        end_date__gte=from_date
+    ).select_related(
+        'leave_request', 'leave_request__employee', 'leave_request__employee__department',
+        'leave_request__employee__position', 'leave_request__employee__branch',
+        'leave_request__leave_type'
+    )
+
+    leave_date_map = {}
+    for lp in leave_periods:
+        cur = max(lp.start_date, from_date)
+        end = min(lp.end_date, to_date)
+        while cur <= end:
+            leave_date_map[(lp.leave_request.employee_id, cur)] = lp
+            cur += datetime.timedelta(days=1)
+
+    # Schedules
+    sched_qs = EmployeeSchedule.objects.filter(employee_id__in=emp_ids)
+    sched_by_emp = {}
+    for s in sched_qs:
+        sched_by_emp.setdefault(s.employee_id, {})[s.day_of_week] = s
+
+    daily_records = []
+    late_records = []
+    early_records = []
+    leave_records = []
+    absent_records = []
+    holiday_records = []
+
+    total_days = (to_date - from_date).days + 1
+    for d in range(total_days):
+        cur_date = from_date + datetime.timedelta(days=d)
+        d_idx = cur_date.weekday()
+        date_str = cur_date.strftime("%Y-%m-%d")
+
+        for emp in employees:
+            att = att_map.get((emp.id, cur_date))
+            sched = sched_by_emp.get(emp.id, {}).get(d_idx)
+            lp = leave_date_map.get((emp.id, cur_date))
+
+            emp_name = f"{emp.first_name} {emp.last_name}".strip()
+            role_name = emp.position.name if emp.position else "Staff"
+            dept_name = emp.department.name if emp.department else "---"
+            branch_code = emp.branch.code or emp.branch.name if emp.branch else "F2"
+
+            is_off = (sched and not sched.is_work_day) or (d_idx in (5, 6) and not (sched and sched.is_work_day))
+            is_half = bool(sched.is_half_day) if sched else False
+
+            if is_off:
+                scheduled_day = 0.0
+                holiday_val = 1.0
+            elif is_half:
+                scheduled_day = 0.5
+                holiday_val = 0.5
+            else:
+                scheduled_day = 1.0
+                holiday_val = 0.0
+
+            leave_val = float(lp.days or 0) if lp else 0.0
+            if leave_val > 1.0:
+                leave_val = 1.0
+
+            attend_val = 0.0
+            if att and att.status != 'absent':
+                if att.working_hours:
+                    hrs = att.working_hours.total_seconds() / 3600.0
+                    if hrs >= 7.0:
+                        attend_val = 1.0
+                    elif hrs >= 5.0:
+                        attend_val = 0.75
+                    elif hrs >= 3.0:
+                        attend_val = 0.5
+                    elif hrs >= 1.0:
+                        attend_val = 0.25
+                    else:
+                        attend_val = 0.25
+                elif leave_val > 0:
+                    base_day = scheduled_day if scheduled_day > 0 else 1.0
+                    attend_val = max(0.0, base_day - leave_val)
+                elif is_half:
+                    attend_val = 0.5
+                else:
+                    attend_val = scheduled_day if scheduled_day > 0 else 1.0
+
+            if scheduled_day > 0:
+                absent_val = max(0.0, scheduled_day - attend_val - leave_val)
+            else:
+                absent_val = 0.0
+
+            # 1. Holiday List
+            if is_off and (attend_val == 0) and (leave_val == 0):
+                holiday_records.append({
+                    'no': len(holiday_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'duration': '1.0d',
+                    'note': 'Holiday / Off-day'
+                })
+            elif is_half:
+                holiday_records.append({
+                    'no': len(holiday_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'duration': '0.5d',
+                    'note': 'Half Day Off'
+                })
+
+            # 2. Leave List
+            if leave_val > 0:
+                leave_records.append({
+                    'no': len(leave_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'leave_type': lp.leave_request.leave_type.name if (lp and lp.leave_request and lp.leave_request.leave_type) else 'Leave',
+                    'duration': f"{_fmt_days(leave_val)}d",
+                    'note': (lp.leave_request.reason if lp and lp.leave_request else '') or 'Approved Leave'
+                })
+
+            # 3. Late List
+            if att and att.status == 'late':
+                ci_str = timezone.localtime(att.check_in).strftime('%H:%M') if att.check_in else '---'
+                late_note = 'Late Check-in'
+                if att.check_in and sched and sched.start_time:
+                    ci_time = timezone.localtime(att.check_in).time()
+                    diff_mins = (ci_time.hour * 60 + ci_time.minute) - (sched.start_time.hour * 60 + sched.start_time.minute)
+                    if diff_mins > 0:
+                        late_note = f"Late by {diff_mins} mins"
+                late_records.append({
+                    'no': len(late_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'check_in': ci_str,
+                    'note': late_note
+                })
+
+            # 4. Early Leave List
+            if att and att.status in ('early_leave', 'checkout_early'):
+                co_str = timezone.localtime(att.check_out).strftime('%H:%M') if att.check_out else '---'
+                early_note = 'Early Check-out'
+                if att.check_out and sched and sched.end_time:
+                    co_time = timezone.localtime(att.check_out).time()
+                    diff_mins = (sched.end_time.hour * 60 + sched.end_time.minute) - (co_time.hour * 60 + co_time.minute)
+                    if diff_mins > 0:
+                        early_note = f"Left early by {diff_mins} mins"
+                early_records.append({
+                    'no': len(early_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'check_out': co_str,
+                    'note': early_note
+                })
+
+            # 5. Absent List
+            if absent_val > 0:
+                absent_records.append({
+                    'no': len(absent_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'duration': f"{_fmt_days(absent_val)}d",
+                    'note': f"Absent {_fmt_days(absent_val)}d" if absent_val < scheduled_day else 'Absent / No Check-in'
+                })
+
+            # 6. Main Attendance List
+            if attend_val > 0:
+                ci_str = timezone.localtime(att.check_in).strftime('%H:%M') if (att and att.check_in) else '---'
+                co_str = timezone.localtime(att.check_out).strftime('%H:%M') if (att and att.check_out) else '---'
+                hrs_str = ''
+                if att and att.working_hours:
+                    tot_secs = int(att.working_hours.total_seconds())
+                    hrs_str = f"{tot_secs // 3600}h {(tot_secs % 3600) // 60}m"
+
+                dur_label = f"{_fmt_days(attend_val)}d"
+                is_danger = (attend_val < scheduled_day) or (att and att.status in ('late', 'early_leave', 'checkout_early'))
+
+                daily_records.append({
+                    'no': len(daily_records) + 1,
+                    'date': date_str,
+                    'raw_date': cur_date,
+                    'employee': emp,
+                    'name': emp_name,
+                    'position': role_name,
+                    'department': dept_name,
+                    'branch': branch_code,
+                    'check_in': ci_str,
+                    'check_out': co_str,
+                    'working_hours': hrs_str,
+                    'attendance_label': dur_label,
+                    'is_danger': is_danger,
+                    'attendance': att,
+                })
+
+    return {
+        'daily_records': daily_records,
+        'late_records': late_records,
+        'early_records': early_records,
+        'leave_records': leave_records,
+        'absent_records': absent_records,
+        'holiday_records': holiday_records,
+        'present_count': len(daily_records),
+        'late_count': len(late_records),
+        'early_leave_count': len(early_records),
+        'leave_count': len(leave_records),
+        'absent_count': len(absent_records),
+        'holiday_count': len(holiday_records),
     }
 
 
@@ -858,6 +1173,27 @@ class DetailReportView(RoleRequiredMixin, TemplateView):
         roster_data = _get_attendance_summary_roster(self.request)
         ctx.update(roster_data)
         ctx['detail_rows'] = roster_data['roster_rows']
+        ctx['summary_rows'] = roster_data['roster_rows']
+
+        # Query employees matching the same filters to build daily logs
+        branch_id = self.request.GET.get('branch', '').strip()
+        dept_id = self.request.GET.get('department', '').strip()
+        emp_id = self.request.GET.get('employee', '').strip()
+        show_resign = self.request.GET.get('show_resign') in ('on', 'true', '1')
+
+        emp_qs = Employee.objects.select_related('company', 'branch', 'department', 'position').all()
+        if not show_resign:
+            emp_qs = emp_qs.filter(status='active')
+        if branch_id:
+            emp_qs = emp_qs.filter(branch_id=branch_id)
+        if dept_id:
+            emp_qs = emp_qs.filter(department_id=dept_id)
+        if emp_id:
+            emp_qs = emp_qs.filter(id=emp_id)
+
+        employees = list(emp_qs.order_by('first_name', 'last_name'))
+        daily_data = _get_detail_daily_records(employees, roster_data['from_date'], roster_data['to_date'])
+        ctx.update(daily_data)
         return ctx
 
 
@@ -872,7 +1208,8 @@ class DetailReportExcelExportView(RoleRequiredMixin, View):
             payrolls=data['payrolls'],
             attendances=data['attendances'],
             company_name=_get_company_name(),
-            generated_by=generated_by
+            generated_by=generated_by,
+            date_range=data.get('date_range_display', '')
         )
         now_tag = timezone.now().strftime("%Y%m%d")
         filename = f"detail_master_ledger_{now_tag}.xlsx"
@@ -903,7 +1240,8 @@ class DetailReportPdfExportView(RoleRequiredMixin, View):
             category=tab,
             data_list=items,
             company_name=_get_company_name(),
-            generated_by=generated_by
+            generated_by=generated_by,
+            date_range=data.get('date_range_display', '')
         )
         now_tag = timezone.now().strftime("%Y%m%d")
         filename = f"detail_{tab}_ledger_{now_tag}.pdf"

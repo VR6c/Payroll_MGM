@@ -5,6 +5,7 @@ import html
 from decimal import Decimal
 
 from django.conf import settings
+from django.utils import timezone
 
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -1117,18 +1118,19 @@ def generate_summary_report_pdf(period_str, payrolls, dept_stats, summary_stats,
 # ==============================================================================
 
 def generate_detail_report_excel(employees, payrolls, attendances,
-                                  company_name="Payroll MGM", generated_by="Admin"):
+                                  company_name="Payroll MGM", generated_by="Admin", date_range=""):
     wb = openpyxl.Workbook()
 
     ws1 = wb.active
     ws1.title = "Employee Master Roster"
     ws1.views.sheetView[0].showGridLines = True
 
+    sub_e = f"Period: {date_range} • Total Records: {len(employees)}" if date_range else f"Total Records: {len(employees)}"
     add_excel_header_block(
         ws1,
         company_name=company_name,
         report_title="Employee Master Roster Ledger",
-        subtitle=f"Total Records: {len(employees)}",
+        subtitle=sub_e,
         generated_by=generated_by,
         max_col=10
     )
@@ -1176,11 +1178,12 @@ def generate_detail_report_excel(employees, payrolls, attendances,
     ws2 = wb.create_sheet(title="Payroll Register")
     ws2.views.sheetView[0].showGridLines = True
 
+    sub_p = f"Period: {date_range} • Total Records: {len(payrolls)}" if date_range else f"Total Records: {len(payrolls)}"
     add_excel_header_block(
         ws2,
         company_name=company_name,
         report_title="Payroll Master Register",
-        subtitle=f"Total Records: {len(payrolls)}",
+        subtitle=sub_p,
         generated_by=generated_by,
         max_col=11
     )
@@ -1234,11 +1237,12 @@ def generate_detail_report_excel(employees, payrolls, attendances,
     ws3 = wb.create_sheet(title="Attendance Ledger")
     ws3.views.sheetView[0].showGridLines = True
 
+    sub_a = f"Period: {date_range} • Total Records: {len(attendances)}" if date_range else f"Total Records: {len(attendances)}"
     add_excel_header_block(
         ws3,
         company_name=company_name,
         report_title="Attendance & Time Logs",
-        subtitle=f"Total Records: {len(attendances)}",
+        subtitle=sub_a,
         generated_by=generated_by,
         max_col=8
     )
@@ -1254,23 +1258,20 @@ def generate_detail_report_excel(employees, payrolls, attendances,
         c.alignment = ExcelTheme.ALIGN_HEADER
         c.border = ExcelTheme.BORDER_THIN
 
-    for r_idx, a in enumerate(attendances, start=6):
-        emp = a.employee
-        cin = a.check_in.strftime("%H:%M") if a.check_in else "-"
-        cout = a.check_out.strftime("%H:%M") if a.check_out else "-"
-        hours_str = str(a.working_hours).split('.')[0] if a.working_hours else "-"
-
+    for r_idx, att in enumerate(attendances, start=6):
+        emp = att.employee
+        dept_name = emp.department.name if emp.department else "-"
         ws3.row_dimensions[r_idx].height = 20
         row_vals = [
             (r_idx - 5, ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
-            (a.date.strftime("%Y-%m-%d"), ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
+            (att.date.strftime("%Y-%m-%d"), ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
             (emp.employee_code, ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
             (f"{emp.first_name} {emp.last_name}".strip(), ExcelTheme.ALIGN_LEFT, ExcelTheme.FONT_BOLD, None),
-            (emp.department.name if emp.department else "-", ExcelTheme.ALIGN_LEFT, ExcelTheme.FONT_REGULAR, None),
-            (cin, ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
-            (cout, ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
-            (hours_str, ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
-            (a.get_status_display(), ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_BOLD, None),
+            (dept_name, ExcelTheme.ALIGN_LEFT, ExcelTheme.FONT_REGULAR, None),
+            (timezone.localtime(att.check_in).strftime("%H:%M") if att.check_in else "-", ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
+            (timezone.localtime(att.check_out).strftime("%H:%M") if att.check_out else "-", ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
+            (str(att.working_hours).split(".")[0] if att.working_hours else "-", ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_REGULAR, None),
+            (att.get_status_display(), ExcelTheme.ALIGN_CENTER, ExcelTheme.FONT_BOLD, None),
         ]
         zebra = ExcelTheme.ZEBRA_FILL if r_idx % 2 == 0 else PatternFill(fill_type=None)
         for c_idx, (v, align, font, fmt) in enumerate(row_vals, start=1):
@@ -1291,7 +1292,7 @@ def generate_detail_report_excel(employees, payrolls, attendances,
 
 
 def generate_detail_report_pdf(category, data_list,
-                                company_name="Payroll MGM", generated_by="Admin"):
+                                company_name="Payroll MGM", generated_by="Admin", date_range=""):
     """Landscape detailed ledger — A4 Landscape."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -1314,12 +1315,16 @@ def generate_detail_report_pdf(category, data_list,
     }
     report_title = title_map.get(category, "Detailed Ledger Report")
 
+    sub_text = f"Comprehensive {category.title()} Records"
+    if date_range:
+        sub_text = f"Period: {date_range} • {sub_text}"
+
     header_left = [
         Paragraph(html.escape(company_name.upper()), styles['DocCompany']),
         Spacer(1, 3),
         Paragraph(report_title, styles['DocTitle']),
         Spacer(1, 2),
-        Paragraph(f"Comprehensive {category.title()} Records", styles['DocSubtitle']),
+        Paragraph(sub_text, styles['DocSubtitle']),
     ]
 
     header_right = [

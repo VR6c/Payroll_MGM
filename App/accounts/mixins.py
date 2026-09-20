@@ -3,14 +3,26 @@ from django.core.exceptions import PermissionDenied
 
 class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     required_roles = []
+    required_module = None
+    required_permission = None
 
     def test_func(self):
         user = self.request.user
         if not user or not user.is_authenticated:
             return False
-        if not self.required_roles:
+        if user.is_superuser or getattr(user, 'role', None) == 'super_admin':
             return True
-        return getattr(user, 'role', None) in self.required_roles
+        if not self.required_roles and not self.required_module and not self.required_permission:
+            return True
+        if self.required_roles and getattr(user, 'role', None) in self.required_roles:
+            return True
+        if self.required_permission and hasattr(user, 'has_permission'):
+            if user.has_permission(self.required_permission):
+                return True
+        if self.required_module and hasattr(user, 'has_module_access'):
+            if user.has_module_access(self.required_module):
+                return True
+        return False
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:

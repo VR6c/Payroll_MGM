@@ -55,12 +55,12 @@
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge bg-light text-dark border">
+                  <span class="text-dark">
                     {% if ot.overtime_type %}{{ ot.overtime_type.name }}{% else %}Standard ({{ ot.rate_multiplier }}x){% endif %}
                   </span>
                 </td>
                 <td>
-                  <span class="badge bg-light text-primary border fw-bold">{{ ot.hours }} hrs</span>
+                  <span class="fw-semibold text-primary">{{ ot.hours }} hrs</span>
                 </td>
                 <td class="fw-bold text-success">${{ ot.overtime_amount|floatformat:2 }}</td>
                 <td>

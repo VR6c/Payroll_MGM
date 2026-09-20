@@ -186,13 +186,13 @@
                 </td>
                 <td>
                   {% if ot.overtime_type %}
-                    <span class="badge bg-light text-dark border">{{ ot.overtime_type.name }}</span>
+                    <span class="text-dark">{{ ot.overtime_type.name }}</span>
                   {% else %}
-                    <span class="badge bg-light text-dark border">Standard ({{ ot.rate_multiplier }}x)</span>
+                    <span class="text-dark">Standard ({{ ot.rate_multiplier }}x)</span>
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge bg-light text-primary border fw-bold">{{ ot.hours }} hrs</span>
+                  <span class="fw-semibold text-primary">{{ ot.hours }} hrs</span>
                 </td>
                 <td class="text-muted small">${{ ot.hourly_rate }}</td>
                 <td>

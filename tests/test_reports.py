@@ -186,6 +186,26 @@ class ReportsAndExportsIntegrationTests(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertContains(resp, "Detailed Employee &amp; Payroll Master Ledger")
 
+    def test_detail_report_summary_and_daily_combined(self):
+        self.client.force_login(self.admin_user)
+        resp = self.client.get(reverse('reports:detail'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('detail_rows', resp.context)
+        self.assertIn('summary_rows', resp.context)
+        self.assertIn('daily_records', resp.context)
+        self.assertIn('late_records', resp.context)
+        self.assertIn('early_records', resp.context)
+        self.assertIn('leave_records', resp.context)
+        self.assertIn('absent_records', resp.context)
+        self.assertIn('holiday_records', resp.context)
+        self.assertContains(resp, "Attendance Summary Overview")
+        self.assertContains(resp, "Attendance List")
+        self.assertContains(resp, "Late List")
+        self.assertContains(resp, "Early List")
+        self.assertContains(resp, "Leave List")
+        self.assertContains(resp, "Absent List")
+        self.assertContains(resp, "Holiday List")
+
     def test_detail_report_excel_export(self):
         self.client.force_login(self.admin_user)
         resp = self.client.get(reverse('reports:detail_excel'))
@@ -202,6 +222,22 @@ class ReportsAndExportsIntegrationTests(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(resp['Content-Type'], 'application/pdf')
             self.assertTrue(resp.content.startswith(b'%PDF-'))
+
+    def test_detail_report_export_date_filtering(self):
+        self.client.force_login(self.admin_user)
+        # Test PDF export with date filter
+        resp = self.client.get(reverse('reports:detail_pdf') + '?tab=attendance&from_date=2026-08-01&to_date=2026-08-31')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+        self.assertTrue(resp.content.startswith(b'%PDF-'))
+
+        # Test Excel export with date filter
+        resp_excel = self.client.get(reverse('reports:detail_excel') + '?from_date=2026-08-01&to_date=2026-08-31')
+        self.assertEqual(resp_excel.status_code, 200)
+        self.assertEqual(resp_excel['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        wb = openpyxl.load_workbook(io.BytesIO(resp_excel.content))
+        self.assertEqual(set(wb.sheetnames), {"Employee Master Roster", "Payroll Register", "Attendance Ledger"})
+
 
     # -------------------------------------------------------------------------
     # OFFICIAL PAYSLIP PDF TESTS

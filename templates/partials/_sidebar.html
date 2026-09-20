@@ -13,16 +13,16 @@
 
     <!-- Setup Collapsible Dropdown -->
     <li
-      class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' %}active{% endif %}">
+      class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}active{% endif %}">
       <a class="nav-link" data-bs-toggle="collapse" href="#ui-setup"
-        aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' %}true{% else %}false{% endif %}"
+        aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}true{% else %}false{% endif %}"
         aria-controls="ui-setup">
         <i class="menu-icon mdi mdi-cog-outline"></i>
         <span class="menu-title">Setup</span>
         <i class="menu-arrow"></i>
       </a>
       <div
-        class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name == 'lunch_breaks' %}show{% endif %}"
+        class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}show{% endif %}"
         id="ui-setup">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item"><a
@@ -40,16 +40,18 @@
           <li class="nav-item"><a
               class="nav-link {% if request.resolver_match.url_name == 'schedules' %}active{% endif %}"
               href="{% url 'attendance:schedules' %}">Work Day / Time</a></li>
+          {% if request.user.role == 'super_admin' %}
           <li class="nav-item"><a
-              class="nav-link {% if request.resolver_match.url_name == 'lunch_breaks' %}active{% endif %}"
-              href="{% url 'attendance:lunch_breaks' %}">Lunch Breaks</a></li>
+              class="nav-link {% if request.resolver_match.url_name in 'user_list,role_list' %}active{% endif %}"
+              href="{% url 'accounts:user_list' %}">Users & RBAC</a></li>
+          {% endif %}
         </ul>
       </div>
     </li>
 
     <!-- Attendance Collapsible Dropdown -->
     <li
-      class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' and request.resolver_match.url_name != 'lunch_breaks' %}active{% endif %}">
+      class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}active{% endif %}">
       <a class="nav-link" data-bs-toggle="collapse" href="#ui-attendance"
         aria-expanded="{% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}true{% else %}false{% endif %}"
         aria-controls="ui-attendance">
@@ -72,6 +74,9 @@
               href="{% url 'attendance:report' %}?type=checkout_early">Checkout Early</a></li>
           <li class="nav-item"><a class="nav-link {% if request.GET.type == 'checkout_late' %}active{% endif %}"
               href="{% url 'attendance:report' %}?type=checkout_late">Checkout Late</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'lunch_breaks' %}active{% endif %}"
+              href="{% url 'attendance:lunch_breaks' %}">Lunch Breaks</a></li>
         </ul>
       </div>
     </li>

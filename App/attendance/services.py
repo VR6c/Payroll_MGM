@@ -39,12 +39,12 @@ class AttendanceService:
     def determine_status(cls, employee, date, check_in_dt, check_out_dt, user_status=None):
         """
         Determine appropriate attendance status based on check-in and check-out times.
-        Auto-evaluates early checkout against scheduled shift end.
+        Auto-evaluates late check-in and early checkout against scheduled shift hours.
         """
         if user_status == 'absent' or (not check_in_dt and not check_out_dt):
             return Attendance.Status.ABSENT
 
-        if user_status == 'checkout_early' or user_status == 'early_leave':
+        if user_status in ('checkout_early', 'early_leave'):
             return Attendance.Status.CHECKOUT_EARLY
 
         expected_start, expected_end = cls.get_scheduled_hours(employee, date)
@@ -52,18 +52,19 @@ class AttendanceService:
         ci_time = check_in_dt.time() if check_in_dt else None
         co_time = check_out_dt.time() if check_out_dt else None
 
+        # Check late check-in first (late arrival is an attendance infraction)
+        if ci_time and ci_time > expected_start:
+            return Attendance.Status.LATE
+
         # Early departure check (e.g., leaving at 16:24 when shift ends at 17:00)
         if co_time and co_time < expected_end:
             return Attendance.Status.CHECKOUT_EARLY
 
-        # If user explicitly requested a status (like 'present', 'overtime', 'late'), respect it
-        if user_status and user_status not in ('', None):
+        # If user explicitly requested a specific non-default status (like 'overtime'), respect it
+        if user_status and user_status not in ('', None, 'present'):
             return user_status
 
-        # If no user status provided, auto-evaluate
-        if ci_time and ci_time > expected_start:
-            return Attendance.Status.LATE
-
+        # If staying past shift end and no other condition triggered
         if co_time and co_time > expected_end:
             return Attendance.Status.OVERTIME
 
@@ -96,9 +97,11 @@ class AttendanceService:
         att.check_out = now
         expected_start, expected_end = cls.get_scheduled_hours(employee, today)
         if now.time() < expected_end:
-            att.status = Attendance.Status.CHECKOUT_EARLY
+            if att.status != Attendance.Status.LATE:
+                att.status = Attendance.Status.CHECKOUT_EARLY
         elif now.time() > expected_end:
-            att.status = Attendance.Status.OVERTIME
+            if att.status != Attendance.Status.LATE:
+                att.status = Attendance.Status.OVERTIME
         att.calculate_working_hours()
         att.save()
         log_activity(user, employee, 'ATTENDANCE', 'CHECK_OUT', f'Checked out at {now.strftime("%H:%M")}')

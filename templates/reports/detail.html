@@ -10,6 +10,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2 no-print">
       <div>
         <h2 class="fw-bold text-dark mb-0" style="font-size: 1.65rem; letter-spacing: -0.02em;">Detail Reports</h2>
+        <p class="text-muted small mb-0 mt-1">Unified Period Summary &amp; Granular Daily Activity Ledger</p>
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -85,9 +86,9 @@
           </div>
 
           <!-- Row 3: Action Buttons -->
-          <div class="d-flex flex-wrap gap-2 pt-1">
+          <div class="d-flex flex-wrap gap-2 pt-1 mb-3">
             <button type="submit" class="btn btn-primary shadow-sm">
-              <i class="mdi mdi-filter-variant"></i> Filter & View Report
+              <i class="mdi mdi-filter-variant"></i> Filter &amp; View Report
             </button>
             <a href="{% url 'reports:detail' %}" class="btn btn-outline-secondary shadow-sm">
               <i class="mdi mdi-refresh"></i> Clear
@@ -95,9 +96,39 @@
             <button type="button" onclick="window.print()" class="btn btn-warning shadow-sm">
               <i class="mdi mdi-printer"></i> Print
             </button>
-            <a href="{% url 'reports:detail_excel' %}?department={{ selected_dept }}&status={{ selected_status }}"
-              class="btn btn-success shadow-sm">
-              <i class="mdi mdi-download"></i> Export
+            <a href="{% url 'reports:detail_excel' %}?from_date={{ from_date_str }}&amp;to_date={{ to_date_str }}&amp;department={{ selected_dept }}&amp;branch={{ selected_branch }}&amp;employee={{ selected_employee }}&amp;status={{ selected_status }}"
+              class="btn btn-success shadow-sm" id="btnExportExcel">
+              <i class="mdi mdi-file-excel"></i> Export Excel
+            </a>
+            <a href="{% url 'reports:detail_pdf' %}?tab=attendance&amp;from_date={{ from_date_str }}&amp;to_date={{ to_date_str }}&amp;department={{ selected_dept }}&amp;branch={{ selected_branch }}&amp;employee={{ selected_employee }}&amp;status={{ selected_status }}"
+              class="btn btn-danger shadow-sm" id="btnExportPdf">
+              <i class="mdi mdi-file-pdf-box"></i> Export PDF
+            </a>
+          </div>
+
+          <!-- Quick Navigation Pills -->
+          <div class="d-flex flex-wrap align-items-center gap-1 pt-2 border-top">
+            <span class="small fw-bold text-muted me-2" style="font-size: 11px;">JUMP TO:</span>
+            <a href="#sec-summary" class="btn btn-sm btn-outline-dark py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-table me-1"></i>Summary ({{ detail_rows|length }})
+            </a>
+            <a href="#sec-attendance" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-account-check me-1"></i>Attendance ({{ daily_records|length }})
+            </a>
+            <a href="#sec-late" class="btn btn-sm btn-outline-warning py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-clock-alert-outline me-1"></i>Late ({{ late_records|length }})
+            </a>
+            <a href="#sec-early" class="btn btn-sm btn-outline-warning py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-clock-fast me-1"></i>Early ({{ early_records|length }})
+            </a>
+            <a href="#sec-leave" class="btn btn-sm btn-outline-info py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-calendar-account-outline me-1"></i>Leave ({{ leave_records|length }})
+            </a>
+            <a href="#sec-absent" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-account-remove-outline me-1"></i>Absent ({{ absent_records|length }})
+            </a>
+            <a href="#sec-holiday" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size: 11px;">
+              <i class="mdi mdi-beach me-1"></i>Holiday ({{ holiday_records|length }})
             </a>
           </div>
         </form>
@@ -115,7 +146,9 @@
             <img src="{% static 'assets/images/salary.png' %}" alt="Company Logo"
               style="height: 52px; width: auto; object-fit: contain;" class="d-inline-block">
           </div>
-          <h3 class="fw-bold text-dark mb-1" style="font-size: 22px; letter-spacing: -0.01em;">Detail Report <span class="d-none">Detailed Employee &amp; Payroll Master Ledger</span></h3>
+          <h3 class="fw-bold text-dark mb-1" style="font-size: 22px; letter-spacing: -0.01em;">
+            Detail Report <span class="d-none">Detailed Employee &amp; Payroll Master Ledger</span>
+          </h3>
           <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap text-muted mt-2" style="font-size: 13px;">
             <span>
               <i class="mdi mdi-calendar-range text-primary me-1"></i>Period: <strong class="text-dark">{{ date_range_display }}</strong>
@@ -152,54 +185,434 @@
           <i class="mdi mdi-arrow-left-right me-1 text-primary"></i>Swipe table horizontally to view all columns
         </div>
 
-        <!-- Attendance Detail Grid Table -->
-        <div class="table-responsive mb-4">
-          <table class="report-grid-table w-100">
-            <thead>
-              <tr>
-                <th style="width: 45px; text-align: center;">NO</th>
-                <th style="width: 23%;">NAME</th>
-                <th style="width: 17%;">DEPARTMENT</th>
-                <th style="width: 9%; text-align: center;">ATTEND</th>
-                <th style="width: 9%; text-align: center;">ABSENT</th>
-                <th style="width: 9%; text-align: center;">LEAVE</th>
-                <th style="width: 11%; text-align: center;">HOLIDAY</th>
-                <th style="width: 11%; text-align: center;">LATE</th>
-                <th style="width: 11%; text-align: center;">EARLY</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in detail_rows %}
-              <tr>
-                <td style="text-align: center; font-size: 11px;">{{ row.no }}</td>
-                <td>
-                  <div class="fw-bold text-dark" style="font-size: 11px; line-height: 1.25;">{{ row.name }}</div>
-                  <div class="text-muted" style="font-size: 9.5px;">{{ row.position }}</div>
-                </td>
-                <td>
-                  <div class="text-dark" style="font-size: 11px; line-height: 1.25;">{{ row.department }}</div>
-                  <div class="text-muted" style="font-size: 9.5px;">{{ row.branch }}</div>
-                </td>
-                <td style="text-align: center; font-size: 11px;">{{ row.attend }}</td>
-                <td style="text-align: center; font-size: 11px;">{{ row.absent }}</td>
-                <td style="text-align: center; font-size: 11px;">{{ row.leave }}</td>
-                <td style="text-align: center; font-size: 11px;">{{ row.holiday }}</td>
-                <td style="text-align: center; font-size: 11px;">
-                  <span class="{% if row.late > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ row.late }}</span>
-                </td>
-                <td style="text-align: center; font-size: 11px;">
-                  <span class="{% if row.early > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ row.early }}</span>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="9" class="text-center py-4 text-muted small">
-                  <i class="mdi mdi-information-outline me-1"></i> No employee detail data available for the selected period.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <!-- ============================================================= -->
+        <!-- PART 1: ATTENDANCE SUMMARY (SUMMARY REPORT COMPONENT)         -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-5" id="sec-summary">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #334155; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-chart-donut fs-6"></i> Attendance Summary Overview
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #334155 !important;">
+              {{ detail_rows|length }} Employees
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 23%;">NAME</th>
+                  <th style="width: 17%;">DEPARTMENT</th>
+                  <th style="width: 9%; text-align: center;">ATTEND</th>
+                  <th style="width: 9%; text-align: center;">ABSENT</th>
+                  <th style="width: 9%; text-align: center;">LEAVE</th>
+                  <th style="width: 11%; text-align: center;">HOLIDAY</th>
+                  <th style="width: 11%; text-align: center;">LATE</th>
+                  <th style="width: 11%; text-align: center;">EARLY</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in detail_rows %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ row.no }}</td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11px; line-height: 1.25;">{{ row.name }}</div>
+                    <div class="text-muted" style="font-size: 9.5px;">{{ row.position }}</div>
+                  </td>
+                  <td>
+                    <div class="text-dark" style="font-size: 11px; line-height: 1.25;">{{ row.department }}</div>
+                    <div class="text-muted" style="font-size: 9.5px;">{{ row.branch }}</div>
+                  </td>
+                  <td style="text-align: center; font-size: 11px;">{{ row.attend }}</td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="{% if row.absent > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ row.absent }}</span>
+                  </td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="{% if row.leave > 0 %}text-primary fw-bold{% else %}text-muted{% endif %}">{{ row.leave }}</span>
+                  </td>
+                  <td style="text-align: center; font-size: 11px;">{{ row.holiday }}</td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="{% if row.late > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ row.late }}</span>
+                  </td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="{% if row.early > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ row.early }}</span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="9" class="text-center py-4 text-muted small">
+                    <i class="mdi mdi-information-outline me-1"></i> No employee summary data available for the selected period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section Divider for Daily Breakdown -->
+        <div class="d-flex align-items-center my-4 py-2 border-top border-bottom bg-light px-3 rounded">
+          <i class="mdi mdi-calendar-multiselect text-primary me-2 fs-5"></i>
+          <h5 class="fw-bold text-dark mb-0" style="font-size: 14px; letter-spacing: -0.01em;">
+            DAILY ACTIVITY BREAKDOWN &amp; LOGS
+          </h5>
+          <span class="ms-auto text-muted small" style="font-size: 11px;">
+            Granular Event Logs for Period: {{ date_range_display }}
+          </span>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 2: DAILY ATTENDANCE LIST (DAILY COMPONENT)               -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-attendance">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #0284c7; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-account-check fs-6"></i> Attendance List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #0284c7 !important;">
+              {{ daily_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 25%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 13%;">BRANCH</th>
+                  <th style="width: 10%; text-align: center;">CHECK IN</th>
+                  <th style="width: 10%; text-align: center;">CHECK OUT</th>
+                  <th style="width: 10%; text-align: center;">ATTENDANCE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in daily_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ row.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ row.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ row.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ row.position }}</div>
+                  </td>
+                  <td>
+                    <div class="text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ row.department }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ row.branch }}</td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="text-dark">{{ row.check_in }}</span>
+                  </td>
+                  <td style="text-align: center; font-size: 11px;">
+                    <span class="text-dark">{{ row.check_out }}</span>
+                  </td>
+                  <td style="text-align: center;">
+                    <span class="{% if row.is_danger %}text-danger{% else %}text-success{% endif %} fw-semibold"
+                      style="font-size: 11px;">
+                      {{ row.attendance_label }}
+                    </span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No employee attendance activity recorded in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 3: LATE LIST (DAILY COMPONENT)                           -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-late">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #d97706; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-clock-alert-outline fs-6"></i> Late List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #d97706 !important;">
+              {{ late_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 24%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 14%;">BRANCH</th>
+                  <th style="width: 12%; text-align: center;">CHECK IN</th>
+                  <th style="width: 18%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for l in late_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ l.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ l.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ l.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ l.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ l.department }}</td>
+                  <td style="font-size: 11px;">{{ l.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-danger fw-semibold" style="font-size: 11px;">{{ l.check_in }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ l.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No late check-in records in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 4: EARLY LIST (DAILY COMPONENT)                          -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-early">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #ea580c; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-clock-fast fs-6"></i> Early List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #ea580c !important;">
+              {{ early_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 24%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 14%;">BRANCH</th>
+                  <th style="width: 12%; text-align: center;">CHECK OUT</th>
+                  <th style="width: 18%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in early_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ e.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ e.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ e.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ e.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ e.department }}</td>
+                  <td style="font-size: 11px;">{{ e.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-dark fw-semibold" style="font-size: 11px;">{{ e.check_out }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ e.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No early leave records in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 5: LEAVE LIST (DAILY COMPONENT)                          -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-leave">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #6366f1; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-calendar-account-outline fs-6"></i> Leave List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #6366f1 !important;">
+              {{ leave_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 23%;">NAME</th>
+                  <th style="width: 18%;">DEPARTMENT</th>
+                  <th style="width: 13%;">BRANCH</th>
+                  <th style="width: 14%;">LEAVE TYPE</th>
+                  <th style="width: 8%; text-align: center;">DAYS</th>
+                  <th style="width: 12%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lv in leave_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ lv.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ lv.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ lv.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ lv.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ lv.department }}</td>
+                  <td style="font-size: 11px;">{{ lv.branch }}</td>
+                  <td style="font-size: 11px;">{{ lv.leave_type }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-primary fw-semibold" style="font-size: 11px;">{{ lv.duration }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ lv.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No employee leave records in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 6: ABSENT LIST (DAILY COMPONENT)                         -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-absent">
+          <div
+            class="section-banner px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #dc2626; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-account-remove-outline fs-6"></i> Absent List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #dc2626 !important;">
+              {{ absent_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 24%;">NAME</th>
+                  <th style="width: 20%;">DEPARTMENT</th>
+                  <th style="width: 14%;">BRANCH</th>
+                  <th style="width: 12%; text-align: center;">ABSENT</th>
+                  <th style="width: 18%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in absent_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ a.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ a.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ a.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ a.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ a.department }}</td>
+                  <td style="font-size: 11px;">{{ a.branch }}</td>
+                  <td style="text-align: center;">
+                    <span class="text-danger fw-semibold" style="font-size: 11px;">{{ a.duration }}</span>
+                  </td>
+                  <td style="font-size: 11px;">{{ a.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> No absent employees in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- PART 7: HOLIDAY LIST (DAILY COMPONENT)                        -->
+        <!-- ============================================================= -->
+        <div class="report-section mb-4" id="sec-holiday">
+          <div
+            class="section-banner holiday-header px-3 py-2 fw-bold text-white text-uppercase d-flex justify-content-between align-items-center"
+            style="background-color: #16a34a; font-size: 11.5px; letter-spacing: 0.03em;">
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="mdi mdi-beach fs-6"></i> Holiday List
+            </span>
+            <span class="badge bg-white fw-bold px-2 py-0.5" style="font-size: 10px; color: #16a34a !important;">
+              {{ holiday_records|length }}
+            </span>
+          </div>
+          <div class="table-responsive">
+            <table class="report-grid-table w-100">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">NO</th>
+                  <th style="width: 12%; text-align: center;">DATE</th>
+                  <th style="width: 24%;">NAME</th>
+                  <th style="width: 22%;">DEPARTMENT</th>
+                  <th style="width: 16%;">BRANCH</th>
+                  <th style="width: 26%;">NOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in holiday_records %}
+                <tr>
+                  <td style="text-align: center; font-size: 11px;">{{ h.no }}</td>
+                  <td style="text-align: center; font-size: 10.5px; font-weight: 600; color: #475569;">
+                    {{ h.date }}
+                  </td>
+                  <td>
+                    <div class="fw-bold text-dark" style="font-size: 11.5px; line-height: 1.25;">{{ h.name }}</div>
+                    <div class="text-muted" style="font-size: 10px;">{{ h.position }}</div>
+                  </td>
+                  <td style="font-size: 11px;">{{ h.department }}</td>
+                  <td style="font-size: 11px;">{{ h.branch }}</td>
+                  <td style="font-size: 11px;">{{ h.note }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center py-3 text-muted" style="font-size: 11px;">
+                    <i class="mdi mdi-information-outline me-1"></i> No scheduled public holiday or off-duty staff in this period.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
@@ -208,6 +621,11 @@
 </div>
 
 <style>
+  /* Smooth scroll for quick anchor navigation */
+  html {
+    scroll-behavior: smooth;
+  }
+
   /* Hide duplicate Chrome/Safari native calendar indicator */
   input[type="date"]::-webkit-calendar-picker-indicator,
   .report-date-input::-webkit-calendar-picker-indicator {
@@ -248,6 +666,15 @@
     background-color: #f8fafc;
   }
 
+  .section-banner,
+  .holiday-header {
+    letter-spacing: 0.03em;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
   .report-paper {
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
@@ -258,7 +685,8 @@
   /* Smooth scrolling for responsive tables */
   .table-responsive {
     -webkit-overflow-scrolling: touch;
-    border-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
   }
 
   .table-responsive::-webkit-scrollbar {
@@ -330,9 +758,15 @@
       color: #000 !important;
     }
 
+    .report-section,
     .report-grid-table tr {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
+    }
+
+    .section-banner {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     .badge {
@@ -342,4 +776,42 @@
     }
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    function getExportUrl(baseUrl, extraParams) {
+      var form = document.getElementById('detailFilterForm');
+      var fd = new FormData(form);
+      var params = new URLSearchParams();
+      for (var pair of fd.entries()) {
+        if (pair[1]) {
+          params.set(pair[0], pair[1]);
+        }
+      }
+      if (extraParams) {
+        for (var k in extraParams) {
+          params.set(k, extraParams[k]);
+        }
+      }
+      var qs = params.toString();
+      return baseUrl + (qs ? ('?' + qs) : '');
+    }
+
+    var btnExcel = document.getElementById('btnExportExcel');
+    if (btnExcel) {
+      btnExcel.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = getExportUrl("{% url 'reports:detail_excel' %}");
+      });
+    }
+
+    var btnPdf = document.getElementById('btnExportPdf');
+    if (btnPdf) {
+      btnPdf.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = getExportUrl("{% url 'reports:detail_pdf' %}", { tab: 'attendance' });
+      });
+    }
+  });
+</script>
 {% endblock %}

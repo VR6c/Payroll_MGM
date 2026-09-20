@@ -45,7 +45,7 @@
               {% for lr in leaves %}
               <tr>
                 <td class="fw-semibold text-dark">{{ lr.leave_type.name }}</td>
-                <td><span class="badge bg-light text-dark border fw-bold">{{ lr.total_days }} Days</span></td>
+                <td><span class="fw-semibold text-dark">{{ lr.total_days }} Days</span></td>
                 <td>
                   {% if lr.status == 'approved' %}
                     <span class="badge bg-success">Approved</span>

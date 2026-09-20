@@ -46,7 +46,7 @@
               <tr>
                 <td>{{ forloop.counter }}</td>
                 <td class="fw-semibold text-dark">{{ pos.name }}</td>
-                <td><span class="badge bg-light text-dark border">{{ pos.department.name|default:"General / All" }}</span></td>
+                <td><span class="text-dark">{{ pos.department.name|default:"General / All" }}</span></td>
                 <td>{{ pos.company.name }}</td>
                 <td>{{ pos.description|default:"-" }}</td>
                 <td>

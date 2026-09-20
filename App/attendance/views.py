@@ -326,7 +326,7 @@ class AttendanceCreateView(RoleRequiredMixin, View):
                 if record_status == 'early_leave':
                     record_status = Attendance.Status.CHECKOUT_EARLY
                 elif record_status in ('present', '', None) and (ci_dt or co_dt):
-                    record_status = AttendanceService.determine_status(emp, d, ci_dt, co_dt, user_status=status)
+                    record_status = AttendanceService.determine_status(emp, d, ci_dt, co_dt, user_status=None)
 
                 existing = Attendance.objects.filter(employee=emp, date=d).first()
                 if existing:
@@ -395,9 +395,9 @@ class AttendanceUpdateView(RoleRequiredMixin, UpdateView):
             att.working_hours = None
         if att.status == 'early_leave':
             att.status = Attendance.Status.CHECKOUT_EARLY
-        elif att.status == 'present' and att.check_out:
+        elif att.status == 'present' and (att.check_in or att.check_out):
             att.status = AttendanceService.determine_status(
-                att.employee, att.date, att.check_in, att.check_out, user_status='present'
+                att.employee, att.date, att.check_in, att.check_out, user_status=None
             )
         att.save()
         messages.success(self.request, "Attendance record updated successfully!")
@@ -496,6 +496,53 @@ class LunchBreakDeleteView(RoleRequiredMixin, DeleteView):
         return super().post(request, *args, **kwargs)
 
 
+def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date=None, to_date=None, date_str=None):
+    if filter_type == 'checkin_early':
+        qs = qs.filter(
+            Q(status='present') | Q(check_in__time__lte=datetime.time(8, 0), check_in__isnull=False)
+        ).exclude(status__in=['late', 'checkout_early'])
+    elif filter_type == 'checkin_late':
+        qs = qs.filter(
+            Q(status='late') | Q(check_in__time__gt=datetime.time(8, 0), check_in__isnull=False)
+        )
+    elif filter_type == 'checkout_early':
+        qs = qs.filter(
+            Q(status='checkout_early') |
+            Q(check_out__time__lt=datetime.time(17, 0), check_out__isnull=False)
+        )
+    elif filter_type == 'checkout_late':
+        qs = qs.filter(
+            Q(status='overtime') |
+            Q(check_out__time__gt=datetime.time(17, 0), check_out__isnull=False)
+        )
+
+    if status:
+        if status == 'late':
+            qs = qs.filter(
+                Q(status='late') | Q(check_in__time__gt=datetime.time(8, 0), check_in__isnull=False)
+            )
+        elif status == 'checkout_early':
+            qs = qs.filter(
+                Q(status='checkout_early') |
+                Q(check_out__time__lt=datetime.time(17, 0), check_out__isnull=False)
+            )
+        elif status == 'overtime':
+            qs = qs.filter(
+                Q(status='overtime') |
+                Q(check_out__time__gt=datetime.time(17, 0), check_out__isnull=False)
+            )
+        else:
+            qs = qs.filter(status=status)
+
+    if from_date:
+        qs = qs.filter(date__gte=from_date)
+    if to_date:
+        qs = qs.filter(date__lte=to_date)
+    if date_str and not from_date and not to_date:
+        qs = qs.filter(date=date_str)
+    return qs
+
+
 class AttendanceReportView(RoleRequiredMixin, ListView):
     model = Attendance
     template_name = 'attendance/report.html'
@@ -505,40 +552,14 @@ class AttendanceReportView(RoleRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
-        filter_type = self.request.GET.get('type')
-        status = self.request.GET.get('status')
-        from_date = self.request.GET.get('from_date')
-        to_date = self.request.GET.get('to_date')
-        date_str = self.request.GET.get('date')
-
-        if filter_type == 'checkin_early':
-            qs = qs.filter(
-                Q(status='present') | Q(check_in__time__lte=datetime.time(8, 0), check_in__isnull=False)
-            ).exclude(status__in=['late', 'checkout_early'])
-        elif filter_type == 'checkin_late':
-            qs = qs.filter(
-                Q(status='late') | Q(check_in__time__gt=datetime.time(8, 0), check_in__isnull=False)
-            )
-        elif filter_type == 'checkout_early':
-            qs = qs.filter(
-                Q(status='checkout_early') |
-                Q(check_out__time__lt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif filter_type == 'checkout_late':
-            qs = qs.filter(
-                Q(status='overtime') |
-                Q(check_out__time__gt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif status:
-            qs = qs.filter(status=status)
-
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if date_str and not from_date and not to_date:
-            qs = qs.filter(date=date_str)
-        return qs
+        return apply_attendance_report_filters(
+            qs,
+            filter_type=self.request.GET.get('type'),
+            status=self.request.GET.get('status'),
+            from_date=self.request.GET.get('from_date'),
+            to_date=self.request.GET.get('to_date'),
+            date_str=self.request.GET.get('date'),
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -554,39 +575,14 @@ class AttendanceReportExcelExportView(RoleRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
-        filter_type = request.GET.get('type')
-        status = request.GET.get('status')
-        from_date = request.GET.get('from_date')
-        to_date = request.GET.get('to_date')
-        date_str = request.GET.get('date')
-
-        if filter_type == 'checkin_early':
-            qs = qs.filter(
-                Q(status='present') | Q(check_in__time__lte=datetime.time(8, 0), check_in__isnull=False)
-            ).exclude(status__in=['late', 'checkout_early'])
-        elif filter_type == 'checkin_late':
-            qs = qs.filter(
-                Q(status='late') | Q(check_in__time__gt=datetime.time(8, 0), check_in__isnull=False)
-            )
-        elif filter_type == 'checkout_early':
-            qs = qs.filter(
-                Q(status='checkout_early') |
-                Q(check_out__time__lt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif filter_type == 'checkout_late':
-            qs = qs.filter(
-                Q(status='overtime') |
-                Q(check_out__time__gt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif status:
-            qs = qs.filter(status=status)
-
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if date_str and not from_date and not to_date:
-            qs = qs.filter(date=date_str)
+        qs = apply_attendance_report_filters(
+            qs,
+            filter_type=request.GET.get('type'),
+            status=request.GET.get('status'),
+            from_date=request.GET.get('from_date'),
+            to_date=request.GET.get('to_date'),
+            date_str=request.GET.get('date'),
+        )
 
         generated_by = request.user.get_full_name() or request.user.username
         excel_bytes = generate_attendance_list_excel(qs, generated_by=generated_by)
@@ -604,39 +600,14 @@ class AttendanceReportPdfExportView(RoleRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
-        filter_type = request.GET.get('type')
-        status = request.GET.get('status')
-        from_date = request.GET.get('from_date')
-        to_date = request.GET.get('to_date')
-        date_str = request.GET.get('date')
-
-        if filter_type == 'checkin_early':
-            qs = qs.filter(
-                Q(status='present') | Q(check_in__time__lte=datetime.time(8, 0), check_in__isnull=False)
-            ).exclude(status__in=['late', 'checkout_early'])
-        elif filter_type == 'checkin_late':
-            qs = qs.filter(
-                Q(status='late') | Q(check_in__time__gt=datetime.time(8, 0), check_in__isnull=False)
-            )
-        elif filter_type == 'checkout_early':
-            qs = qs.filter(
-                Q(status='checkout_early') |
-                Q(check_out__time__lt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif filter_type == 'checkout_late':
-            qs = qs.filter(
-                Q(status='overtime') |
-                Q(check_out__time__gt=datetime.time(17, 0), check_out__isnull=False)
-            )
-        elif status:
-            qs = qs.filter(status=status)
-
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if date_str and not from_date and not to_date:
-            qs = qs.filter(date=date_str)
+        qs = apply_attendance_report_filters(
+            qs,
+            filter_type=request.GET.get('type'),
+            status=request.GET.get('status'),
+            from_date=request.GET.get('from_date'),
+            to_date=request.GET.get('to_date'),
+            date_str=request.GET.get('date'),
+        )
 
         generated_by = request.user.get_full_name() or request.user.username
         pdf_bytes = generate_detail_report_pdf('attendance', qs, generated_by=generated_by)

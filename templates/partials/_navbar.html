@@ -40,6 +40,9 @@
             <span class="badge bg-primary text-white mt-2">{{ request.user.get_role_display }}</span>
           </div>
           <a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Change Password</a>
+          {% if request.user.role == 'super_admin' %}
+          <a class="dropdown-item" href="{% url 'accounts:user_list' %}"><i class="dropdown-item-icon mdi mdi-shield-account-outline text-primary me-2"></i> Users & RBAC</a>
+          {% endif %}
           <div class="dropdown-divider"></div>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}

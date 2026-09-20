@@ -48,7 +48,7 @@
               <tr>
                 <td class="fw-semibold text-dark">{{ struct.employee.first_name }} {{ struct.employee.last_name }}</td>
                 <td>{{ struct.employee.department.name|default:"-" }}</td>
-                <td><span class="badge bg-light text-dark border fw-bold">${{ struct.basic_salary }}</span></td>
+                <td><span class="fw-semibold text-dark">${{ struct.basic_salary }}</span></td>
                 <td>${{ struct.transportation }}</td>
                 <td>${{ struct.housing }}</td>
                 <td>${{ struct.meal_allowance }}</td>

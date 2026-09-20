@@ -196,13 +196,13 @@
                 <td>{{ forloop.counter }}</td>
                 <td class="fw-bold text-dark">{{ d.dept_name }}</td>
                 <td class="text-center">
-                  <span class="badge bg-light text-dark border">{{ d.emp_count }}</span>
+                  <span class="fw-semibold text-dark">{{ d.emp_count }}</span>
                 </td>
                 <td class="text-center">{{ d.session_count }}</td>
                 <td class="text-end fw-semibold">{{ d.total_hours|floatformat:2 }} hrs</td>
                 <td class="text-end fw-bold text-success">${{ d.total_amount|floatformat:2 }}</td>
                 <td>
-                  <span class="badge bg-light text-primary border fw-bold">
+                  <span class="fw-semibold text-primary">
                     {% widthratio d.total_amount total_amount 100 %}%
                   </span>
                 </td>
@@ -244,11 +244,11 @@
               {% for emp in employee_breakdown %}
               <tr>
                 <td>{{ forloop.counter }}</td>
-                <td><span class="badge bg-light text-dark border">{{ emp.emp_code }}</span></td>
+                <td><span class="fw-semibold text-dark">{{ emp.emp_code }}</span></td>
                 <td class="fw-bold text-dark">{{ emp.emp_name }}</td>
                 <td>{{ emp.dept_name }}</td>
                 <td class="text-center">
-                  <span class="badge bg-light text-success border fw-bold">{{ emp.approved_count }} / {{ emp.session_count }}</span>
+                  <span class="fw-semibold text-success">{{ emp.approved_count }} / {{ emp.session_count }}</span>
                 </td>
                 <td class="text-end fw-semibold">{{ emp.total_hours|floatformat:2 }} hrs</td>
                 <td class="text-end fw-bold text-success fs-6">${{ emp.total_amount|floatformat:2 }}</td>
@@ -299,7 +299,7 @@
                 </td>
                 <td>{{ ot.employee.department.name|default:"-" }}</td>
                 <td>
-                  <span class="badge bg-light text-dark border">
+                  <span class="text-dark">
                     {% if ot.overtime_type %}{{ ot.overtime_type.name }}{% else %}Standard ({{ ot.rate_multiplier }}x){% endif %}
                   </span>
                 </td>
