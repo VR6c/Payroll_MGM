@@ -48,7 +48,7 @@
                 <p class="mb-0">Leave Balance</p>
                 <i class="mdi mdi-calendar-account fs-3"></i>
               </div>
-              <h3 class="fw-bold mb-2">{{ leave_balance.remaining_days|default:"0" }} Days</h3>
+              <h3 class="fw-bold mb-2"><span class="counter-value" data-counter>{{ leave_balance.remaining_days|default:"0" }}</span> Days</h3>
               <p class="mb-0 small opacity-75">Remaining for year {% now "Y" %}</p>
             </div>
           </div>
@@ -61,7 +61,7 @@
                 <p class="mb-0">Latest Net Salary</p>
                 <i class="mdi mdi-cash-multiple fs-3"></i>
               </div>
-              <h3 class="fw-bold mb-2">${{ recent_payslips.0.net_salary|default:"N/A" }}</h3>
+              <h3 class="fw-bold mb-2">$<span class="counter-value" data-counter>{{ recent_payslips.0.net_salary|default:"N/A" }}</span></h3>
               <p class="mb-0 small opacity-75">
                 {% if recent_payslips.0 %}
                   Period: {{ recent_payslips.0.payroll_period|date:"M Y" }}
@@ -151,19 +151,19 @@
           <div class="statistics-details d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-3 bg-white rounded shadow-sm">
             <div>
               <p class="statistics-title text-muted mb-1">Active Employees</p>
-              <h3 class="rate-percentage fw-bold text-primary mb-0">{{ total_employees }}</h3>
+              <h3 class="rate-percentage fw-bold text-primary mb-0 counter-value" data-counter>{{ total_employees }}</h3>
             </div>
             <div>
               <p class="statistics-title text-muted mb-1">Present Today</p>
-              <h3 class="rate-percentage fw-bold text-success mb-0">{{ present_today }}</h3>
+              <h3 class="rate-percentage fw-bold text-success mb-0 counter-value" data-counter>{{ present_today }}</h3>
             </div>
             <div>
               <p class="statistics-title text-muted mb-1">Late Today</p>
-              <h3 class="rate-percentage fw-bold text-warning mb-0">{{ late_today }}</h3>
+              <h3 class="rate-percentage fw-bold text-warning mb-0 counter-value" data-counter>{{ late_today }}</h3>
             </div>
             <div>
               <p class="statistics-title text-muted mb-1">Pending Leaves</p>
-              <h3 class="rate-percentage fw-bold text-info mb-0">{{ pending_leaves }}</h3>
+              <h3 class="rate-percentage fw-bold text-info mb-0 counter-value" data-counter>{{ pending_leaves }}</h3>
             </div>
           </div>
         </div>

@@ -245,7 +245,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Total Accounts</span>
-              <h4 class="fw-bold mb-0 text-dark">{{ total_users }}</h4>
+              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ total_users }}</h4>
             </div>
           </div>
         </div>
@@ -260,7 +260,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Super Admins</span>
-              <h4 class="fw-bold mb-0 text-dark">{{ super_admin_count }}</h4>
+              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ super_admin_count }}</h4>
             </div>
           </div>
         </div>
@@ -275,7 +275,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">HR & Managers</span>
-              <h4 class="fw-bold mb-0 text-dark">{{ hr_admin_count|add:manager_count }}</h4>
+              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ hr_admin_count|add:manager_count }}</h4>
             </div>
           </div>
         </div>
@@ -290,7 +290,7 @@
             </div>
             <div>
               <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Active Logins</span>
-              <h4 class="fw-bold mb-0 text-success">{{ active_users_count }} <span class="text-muted fs-6 fw-normal">/ {{ total_users }}</span></h4>
+              <h4 class="fw-bold mb-0 text-success"><span class="counter-value" data-counter>{{ active_users_count }}</span> <span class="text-muted fs-6 fw-normal">/ {{ total_users }}</span></h4>
             </div>
           </div>
         </div>

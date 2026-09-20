@@ -51,7 +51,7 @@
               </div>
               <div>
                 <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Hours</p>
-                <h4 class="fw-bold mb-0 text-dark">{{ total_hours }} <span class="fs-6 text-muted fw-normal">hrs</span></h4>
+                <h4 class="fw-bold mb-0 text-dark"><span class="counter-value" data-counter>{{ total_hours }}</span> <span class="fs-6 text-muted fw-normal">hrs</span></h4>
                 <small class="text-muted">{{ approved_hours }} hrs approved</small>
               </div>
             </div>
@@ -68,7 +68,7 @@
               </div>
               <div>
                 <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Overtime Pay</p>
-                <h4 class="fw-bold mb-0 text-success">${{ total_amount|floatformat:2 }}</h4>
+                <h4 class="fw-bold mb-0 text-success counter-value" data-counter>${{ total_amount|floatformat:2 }}</h4>
                 <small class="text-muted">${{ approved_amount|floatformat:2 }} approved</small>
               </div>
             </div>
@@ -85,7 +85,7 @@
               </div>
               <div>
                 <p class="text-muted mb-1 small fw-semibold text-uppercase">Approved Sessions</p>
-                <h4 class="fw-bold mb-0 text-dark">{{ approved_count }} <span class="fs-6 text-muted fw-normal">/ {{ total_requests }}</span></h4>
+                <h4 class="fw-bold mb-0 text-dark"><span class="counter-value" data-counter>{{ approved_count }}</span> <span class="fs-6 text-muted fw-normal">/ {{ total_requests }}</span></h4>
                 <small class="text-muted">{{ avg_hours|floatformat:1 }} hrs avg / session</small>
               </div>
             </div>
@@ -102,7 +102,7 @@
               </div>
               <div>
                 <p class="text-muted mb-1 small fw-semibold text-uppercase">Pending Approvals</p>
-                <h4 class="fw-bold mb-0 text-warning">{{ pending_count }}</h4>
+                <h4 class="fw-bold mb-0 text-warning counter-value" data-counter>{{ pending_count }}</h4>
                 <small class="text-muted">{{ pending_hours }} hrs pending</small>
               </div>
             </div>
