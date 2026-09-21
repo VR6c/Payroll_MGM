@@ -9,6 +9,8 @@ class Activity(models.Model):
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Activities'

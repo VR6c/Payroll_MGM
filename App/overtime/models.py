@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 import datetime
+from typing import Any
 from django.db import models
 from django.utils import timezone
 from employees.models import Employee
@@ -9,11 +10,13 @@ from config.rules import get_rule
 class OvertimeType(models.Model):
     company = models.ForeignKey('companies.Company', on_delete=models.CASCADE, related_name='overtime_types')
     name = models.CharField(max_length=100)
-    rate_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('1.50'))
+    rate_multiplier: Any = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('1.50'))
     description = models.TextField(blank=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         ordering = ['name']
@@ -29,15 +32,15 @@ class OvertimeRequest(models.Model):
         REJECTED = 'rejected', 'Rejected'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='overtime_requests')
-    overtime_type = models.ForeignKey(OvertimeType, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests')
-    date = models.DateField()
-    start_time = models.TimeField(null=True, blank=True)
-    end_time = models.TimeField(null=True, blank=True)
-    hours = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
-    rate_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('1.50'))
-    hourly_rate = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
-    overtime_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    employee: Any = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='overtime_requests')
+    overtime_type: Any = models.ForeignKey(OvertimeType, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests')
+    date: Any = models.DateField()
+    start_time: Any = models.TimeField(null=True, blank=True)
+    end_time: Any = models.TimeField(null=True, blank=True)
+    hours: Any = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    rate_multiplier: Any = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('1.50'))
+    hourly_rate: Any = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    overtime_amount: Any = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     reason = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     approved_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_overtimes')
@@ -45,6 +48,8 @@ class OvertimeRequest(models.Model):
     rejection_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         ordering = ['-date', '-created_at']
@@ -57,13 +62,15 @@ class OvertimeRequest(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.date} ({self.hours} hrs) [{self.get_status_display()}]"
 
-    def calculate_hours(self):
+    def calculate_hours(self) -> Decimal:
         """Calculates decimal hours from start_time and end_time."""
         if not self.start_time or not self.end_time:
-            return self.hours or Decimal('0.00')
+            return Decimal(str(self.hours or 0))
 
-        t1 = datetime.datetime.combine(datetime.date.today(), self.start_time)
-        t2 = datetime.datetime.combine(datetime.date.today(), self.end_time)
+        st = self.start_time
+        et = self.end_time
+        t1 = datetime.datetime.combine(datetime.date.today(), st)
+        t2 = datetime.datetime.combine(datetime.date.today(), et)
 
         if t2 < t1:
             # Shift spans midnight
@@ -73,32 +80,32 @@ class OvertimeRequest(models.Model):
         computed_hours = Decimal(str(diff_seconds / 3600.0)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         return computed_hours
 
-    def calculate_hourly_rate(self):
+    def calculate_hourly_rate(self) -> Decimal:
         """Determines hourly wage from employee salary structure or basic salary."""
         basic_sal = Decimal('0.00')
         if hasattr(self.employee, 'salary_structures'):
             struct = self.employee.salary_structures.filter(status=True).order_by('-effective_date').first()
-            if struct:
-                basic_sal = struct.basic_salary
-        if basic_sal == Decimal('0.00') and self.employee.basic_salary:
-            basic_sal = self.employee.basic_salary
+            if struct and struct.basic_salary:
+                basic_sal = Decimal(str(struct.basic_salary))
+        if basic_sal == Decimal('0.00') and self.employee and self.employee.basic_salary:
+            basic_sal = Decimal(str(self.employee.basic_salary))
 
         # Default standard monthly work hours: 22 workdays * 8 hours = 176 hours
         std_daily_hours = get_rule('attendance', 'standard_work_hours_per_day', Decimal('8.0'))
-        std_monthly_hours = Decimal('22.0') * std_daily_hours
+        std_monthly_hours = Decimal('22.0') * Decimal(str(std_daily_hours))
         if std_monthly_hours > 0:
             rate = (basic_sal / std_monthly_hours).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             return rate
         return Decimal('0.00')
 
-    def calculate_amount(self):
+    def calculate_amount(self) -> Decimal:
         """Calculates total overtime compensation: hours * hourly_rate * rate_multiplier."""
-        h = self.hours or Decimal('0.00')
-        hr = self.hourly_rate or Decimal('0.00')
-        rm = self.rate_multiplier or Decimal('1.50')
+        h = Decimal(str(self.hours or 0))
+        hr = Decimal(str(self.hourly_rate or 0))
+        rm = Decimal(str(self.rate_multiplier or Decimal('1.50')))
         return (h * hr * rm).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # Synchronize multiplier from overtime type if set and default multiplier is used
         if self.overtime_type and self.rate_multiplier == Decimal('1.50'):
             self.rate_multiplier = self.overtime_type.rate_multiplier

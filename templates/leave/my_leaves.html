@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}My Leave Requests - Payroll MGM{% endblock %}
+{% block title %}{% if is_admin_or_mgr %}Leave Requests & Approvals{% else %}My Leave Requests{% endif %} - Payroll MGM{% endblock %}
 
 {% block content %}
 <div class="row">
   <div class="col-12">
+    <!-- Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
-        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-calendar-check-outline text-primary me-2"></i>My Leave Requests</h3>
-        <p class="text-muted mb-0">View submitted leave requests and status</p>
+        <h3 class="fw-bold text-dark mb-1">
+          <i class="mdi mdi-calendar-check-outline text-primary me-2"></i>
+          {% if is_admin_or_mgr %}Leave Requests & Approvals{% else %}My Leave Requests{% endif %}
+        </h3>
+        <p class="text-muted mb-0">
+          {% if is_admin_or_mgr %}Review, approve, and manage employee leave applications{% else %}View submitted leave requests and status{% endif %}
+        </p>
       </div>
       <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
         <nav aria-label="breadcrumb">
@@ -19,7 +25,9 @@
             {% else %}
             <li class="breadcrumb-item text-muted">Self-Service</li>
             {% endif %}
-            <li class="breadcrumb-item active" aria-current="page">My Leave Requests</li>
+            <li class="breadcrumb-item active" aria-current="page">
+              {% if is_admin_or_mgr %}Requests & Approvals{% else %}My Leave Requests{% endif %}
+            </li>
           </ol>
         </nav>
         <a href="{% url 'leave:create' %}" class="btn btn-primary text-white">
@@ -28,31 +36,154 @@
       </div>
     </div>
 
+    <!-- Stat Counters -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #ebf5ff; color: #0284c7;">
+                <i class="mdi mdi-calendar-blank-multiple fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Requests</p>
+                <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ total_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #fff8eb; color: #d97706;">
+                <i class="mdi mdi-clock-alert-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Pending Approvals</p>
+                <h4 class="fw-bold mb-0 text-warning counter-value" data-counter>{{ pending_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #e8f8f0; color: #198754;">
+                <i class="mdi mdi-check-circle-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Approved</p>
+                <h4 class="fw-bold mb-0 text-success counter-value" data-counter>{{ approved_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #fef2f2; color: #dc2626;">
+                <i class="mdi mdi-close-circle-outline fs-3"></i>
+              </div>
+              <div>
+                <p class="text-muted mb-1 small fw-semibold text-uppercase">Rejected</p>
+                <h4 class="fw-bold mb-0 text-danger counter-value" data-counter>{{ rejected_count }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Card (for Admins / Managers) -->
+    {% if is_admin_or_mgr %}
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-center">
+          <div class="col-12 col-md-5">
+            <label class="small text-muted fw-semibold d-block mb-1">Filter by Employee</label>
+            <select name="employee" class="form-select select2">
+              <option value="">-- All Employees --</option>
+              {% for emp in employees %}
+                <option value="{{ emp.id }}" {% if current_employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                  {{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="small text-muted fw-semibold d-block mb-1">Filter by Status</label>
+            <select name="status" class="form-select">
+              <option value="">-- All Statuses --</option>
+              <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+              <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-3 d-flex gap-2 align-items-end pt-3 pt-md-0 mt-md-3">
+            <button type="submit" class="btn btn-primary text-white flex-grow-1">
+              <i class="mdi mdi-filter-outline me-1"></i> Filter
+            </button>
+            <a href="{% url 'leave:my_leaves' %}" class="btn btn-light" title="Reset Filters">
+              <i class="mdi mdi-refresh"></i>
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Leave Requests Table -->
     <div class="card">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
             <thead>
               <tr class="table-light">
+                <th style="width: 50px;">#</th>
+                {% if is_admin_or_mgr %}
+                <th>Employee</th>
+                <th>Department</th>
+                {% endif %}
                 <th>Leave Type</th>
                 <th>Total Days</th>
                 <th>Status</th>
                 <th>Date Requested</th>
                 <th>Approved By</th>
+                <th class="text-end" style="min-width: 140px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for lr in leaves %}
               <tr>
-                <td class="fw-semibold text-dark">{{ lr.leave_type.name }}</td>
-                <td><span class="fw-semibold text-dark">{{ lr.total_days }} Days</span></td>
+                <td>{{ forloop.counter }}</td>
+                {% if is_admin_or_mgr %}
+                <td>
+                  <div class="fw-semibold text-dark">{{ lr.employee.first_name }} {{ lr.employee.last_name }}</div>
+                  <small class="text-muted">{{ lr.employee.employee_code }} &bull; {{ lr.employee.position.name|default:"Staff" }}</small>
+                </td>
+                <td>{{ lr.employee.department.name|default:"-" }}</td>
+                {% endif %}
+                <td class="fw-semibold text-dark">
+                  {{ lr.leave_type.name }}
+                  {% if lr.reason %}
+                  <div><small class="text-muted text-truncate d-inline-block" style="max-width: 200px;" title="{{ lr.reason }}">{{ lr.reason }}</small></div>
+                  {% endif %}
+                </td>
+                <td><span class="fw-semibold text-primary">{{ lr.total_days }} Days</span></td>
                 <td>
                   {% if lr.status == 'approved' %}
-                    <span class="badge bg-success">Approved</span>
+                    <span class="badge bg-success"><i class="mdi mdi-check-circle-outline me-1"></i>Approved</span>
                   {% elif lr.status == 'pending' %}
-                    <span class="badge bg-warning text-dark">Pending</span>
+                    <span class="badge bg-warning text-dark"><i class="mdi mdi-clock-outline me-1"></i>Pending</span>
                   {% elif lr.status == 'rejected' %}
-                    <span class="badge bg-danger">Rejected</span>
+                    <span class="badge bg-danger"><i class="mdi mdi-close-circle-outline me-1"></i>Rejected</span>
                   {% elif lr.status == 'cancelled' %}
                     <span class="badge bg-secondary">Cancelled</span>
                   {% else %}
@@ -60,11 +191,90 @@
                   {% endif %}
                 </td>
                 <td>{{ lr.created_at|date:"M d, Y" }}</td>
-                <td>{{ lr.approved_by.get_full_name|default:lr.approved_by.username|default:"-" }}</td>
+                <td>
+                  {% if lr.approved_by %}
+                    <span class="fw-medium text-dark">{{ lr.approved_by.get_full_name|default:lr.approved_by.username }}</span>
+                    {% if lr.approved_at %}
+                    <div><small class="text-muted">{{ lr.approved_at|date:"M d, Y" }}</small></div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end align-items-center gap-1">
+                    {% if lr.status == 'pending' and is_admin_or_mgr %}
+                      <!-- Quick Approve -->
+                      <form method="post" action="{% url 'leave:approve' lr.id %}" class="d-inline m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success text-white py-1 px-2" title="Approve Leave Request" onclick="return confirm('Approve leave request for {{ lr.employee }}?');">
+                          <i class="mdi mdi-check"></i>
+                        </button>
+                      </form>
+                      <!-- Quick Reject -->
+                      <form method="post" action="{% url 'leave:reject' lr.id %}" class="d-inline m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Reject Leave Request" onclick="return confirm('Reject leave request for {{ lr.employee }}?');">
+                          <i class="mdi mdi-close"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    {% if is_admin_or_mgr or lr.status == 'pending' %}
+                      <!-- Edit Button -->
+                      <a href="{% url 'leave:edit' lr.id %}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Edit Leave Request">
+                        <i class="mdi mdi-pencil"></i>
+                      </a>
+                      <!-- Delete Button Trigger Modal -->
+                      <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" data-bs-toggle="modal" data-bs-target="#deleteLeaveModal{{ lr.id }}" title="Delete Leave Request">
+                        <i class="mdi mdi-trash-can-outline"></i>
+                      </button>
+                    {% else %}
+                      <span class="text-muted small">&ndash;</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Delete Confirmation Modal -->
+                  <div class="modal fade text-start" id="deleteLeaveModal{{ lr.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'leave:delete' lr.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger">
+                              <i class="mdi mdi-alert-circle me-1"></i> Delete Leave Request
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p class="mb-2">Are you sure you want to delete the leave request for <strong>{{ lr.employee }}</strong>?</p>
+                            <ul class="list-unstyled bg-light p-3 rounded mb-0 small">
+                              <li><strong>Leave Type:</strong> {{ lr.leave_type.name }}</li>
+                              <li><strong>Duration:</strong> {{ lr.total_days }} Days</li>
+                              <li><strong>Status:</strong> <span class="badge {% if lr.status == 'approved' %}bg-success{% elif lr.status == 'pending' %}bg-warning text-dark{% elif lr.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ lr.get_status_display }}</span></li>
+                            </ul>
+                            {% if lr.status == 'approved' %}
+                            <div class="alert alert-warning mt-3 mb-0 small">
+                              <i class="mdi mdi-information-outline me-1"></i> This request was approved. Deleting it will restore <strong>{{ lr.total_days }} day(s)</strong> back to the employee's leave balance.
+                            </div>
+                            {% endif %}
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger text-white">Delete</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center py-4 text-muted">No leave requests submitted yet.</td>
+                <td colspan="{% if is_admin_or_mgr %}9{% else %}7{% endif %}" class="text-center py-5 text-muted">
+                  <i class="mdi mdi-calendar-blank fs-2 d-block text-secondary mb-2"></i>
+                  No leave requests found.
+                </td>
               </tr>
               {% endfor %}
             </tbody>

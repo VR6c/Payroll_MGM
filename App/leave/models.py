@@ -1,3 +1,5 @@
+from decimal import Decimal
+from typing import Any
 from django.db import models
 from employees.models import Employee
 
@@ -7,6 +9,8 @@ class LeaveType(models.Model):
     default_days = models.IntegerField(default=0)
     paid = models.BooleanField(default=True)
     status = models.BooleanField(default=True)
+
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -21,15 +25,17 @@ class LeaveRequest(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     reason = models.TextField()
-    total_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    total_days: Any = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     approved_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if self.pk:
-            self.total_days = sum(p.days for p in self.periods.all())
+    objects = models.Manager()
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk and hasattr(self, 'periods') and self.periods.exists():
+            self.total_days = sum((p.days for p in self.periods.all()), Decimal('0'))
         super().save(*args, **kwargs)
 
 class LeavePeriod(models.Model):
@@ -37,6 +43,8 @@ class LeavePeriod(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     days = models.DecimalField(max_digits=6, decimal_places=2)
+
+    objects = models.Manager()
 
 class LeaveBalance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_balances')
@@ -46,5 +54,8 @@ class LeaveBalance(models.Model):
     used_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     remaining_days = models.DecimalField(max_digits=6, decimal_places=2, default=0)
 
+    objects = models.Manager()
+
     class Meta:
         unique_together = ('employee', 'leave_type', 'year')
+

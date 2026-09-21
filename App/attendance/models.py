@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 from django.db import models
 from django.utils import timezone
 from employees.models import Employee
@@ -9,7 +10,7 @@ class LunchBreak(models.Model):
         TEA = 'tea', 'Tea Break'
         CUSTOM = 'custom', 'Custom Break'
 
-    company = models.ForeignKey(
+    company: Any = models.ForeignKey(
         'companies.Company',
         on_delete=models.CASCADE,
         null=True,
@@ -17,27 +18,29 @@ class LunchBreak(models.Model):
         related_name='lunch_breaks',
         help_text="Optional company assignment. If blank, applies to all companies."
     )
-    name = models.CharField(max_length=100, default='Lunch Break')
-    break_type = models.CharField(max_length=20, choices=BreakType.choices, default=BreakType.LUNCH)
-    start_time = models.TimeField(default=datetime.time(12, 0), help_text="Start time of the break, e.g. 12:00")
-    end_time = models.TimeField(default=datetime.time(13, 0), help_text="End time of the break, e.g. 13:00")
-    duration_minutes = models.PositiveIntegerField(
+    name: Any = models.CharField(max_length=100, default='Lunch Break')
+    break_type: Any = models.CharField(max_length=20, choices=BreakType.choices, default=BreakType.LUNCH)
+    start_time: Any = models.TimeField(default=datetime.time(12, 0), help_text="Start time of the break, e.g. 12:00")
+    end_time: Any = models.TimeField(default=datetime.time(13, 0), help_text="End time of the break, e.g. 13:00")
+    duration_minutes: Any = models.PositiveIntegerField(
         default=60,
         help_text="Duration in minutes (e.g. 60 for 1 hour)"
     )
-    auto_deduct = models.BooleanField(
+    auto_deduct: Any = models.BooleanField(
         default=True,
         help_text="Automatically deduct this break from working hours if shift overlaps"
     )
-    min_work_hours = models.DecimalField(
+    min_work_hours: Any = models.DecimalField(
         max_digits=4,
         decimal_places=2,
         default=4.00,
         help_text="Minimum elapsed hours worked to qualify for break deduction"
     )
-    status = models.BooleanField(default=True, help_text="Active / Inactive status")
+    status: Any = models.BooleanField(default=True, help_text="Active / Inactive status")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         ordering = ['start_time', 'name']
@@ -96,13 +99,15 @@ class LunchBreak(models.Model):
 
 
 class WorkSchedule(models.Model):
-    company = models.ForeignKey('companies.Company', on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    late_after = models.TimeField()
-    early_leave_before = models.TimeField()
-    status = models.BooleanField(default=True)
+    company: Any = models.ForeignKey('companies.Company', on_delete=models.CASCADE)
+    name: Any = models.CharField(max_length=100)
+    start_time: Any = models.TimeField()
+    end_time: Any = models.TimeField()
+    late_after: Any = models.TimeField()
+    early_leave_before: Any = models.TimeField()
+    status: Any = models.BooleanField(default=True)
+
+    objects = models.Manager()
 
     def __str__(self):
         return f"{self.name} ({self.start_time}-{self.end_time})"
@@ -115,14 +120,16 @@ class Attendance(models.Model):
         CHECKOUT_EARLY = 'checkout_early', 'Checkout Early'
         OVERTIME = 'overtime', 'Overtime'
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendances')
-    date = models.DateField()
-    check_in = models.DateTimeField(null=True, blank=True)
-    check_out = models.DateTimeField(null=True, blank=True)
-    working_hours = models.DurationField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
+    employee: Any = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendances')
+    date: Any = models.DateField()
+    check_in: Any = models.DateTimeField(null=True, blank=True)
+    check_out: Any = models.DateTimeField(null=True, blank=True)
+    working_hours: Any = models.DurationField(null=True, blank=True)
+    status: Any = models.CharField(max_length=20, choices=Status.choices, default=Status.PRESENT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         unique_together = ('employee', 'date')
@@ -211,18 +218,20 @@ class EmployeeSchedule(models.Model):
         (6, 'Sunday'),
     ]
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='employee_schedules')
-    schedule_type = models.CharField(max_length=20, choices=ScheduleType.choices, default=ScheduleType.FLEXIBLE)
-    day_of_week = models.IntegerField(choices=DAY_CHOICES)
-    start_time = models.TimeField(null=True, blank=True)
-    end_time = models.TimeField(null=True, blank=True)
-    start_time2 = models.TimeField(null=True, blank=True)
-    end_time2 = models.TimeField(null=True, blank=True)
-    is_half_day = models.BooleanField(default=False)
-    is_work_day = models.BooleanField(default=True)
-    shift_label = models.CharField(max_length=100, default='Full Day')
+    employee: Any = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='employee_schedules')
+    schedule_type: Any = models.CharField(max_length=20, choices=ScheduleType.choices, default=ScheduleType.FLEXIBLE)
+    day_of_week: Any = models.IntegerField(choices=DAY_CHOICES)
+    start_time: Any = models.TimeField(null=True, blank=True)
+    end_time: Any = models.TimeField(null=True, blank=True)
+    start_time2: Any = models.TimeField(null=True, blank=True)
+    end_time2: Any = models.TimeField(null=True, blank=True)
+    is_half_day: Any = models.BooleanField(default=False)
+    is_work_day: Any = models.BooleanField(default=True)
+    shift_label: Any = models.CharField(max_length=100, default='Full Day')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         unique_together = ('employee', 'day_of_week')

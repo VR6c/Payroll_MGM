@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.template.context import BaseContext
@@ -82,6 +83,37 @@ class ViewIntegrationTests(TestCase):
         leave_type = LeaveType.objects.create(company=self.company, name="Annual Leave", default_days=10)
         response = self.client.get(reverse('leave:my_leaves'))
         self.assertEqual(response.status_code, 200)
+
+    def test_leave_request_edit_and_delete(self):
+        self.client.force_login(self.admin_user)
+        leave_type = LeaveType.objects.create(company=self.company, name="Sick Leave", default_days=10)
+        leave = LeaveRequest.objects.create(
+            employee=self.employee,
+            leave_type=leave_type,
+            total_days=Decimal('2.00'),
+            reason="Cold",
+            status=LeaveRequest.Status.PENDING
+        )
+        edit_resp = self.client.get(reverse('leave:edit', kwargs={'pk': leave.pk}))
+        self.assertEqual(edit_resp.status_code, 200)
+
+        post_resp = self.client.post(reverse('leave:edit', kwargs={'pk': leave.pk}), {
+            'employee': self.employee.pk,
+            'leave_type': leave_type.pk,
+            'reason': 'Updated Reason',
+            'status': 'approved',
+            'periods-0-start_date': '2026-09-21',
+            'periods-0-end_date': '2026-09-22',
+            'periods-0-days': '2.0',
+        })
+        self.assertEqual(post_resp.status_code, 302)
+        leave.refresh_from_db()
+        self.assertEqual(leave.status, LeaveRequest.Status.APPROVED)
+        self.assertEqual(leave.reason, 'Updated Reason')
+
+        del_resp = self.client.post(reverse('leave:delete', kwargs={'pk': leave.pk}))
+        self.assertEqual(del_resp.status_code, 302)
+        self.assertFalse(LeaveRequest.objects.filter(pk=leave.pk).exists())
 
     def test_payroll_views(self):
         self.client.force_login(self.admin_user)

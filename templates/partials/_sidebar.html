@@ -27,7 +27,7 @@
   <div class="sidebar-nav-container">
     <ul class="nav">
       <!-- Dashboard -->
-      <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'home' %}active{% endif %}">
         <a class="nav-link" href="{% url 'dashboard:home' %}" data-title="Dashboard">
           <i class="mdi mdi-grid-large menu-icon"></i>
           <span class="menu-title">Dashboard</span>
@@ -38,41 +38,41 @@
       <li class="nav-item nav-category">HR Management</li>
 
       <!-- Setup Collapsible Dropdown -->
-      <li class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-setup"
-          aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}true{% else %}false{% endif %}"
           aria-controls="ui-setup" data-title="Setup">
           <i class="menu-icon mdi mdi-cog-outline"></i>
           <span class="menu-title">Setup</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.url_name == 'schedules' or request.resolver_match.url_name in 'user_list,role_list' %}show{% endif %}"
+        <div class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}show{% endif %}"
           id="ui-setup">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Setup</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'list' and request.resolver_match.app_name == 'employees' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'employees' and request.resolver_match.url_name in 'list,create,detail,update' %}active{% endif %}"
                 href="{% url 'employees:list' %}">Employees</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'positions' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'employees' and 'position' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'employees:positions' %}">Positions</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'departments' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'employees' and 'department' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'employees:departments' %}">Departments</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'branches' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'employees' and 'branch' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'employees:branches' %}">Branches</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'schedules' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}active{% endif %}"
                 href="{% url 'attendance:schedules' %}">Work Day / Time</a>
             </li>
             {% if request.user.role == 'super_admin' %}
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name in 'user_list,role_list' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' %}active{% endif %}"
                 href="{% url 'accounts:user_list' %}">Users & RBAC</a>
             </li>
             {% endif %}
@@ -81,40 +81,40 @@
       </li>
 
       <!-- Attendance Collapsible Dropdown -->
-      <li class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' and request.resolver_match.url_name != 'my_attendance' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-attendance"
-          aria-expanded="{% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' and request.resolver_match.url_name != 'my_attendance' %}true{% else %}false{% endif %}"
           aria-controls="ui-attendance" data-title="Attendance">
           <i class="menu-icon mdi mdi-clock-check-outline"></i>
           <span class="menu-title">Attendance</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' %}show{% endif %}"
+        <div class="collapse {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name != 'schedules' and request.resolver_match.url_name != 'my_attendance' %}show{% endif %}"
           id="ui-attendance">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Attendance</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'report' and not request.GET.type %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'report' and not request.GET.type %}active{% endif %}"
                 href="{% url 'attendance:report' %}">All Records</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.GET.type == 'checkin_early' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'report' and request.GET.type == 'checkin_early' %}active{% endif %}"
                 href="{% url 'attendance:report' %}?type=checkin_early">Checkin Early</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.GET.type == 'checkin_late' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'report' and request.GET.type == 'checkin_late' %}active{% endif %}"
                 href="{% url 'attendance:report' %}?type=checkin_late">Checkin Late</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.GET.type == 'checkout_early' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'report' and request.GET.type == 'checkout_early' %}active{% endif %}"
                 href="{% url 'attendance:report' %}?type=checkout_early">Checkout Early</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.GET.type == 'checkout_late' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'report' and request.GET.type == 'checkout_late' %}active{% endif %}"
                 href="{% url 'attendance:report' %}?type=checkout_late">Checkout Late</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'lunch_breaks' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'lunch_breaks' %}active{% endif %}"
                 href="{% url 'attendance:lunch_breaks' %}">Lunch Breaks</a>
             </li>
           </ul>
@@ -134,15 +134,15 @@
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Leave</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'my_leaves' or request.resolver_match.url_name == 'create' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name in 'my_leaves,create,edit,delete,approve,reject,cancel' %}active{% endif %}"
                 href="{% url 'leave:my_leaves' %}">Requests & Approvals</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'types' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name in 'types,type_create,type_update,type_delete' %}active{% endif %}"
                 href="{% url 'leave:types' %}">Leave Types</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'type_groups' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'leave' and 'type_group' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'leave:type_groups' %}">Type Groups</a>
             </li>
           </ul>
@@ -150,27 +150,27 @@
       </li>
 
       <!-- Overtime Collapsible Dropdown -->
-      <li class="nav-item {% if request.resolver_match.app_name == 'overtime' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'overtime' and request.resolver_match.url_name != 'my_overtime' and request.resolver_match.url_name != 'my_create' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-overtime"
-          aria-expanded="{% if request.resolver_match.app_name == 'overtime' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'overtime' and request.resolver_match.url_name != 'my_overtime' and request.resolver_match.url_name != 'my_create' %}true{% else %}false{% endif %}"
           aria-controls="ui-overtime" data-title="Overtime">
           <i class="menu-icon mdi mdi-clock-fast"></i>
           <span class="menu-title">Overtime</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'overtime' %}show{% endif %}" id="ui-overtime">
+        <div class="collapse {% if request.resolver_match.app_name == 'overtime' and request.resolver_match.url_name != 'my_overtime' and request.resolver_match.url_name != 'my_create' %}show{% endif %}" id="ui-overtime">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Overtime</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'list' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'overtime' and request.resolver_match.url_name in 'list,create,edit,delete,approve,reject' %}active{% endif %}"
                 href="{% url 'overtime:list' %}">OT Records</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'types' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'overtime' and 'type' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'overtime:types' %}">Types & Rates</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name in 'report,report_excel,report_pdf' and request.resolver_match.app_name == 'overtime' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'overtime' and 'report' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'overtime:report' %}">Overtime Report</a>
             </li>
           </ul>
@@ -178,39 +178,39 @@
       </li>
 
       <!-- Payroll Collapsible Dropdown -->
-      <li class="nav-item {% if request.resolver_match.app_name == 'payroll' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name != 'my_payslips' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-payroll"
-          aria-expanded="{% if request.resolver_match.app_name == 'payroll' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name != 'my_payslips' %}true{% else %}false{% endif %}"
           aria-controls="ui-payroll" data-title="Payroll">
           <i class="menu-icon mdi mdi-cash-multiple"></i>
           <span class="menu-title">Payroll</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'payroll' %}show{% endif %}" id="ui-payroll">
+        <div class="collapse {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name != 'my_payslips' %}show{% endif %}" id="ui-payroll">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Payroll</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'salary_setup' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and 'salary_setup' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'payroll:salary_setup' %}">Setup Salary</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'bonuses' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and 'bonus' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'payroll:bonuses' %}">Bonus / Incentive</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'allowances' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name == 'allowances' %}active{% endif %}"
                 href="{% url 'payroll:allowances' %}">Allowances</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'deduction_rules' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and 'deduction' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'payroll:deduction_rules' %}">Deductions</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name in 'list,export_excel,export_pdf,payslip,payslip_pdf,delete' %}active{% endif %}"
                 href="{% url 'payroll:list' %}">Payroll History</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'new_payroll' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name in 'new_payroll,formula_guide' %}active{% endif %}"
                 href="{% url 'payroll:new_payroll' %}">Generate Payroll</a>
             </li>
           </ul>
@@ -230,15 +230,15 @@
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Reports</li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'daily' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'reports' and 'daily' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'reports:daily' %}">Daily Report</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'summary' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'reports' and 'summary' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'reports:summary' %}">Summary Report</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.url_name == 'detail' %}active{% endif %}"
+              <a class="nav-link {% if request.resolver_match.app_name == 'reports' and 'detail' in request.resolver_match.url_name %}active{% endif %}"
                 href="{% url 'reports:detail' %}">Detail Report</a>
             </li>
           </ul>
@@ -248,7 +248,7 @@
       {% else %}
       <!-- Employee Self-Service Navigation -->
       <li class="nav-item nav-category">Employee Self-Service</li>
-      <li class="nav-item {% if request.resolver_match.url_name == 'my_attendance' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'my_attendance' %}active{% endif %}">
         <a class="nav-link" href="{% url 'attendance:my_attendance' %}" data-title="My Attendance">
           <i class="menu-icon mdi mdi-clock-outline"></i>
           <span class="menu-title">My Attendance</span>
@@ -260,13 +260,13 @@
           <span class="menu-title">My Leave Requests</span>
         </a>
       </li>
-      <li class="nav-item {% if request.resolver_match.app_name == 'overtime' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'overtime' and request.resolver_match.url_name in 'my_overtime,my_create' %}active{% endif %}">
         <a class="nav-link" href="{% url 'overtime:my_overtime' %}" data-title="My Overtime">
           <i class="menu-icon mdi mdi-clock-fast"></i>
           <span class="menu-title">My Overtime</span>
         </a>
       </li>
-      <li class="nav-item {% if request.resolver_match.url_name == 'my_payslips' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'payroll' and request.resolver_match.url_name == 'my_payslips' %}active{% endif %}">
         <a class="nav-link" href="{% url 'payroll:my_payslips' %}" data-title="My Payslips">
           <i class="menu-icon mdi mdi-receipt"></i>
           <span class="menu-title">My Payslips</span>

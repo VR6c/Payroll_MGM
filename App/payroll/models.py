@@ -12,6 +12,8 @@ class SalaryStructure(models.Model):
     effective_date = models.DateField()
     status = models.BooleanField(default=True)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['-effective_date']
         indexes = [
@@ -50,6 +52,8 @@ class Payroll(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
 
     class Meta:
         unique_together = ('employee', 'payroll_period')
@@ -106,6 +110,8 @@ class DeductionRule(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['category', 'priority', 'id']
 
@@ -124,6 +130,8 @@ class PayrollDeductionItem(models.Model):
     rate_or_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     calculated_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
 
     class Meta:
         ordering = ['id']
