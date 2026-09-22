@@ -883,9 +883,24 @@
         background: #ffffff !important;
       }
 
-      .navbar.headerLight .welcome-text,
+      .navbar .welcome-text,
+      .navbar.headerLight .welcome-text {
+        display: block !important;
+        font-size: 1.4rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        line-height: 1.25 !important;
+        margin-bottom: 2px !important;
+        letter-spacing: -0.01em !important;
+      }
+
+      .navbar .welcome-sub-text,
       .navbar.headerLight .welcome-sub-text {
         display: block !important;
+        font-size: 0.825rem !important;
+        color: #94a3b8 !important;
+        font-weight: 400 !important;
+        margin-bottom: 0 !important;
       }
 
       .page-body-wrapper {
@@ -1299,6 +1314,11 @@
         width: calc(100% - var(--sidebar-mini-width, 72px)) !important;
       }
 
+      body.sidebar-icon-only .navbar .welcome-text,
+      body.sidebar-icon-only .navbar .welcome-sub-text {
+        display: block !important;
+      }
+
       /* Sidebar in Minimized Mode */
       body.sidebar-icon-only .sidebar {
         width: var(--sidebar-mini-width, 72px) !important;
@@ -1358,8 +1378,8 @@
         font-size: 1.3rem !important;
       }
 
-      /* Floating Tooltip for Direct Standalone Links (e.g. Dashboard) */
-      body.sidebar-icon-only .sidebar .nav .nav-item:not(:has(.collapse)):hover > .nav-link::after {
+      /* Floating Tooltip for Direct Standalone Links (e.g. Dashboard, My Attendance) */
+      body.sidebar-icon-only .sidebar .nav .nav-item > .nav-link:not([data-bs-toggle="collapse"]):hover::after {
         content: attr(data-title);
         position: absolute;
         left: 68px;
@@ -1416,6 +1436,12 @@
         padding: 0.5rem !important;
         z-index: 1060 !important;
         animation: flyoutSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      body.sidebar-icon-only .sidebar .nav .nav-item:last-child > .collapse,
+      body.sidebar-icon-only .sidebar .nav .nav-item:nth-last-child(2) > .collapse {
+        top: auto !important;
+        bottom: 0 !important;
       }
 
       @keyframes flyoutSlide {
@@ -1584,7 +1610,7 @@
       if ($.fn.select2) {
         function initSelect2(container) {
           var $scope = container ? $(container) : $(document);
-          $scope.find('select').each(function () {
+          $scope.find('select:not(.no-select2)').each(function () {
             var $select = $(this);
             var $modal = $select.closest('.modal');
             var options = {

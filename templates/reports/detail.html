@@ -14,7 +14,7 @@
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
           <li class="breadcrumb-item text-muted">Report</li>
           <li class="breadcrumb-item active" aria-current="page">Detail Reports</li>
         </ol>
@@ -151,11 +151,11 @@
           </h3>
           <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap text-muted mt-2" style="font-size: 13px;">
             <span>
-              <i class="mdi mdi-calendar-range text-primary me-1"></i>Period: <strong class="text-dark">{{ date_range_display }}</strong>
+              Period: <strong class="text-dark">{{ date_range_display }}</strong>
             </span>
             <span class="text-muted opacity-50">•</span>
             <span>
-              <i class="mdi mdi-account-group text-primary me-1"></i>Total: <strong class="text-dark">{{ detail_rows|length }}</strong> Employees
+              Total: <strong class="text-dark">{{ detail_rows|length }}</strong> Employees
             </span>
             {% if selected_dept %}
               {% for d in departments %}

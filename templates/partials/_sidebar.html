@@ -13,16 +13,6 @@
     </button>
   </div>
 
-  <!-- User Profile Quick Identity Card -->
-  <div class="sidebar-user-card d-flex align-items-center">
-    <div class="sidebar-user-avatar me-lg-3">
-      <span>{{ request.user.username|slice:":2"|upper }}</span>
-    </div>
-    <div class="sidebar-user-details overflow-hidden">
-      <span class="sidebar-user-name fw-bold text-truncate d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
-      <span class="sidebar-user-badge badge bg-primary text-white">{{ request.user.get_role_display|default:request.user.role|title }}</span>
-    </div>
-  </div>
 
   <div class="sidebar-nav-container">
     <ul class="nav">

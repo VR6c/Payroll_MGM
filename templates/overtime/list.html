@@ -2,19 +2,95 @@
 
 {% block title %}Overtime Management - Payroll MGM{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* Stat KPI Cards (Consistent with Dashboard Style) */
+  .stat-card {
+    border: 1px solid rgba(226, 232, 240, 0.75) !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    padding: 1.35rem 1.45rem !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
+    border-color: rgba(203, 213, 225, 0.9) !important;
+  }
+
+  /* Clean vibrant standalone icon */
+  .stat-kpi-icon {
+    font-size: 2.35rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+  .stat-card:hover .stat-kpi-icon {
+    transform: scale(1.08);
+  }
+
+  /* Vibrant icon accent colors */
+  .stat-kpi-icon-primary { color: #1F3BB3; }
+  .stat-kpi-icon-success { color: #059669; }
+  .stat-kpi-icon-warning { color: #D97706; }
+  .stat-kpi-icon-info    { color: #0284C7; }
+
+  /* KPI Typography hierarchy: Number on top, Label below */
+  .stat-kpi-value,
+  .stat-card h3,
+  .stat-card h4 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.2rem !important;
+  }
+  .stat-kpi-label {
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    line-height: 1.25 !important;
+  }
+
+  @media (max-width: 575.98px) {
+    .stat-card {
+      padding: 0.95rem 0.85rem !important;
+      border-radius: 12px !important;
+    }
+    .stat-kpi-icon {
+      font-size: 1.85rem !important;
+      margin-right: 0.75rem !important;
+    }
+    .stat-kpi-value,
+    .stat-card h3,
+    .stat-card h4 {
+      font-size: 1.25rem !important;
+    }
+    .stat-kpi-label {
+      font-size: 0.78rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
   <div class="col-12">
     <!-- Page Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
-        <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-clock-fast text-primary me-2"></i>Overtime Management</h3>
+        <h3 class="fw-bold text-dark mb-1">Overtime Management</h3>
         <p class="text-muted mb-0">Record, review, and manage employee overtime records and payroll compensation</p>
       </div>
       <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
             <li class="breadcrumb-item text-muted">Overtime</li>
             <li class="breadcrumb-item active" aria-current="page">Overtime Records</li>
           </ol>
@@ -32,64 +108,55 @@
       </div>
     </div>
 
-    <!-- Summary KPI Cards -->
+    <!-- Summary KPI Cards (Dashboard Style) -->
     <div class="row g-3 mb-4">
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #eef2ff; color: #1F3BB3;">
-                <i class="mdi mdi-clock-time-four-outline fs-3"></i>
-              </div>
-              <div>
-                <p class="text-muted mb-1 small fw-semibold text-uppercase">Total Hours</p>
-                <h4 class="fw-bold mb-0 text-dark"><span class="counter-value" data-counter>{{ total_hours }}</span> <span class="fs-6 text-muted fw-normal">hrs</span></h4>
-              </div>
+      <!-- Total Hours -->
+      <div class="col-6 col-xl-3">
+        <div class="card stat-card border-0 h-100">
+          <div class="d-flex align-items-center">
+            <i class="mdi mdi-clock-time-four-outline stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
+            <div>
+              <h3 class="stat-kpi-value mb-0"><span class="counter-value" data-counter>{{ total_hours }}</span> <span class="fs-6 text-muted fw-normal ms-1">hrs</span></h3>
+              <span class="stat-kpi-label d-block">Total Hours</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #e8f8f0; color: #198754;">
-                <i class="mdi mdi-cash-multiple fs-3"></i>
-              </div>
-              <div>
-                <p class="text-muted mb-1 small fw-semibold text-uppercase">Estimated Pay</p>
-                <h4 class="fw-bold mb-0 text-success counter-value" data-counter>${{ total_amount|floatformat:2 }}</h4>
-              </div>
+
+      <!-- Estimated Pay -->
+      <div class="col-6 col-xl-3">
+        <div class="card stat-card border-0 h-100">
+          <div class="d-flex align-items-center">
+            <i class="mdi mdi-cash-multiple stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
+            <div>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>${{ total_amount|floatformat:2 }}</h3>
+              <span class="stat-kpi-label d-block">Estimated Pay</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #fff8eb; color: #d97706;">
-                <i class="mdi mdi-clock-alert-outline fs-3"></i>
-              </div>
-              <div>
-                <p class="text-muted mb-1 small fw-semibold text-uppercase">Pending Approvals</p>
-                <h4 class="fw-bold mb-0 text-warning counter-value" data-counter>{{ pending_count }}</h4>
-              </div>
+
+      <!-- Pending Approvals -->
+      <div class="col-6 col-xl-3">
+        <div class="card stat-card border-0 h-100">
+          <div class="d-flex align-items-center">
+            <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
+            <div>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ pending_count }}</h3>
+              <span class="stat-kpi-label d-block">Pending Approvals</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="rounded-3 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 48px; height: 48px; background-color: #e6f9fc; color: #0891b2;">
-                <i class="mdi mdi-check-decagram-outline fs-3"></i>
-              </div>
-              <div>
-                <p class="text-muted mb-1 small fw-semibold text-uppercase">Approved Records</p>
-                <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ approved_count }}</h4>
-              </div>
+
+      <!-- Approved Records -->
+      <div class="col-6 col-xl-3">
+        <div class="card stat-card border-0 h-100">
+          <div class="d-flex align-items-center">
+            <i class="mdi mdi-check-decagram-outline stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
+            <div>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ approved_count }}</h3>
+              <span class="stat-kpi-label d-block">Approved Records</span>
             </div>
           </div>
         </div>

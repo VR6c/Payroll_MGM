@@ -24,19 +24,13 @@
           </span>
           {% endif %}
         </div>
-        <p class="text-muted mb-0 small">
-          {% if is_admin_or_mgr %}
-          Select employee, leave type, approval status, and date periods.
-          {% else %}
-          Choose your leave type, reason, and requested date periods.
-          {% endif %}
-        </p>
+
       </div>
 
       <div class="d-flex flex-column align-items-start align-items-md-end gap-2">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{% url 'leave:my_leaves' %}">Leave Requests</a></li>
             <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Edit Request #{{ leave_request.id }}{% else %}New Request{% endif %}</li>
           </ol>
@@ -78,9 +72,7 @@
                 {% if form.employee.errors %}
                 <div class="text-danger small mt-1">{{ form.employee.errors.0 }}</div>
                 {% endif %}
-                <div class="form-text text-muted" style="font-size: 0.75rem;">
-                  <i class="mdi mdi-account-search-outline me-1"></i>Select the employee requesting time off
-                </div>
+
               </div>
               {% endif %}
 
@@ -93,9 +85,7 @@
                 {% if form.leave_type.errors %}
                 <div class="text-danger small mt-1">{{ form.leave_type.errors.0 }}</div>
                 {% endif %}
-                <div class="form-text text-muted" style="font-size: 0.75rem;">
-                  <i class="mdi mdi-format-list-bulleted me-1"></i>Category (Annual, Sick, Unpaid, etc.)
-                </div>
+
               </div>
 
               {% if form.status %}
@@ -113,9 +103,7 @@
                 {% if form.status.errors %}
                 <div class="text-danger small mt-1">{{ form.status.errors.0 }}</div>
                 {% endif %}
-                <div id="statusHelpText" class="form-text text-muted" style="font-size: 0.75rem;">
-                  <i class="mdi mdi-shield-check-outline me-1"></i>Directly approve or reject, or keep as pending review
-                </div>
+
               </div>
               {% endif %}
 
@@ -128,9 +116,7 @@
                 {% if form.reason.errors %}
                 <div class="text-danger small mt-1">{{ form.reason.errors.0 }}</div>
                 {% endif %}
-                <div class="form-text text-muted" style="font-size: 0.75rem;">
-                  <i class="mdi mdi-text-box-outline me-1"></i>Provide brief context or reason for this leave request
-                </div>
+
               </div>
             </div>
           </div>
@@ -150,25 +136,29 @@
               </button>
             </div>
 
+            <!-- Overlap Alert Warning Banner -->
+            <div id="overlapAlert" class="alert alert-danger d-none align-items-center mb-3 py-2 px-3 shadow-sm border-danger" style="font-size: 0.88rem;">
+              <i class="mdi mdi-alert-circle fs-5 me-2"></i>
+              <div id="overlapAlertText" class="flex-grow-1"></div>
+            </div>
+
             <!-- Periods Container -->
             <div id="periodsContainer"></div>
 
-            <!-- Existing Periods Data for Edit Mode -->
+            <!-- Existing Periods Data for Edit Mode / Form Reload -->
             <div id="existingPeriodsData" class="d-none" style="display: none;">
-              {% for p in existing_periods %}
-                <span class="existing-period-item" data-days="{{ p.days }}" data-start="{{ p.start_date|date:'Y-m-d' }}" data-end="{{ p.end_date|date:'Y-m-d' }}"></span>
-              {% endfor %}
+              {% if posted_periods %}
+                {% for p in posted_periods %}
+                  <span class="existing-period-item" data-days="{{ p.days }}" data-start="{{ p.start_date }}" data-end="{{ p.end_date }}" data-start-time="{{ p.start_time }}" data-end-time="{{ p.end_time }}"></span>
+                {% endfor %}
+              {% elif existing_periods %}
+                {% for p in existing_periods %}
+                  <span class="existing-period-item" data-days="{{ p.days }}" data-start="{{ p.start_date|date:'Y-m-d' }}" data-end="{{ p.end_date|date:'Y-m-d' }}" data-start-time="{{ p.start_time|time:'H:i'|default:'' }}" data-end-time="{{ p.end_time|time:'H:i'|default:'' }}"></span>
+                {% endfor %}
+              {% endif %}
             </div>
 
-            <!-- Duration Conversion Guide -->
-            <div class="d-flex flex-wrap align-items-center gap-2 p-2 rounded bg-light border text-muted small mt-2">
-              <i class="mdi mdi-information-outline text-primary fs-6"></i>
-              <span class="fw-semibold text-dark">Duration Reference:</span>
-              <span class="badge bg-white text-dark border">2h = 0.25d</span>
-              <span class="badge bg-white text-dark border">4h = 0.50d (Half Day)</span>
-              <span class="badge bg-white text-dark border">6h = 0.75d</span>
-              <span class="badge bg-white text-dark border">8h = 1.00d (Full Day)</span>
-            </div>
+
           </div>
 
           <!-- Section 3: Summary Banner -->
@@ -347,58 +337,15 @@
     updateStatusBadge();
   }
 
-  // Add Period Row
-  function addPeriod(defaultDays = '1.0', startDate = null, endDate = null) {
-    const today = new Date().toISOString().split('T')[0];
-    const sDate = startDate || today;
-    const eDate = endDate || today;
-    const row = document.createElement('div');
-    row.className = 'card mb-3 border period-row shadow-none';
-    row.style.background = '#fbfcfe';
-    row.style.borderColor = '#e2e8f0';
-
-    row.innerHTML = `
-      <div class="card-body p-3">
-        <div class="row g-2 align-items-center">
-          <div class="col-12 col-md-4 col-lg-3">
-            <label class="form-label small fw-semibold text-muted mb-1">
-              <i class="mdi mdi-calendar-start text-primary me-1"></i>Start Date <span class="text-danger">*</span>
-            </label>
-            <input type="date" name="periods-${periodIndex}-start_date" class="form-control form-control-sm period-start" value="${sDate}" required>
-          </div>
-          <div class="col-12 col-md-4 col-lg-3">
-            <label class="form-label small fw-semibold text-muted mb-1">
-              <i class="mdi mdi-calendar-end text-primary me-1"></i>End Date <span class="text-danger">*</span>
-            </label>
-            <input type="date" name="periods-${periodIndex}-end_date" class="form-control form-control-sm period-end" value="${eDate}" required>
-          </div>
-          <div class="col-8 col-md-3 col-lg-4">
-            <label class="form-label small fw-semibold text-muted mb-1">
-              <i class="mdi mdi-clock-outline text-primary me-1"></i>Duration (Days) <span class="text-danger">*</span>
-            </label>
-            <div class="input-group input-group-sm">
-              <input type="number" step="0.25" min="0.25" name="periods-${periodIndex}-days" class="form-control period-days" value="${defaultDays}" placeholder="1.0" required>
-              <span class="input-group-text bg-white text-muted">Days</span>
-            </div>
-            <div class="d-flex gap-1 mt-1">
-              <button type="button" class="btn btn-light border py-0 px-2 quick-day" data-val="0.25" style="font-size: 0.7rem;">0.25d (2h)</button>
-              <button type="button" class="btn btn-light border py-0 px-2 quick-day" data-val="0.5" style="font-size: 0.7rem;">0.5d (Half)</button>
-              <button type="button" class="btn btn-light border py-0 px-2 quick-day" data-val="1.0" style="font-size: 0.7rem;">1.0d (Full)</button>
-            </div>
-          </div>
-          <div class="col-4 col-md-1 col-lg-2 text-end pt-md-3">
-            <button type="button" class="btn btn-outline-danger btn-sm rm py-1 px-2" title="Remove this period">
-              <i class="mdi mdi-trash-can-outline fs-6"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    container.appendChild(row);
-    periodIndex++;
-    recalcTotal();
-    updateRemoveButtons();
+  // Update Period Numbers and Badges
+  function updatePeriodNumbers() {
+    const rows = document.querySelectorAll('.period-row');
+    rows.forEach(function(row, idx) {
+      const badge = row.querySelector('.period-badge');
+      if (badge) {
+        badge.textContent = `Period #${idx + 1}`;
+      }
+    });
   }
 
   // Calculate inclusive calendar days between start and end date
@@ -431,6 +378,344 @@
     }
   }
 
+  // Comprehensive Client-Side Duplicate & Overlap Validation
+  function validateAllPeriods() {
+    const rows = document.querySelectorAll('.period-row');
+    const periods = [];
+    const conflicts = new Map(); // rowIndex -> Array of message strings
+
+    rows.forEach((row, idx) => {
+      // Clear visual conflict state
+      row.classList.remove('period-row--conflict');
+      const pill = row.querySelector('.period-conflict-pill');
+      const msg = row.querySelector('.period-conflict-msg');
+      if (pill) pill.classList.add('d-none');
+      if (msg) {
+        msg.classList.add('d-none');
+        const text = msg.querySelector('.msg-text');
+        if (text) text.textContent = '';
+      }
+
+      const sDate = row.querySelector('.period-start')?.value || '';
+      const eDate = row.querySelector('.period-end')?.value || '';
+      const isHourly = !row.querySelector('.period-time-container')?.classList.contains('d-none');
+      const sTime = isHourly ? (row.querySelector('.period-start-time')?.value || '') : '';
+      const eTime = isHourly ? (row.querySelector('.period-end-time')?.value || '') : '';
+
+      periods.push({
+        row,
+        index: idx + 1,
+        sDate,
+        eDate,
+        isHourly,
+        sTime,
+        eTime
+      });
+    });
+
+    // Pairwise overlap / duplicate check
+    for (let i = 0; i < periods.length; i++) {
+      for (let j = i + 1; j < periods.length; j++) {
+        const p1 = periods[i];
+        const p2 = periods[j];
+
+        if (!p1.sDate || !p1.eDate || !p2.sDate || !p2.eDate) continue;
+
+        const maxStart = p1.sDate > p2.sDate ? p1.sDate : p2.sDate;
+        const minEnd = p1.eDate < p2.eDate ? p1.eDate : p2.eDate;
+
+        // Date ranges intersect
+        if (maxStart <= minEnd) {
+          const isSameSingleDay = (p1.sDate === p1.eDate && p2.sDate === p2.eDate && p1.sDate === p2.sDate);
+          if (isSameSingleDay && p1.isHourly && p2.isHourly && p1.sTime && p1.eTime && p2.sTime && p2.eTime) {
+            // Non-overlapping hours on the same single day are permitted
+            if (p1.eTime <= p2.sTime || p2.eTime <= p1.sTime) {
+              continue;
+            } else {
+              // Conflicting / duplicate hours on same day
+              const msg1 = `Overlapping hours with Period #${p2.index} on ${p1.sDate} (${p1.sTime}-${p1.eTime} vs ${p2.sTime}-${p2.eTime})`;
+              const msg2 = `Overlapping hours with Period #${p1.index} on ${p2.sDate} (${p2.sTime}-${p2.eTime} vs ${p1.sTime}-${p1.eTime})`;
+              if (!conflicts.has(i)) conflicts.set(i, []);
+              if (!conflicts.has(j)) conflicts.set(j, []);
+              conflicts.get(i).push(msg1);
+              conflicts.get(j).push(msg2);
+            }
+          } else {
+            // Duplicate date or overlapping date range
+            const isExactSameDates = (p1.sDate === p2.sDate && p1.eDate === p2.eDate);
+            const label = isExactSameDates ? 'Duplicate date' : 'Overlapping date range';
+            const msg1 = `${label} with Period #${p2.index} (${p1.sDate} to ${p1.eDate} vs ${p2.sDate} to ${p2.eDate})`;
+            const msg2 = `${label} with Period #${p1.index} (${p2.sDate} to ${p2.eDate} vs ${p1.sDate} to ${p1.eDate})`;
+            if (!conflicts.has(i)) conflicts.set(i, []);
+            if (!conflicts.has(j)) conflicts.set(j, []);
+            conflicts.get(i).push(msg1);
+            conflicts.get(j).push(msg2);
+          }
+        }
+      }
+    }
+
+    // Apply visual conflict styling
+    let hasConflicts = false;
+    conflicts.forEach((messagesList, rowIdx) => {
+      hasConflicts = true;
+      const p = periods[rowIdx];
+      if (p && p.row) {
+        p.row.classList.add('period-row--conflict');
+        const pill = p.row.querySelector('.period-conflict-pill');
+        const msg = p.row.querySelector('.period-conflict-msg');
+        if (pill) pill.classList.remove('d-none');
+        if (msg) {
+          msg.classList.remove('d-none');
+          const text = msg.querySelector('.msg-text');
+          if (text) text.textContent = messagesList[0];
+        }
+      }
+    });
+
+    // Toggle global alert banner
+    const alertEl = document.getElementById('overlapAlert');
+    const alertText = document.getElementById('overlapAlertText');
+    if (alertEl && alertText) {
+      if (hasConflicts) {
+        alertEl.classList.remove('d-none');
+        alertEl.classList.add('d-flex');
+        alertText.innerHTML = '<strong>Schedule Overlap Detected:</strong> One or more leave periods contain duplicate dates or conflicting hours. Please review and adjust the highlighted periods.';
+      } else {
+        alertEl.classList.add('d-none');
+        alertEl.classList.remove('d-flex');
+        alertText.textContent = '';
+      }
+    }
+
+    return !hasConflicts;
+  }
+
+  // Helper to format Date to YYYY-MM-DD using local time
+  function formatDateLocal(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Helper to compute next day (YYYY-MM-DD) from date string (+1 day)
+  function getNextDayStr(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      d.setDate(d.getDate() + 1);
+      return formatDateLocal(d);
+    }
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return formatDateLocal(d);
+  }
+
+  // Add Period Row with Full Day & Hourly Time Selection Support
+  function addPeriod(defaultDays = '1.0', startDate = null, endDate = null, startTime = '', endTime = '') {
+    const today = formatDateLocal(new Date());
+
+    // Auto-advance date: when adding another period, default to +1 day from previous period's end date
+    let defaultDate = today;
+    if (!startDate) {
+      const existingRows = container ? container.querySelectorAll('.period-row') : [];
+      if (existingRows.length > 0) {
+        let maxDate = '';
+        existingRows.forEach(r => {
+          const e = r.querySelector('.period-end')?.value || r.querySelector('.period-start')?.value;
+          if (e && (!maxDate || e > maxDate)) {
+            maxDate = e;
+          }
+        });
+        if (maxDate) {
+          defaultDate = getNextDayStr(maxDate);
+        }
+      }
+    }
+
+    const sDate = startDate || defaultDate;
+    const eDate = endDate || defaultDate;
+    const sTime = startTime || '';
+    const eTime = endTime || '';
+    const isHourly = (sTime !== '' && eTime !== '') || (parseFloat(defaultDays) < 1.0 && sDate === eDate);
+
+    const row = document.createElement('div');
+    row.className = 'period-row';
+
+    const currIdx = periodIndex;
+
+    row.innerHTML = `
+      <div class="period-card-inner">
+        <!-- Card Header -->
+        <div class="period-header d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="period-number-chip">
+              <span class="period-num-dot"></span>
+              <span class="period-badge fw-bold">Period #${currIdx + 1}</span>
+            </div>
+            <!-- Mode Toggle Pill -->
+            <div class="period-mode-pills period-mode-toggle" role="group">
+              <button type="button" class="mode-pill ${isHourly ? '' : 'active'} mode-btn-full">
+                <i class="mdi mdi-calendar-blank"></i>
+                <span>Full Day</span>
+              </button>
+              <button type="button" class="mode-pill ${isHourly ? 'active' : ''} mode-btn-hourly">
+                <i class="mdi mdi-clock-outline"></i>
+                <span>By Hours</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="conflict-badge period-conflict-pill d-none">
+              <i class="mdi mdi-alert-circle"></i> Conflict
+            </span>
+            <button type="button" class="period-remove-btn rm" title="Remove this period">
+              <i class="mdi mdi-trash-can-outline"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="period-body">
+
+          <!-- Date & Duration Row -->
+          <div class="period-fields-row">
+            <!-- Start Date -->
+            <div class="period-field-group">
+              <label class="period-field-label">
+                <i class="mdi mdi-calendar-arrow-right text-primary"></i> Start Date
+                <span class="req-star">*</span>
+              </label>
+              <input type="date" name="periods-${currIdx}-start_date"
+                class="period-input period-start" value="${sDate}" required>
+            </div>
+
+            <!-- Arrow connector (hidden on mobile) -->
+            <div class="period-date-arrow d-none d-md-flex">
+              <i class="mdi mdi-arrow-right text-muted"></i>
+            </div>
+
+            <!-- End Date -->
+            <div class="period-field-group">
+              <label class="period-field-label">
+                <i class="mdi mdi-calendar-arrow-left text-primary"></i> End Date
+                <span class="req-star">*</span>
+              </label>
+              <input type="date" name="periods-${currIdx}-end_date"
+                class="period-input period-end" value="${eDate}" required>
+            </div>
+
+            <!-- Divider -->
+            <div class="period-field-divider d-none d-lg-block"></div>
+
+            <!-- Duration -->
+            <div class="period-field-group period-duration-group">
+              <label class="period-field-label">
+                <i class="mdi mdi-timer-sand text-primary"></i> Duration
+                <span class="req-star">*</span>
+              </label>
+              <div class="duration-input-wrap">
+                <input type="number" step="0.25" min="0.25"
+                  name="periods-${currIdx}-days" class="period-input period-days"
+                  value="${defaultDays}" placeholder="1.0" required>
+                <span class="duration-unit">Days</span>
+              </div>
+              <!-- Quick Day Chips -->
+              <div class="quick-chips mt-1">
+                <button type="button" class="quick-chip quick-day" data-val="0.25">2h</button>
+                <button type="button" class="quick-chip quick-day" data-val="0.5">½ Day</button>
+                <button type="button" class="quick-chip quick-day" data-val="1.0">Full</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Selection Row (Hourly Mode) -->
+          <div class="period-time-section period-time-container ${isHourly ? '' : 'd-none'}">
+            <div class="time-section-label">
+              <i class="mdi mdi-clock-time-four-outline text-primary"></i>
+              <span>Select Time Window</span>
+            </div>
+            <div class="period-time-row">
+              <!-- Start Time -->
+              <div class="period-field-group">
+                <label class="period-field-label">
+                  <i class="mdi mdi-clock-start text-primary"></i> Start Time
+                  <span class="req-star">*</span>
+                </label>
+                <input type="time" name="periods-${currIdx}-start_time"
+                  class="period-input period-start-time" value="${sTime}">
+              </div>
+
+              <!-- Time Arrow -->
+              <div class="period-date-arrow d-none d-md-flex">
+                <i class="mdi mdi-arrow-right text-muted"></i>
+              </div>
+
+              <!-- End Time -->
+              <div class="period-field-group">
+                <label class="period-field-label">
+                  <i class="mdi mdi-clock-end text-primary"></i> End Time
+                  <span class="req-star">*</span>
+                </label>
+                <input type="time" name="periods-${currIdx}-end_time"
+                  class="period-input period-end-time" value="${eTime}">
+              </div>
+
+              <!-- Time Preset Chips -->
+              <div class="period-field-group time-presets-group">
+                <label class="period-field-label">
+                  <i class="mdi mdi-lightning-bolt text-warning"></i> Quick Slots
+                </label>
+                <div class="quick-chips">
+                  <button type="button" class="quick-chip quick-slot" data-sh="08:00" data-eh="12:00">Morning</button>
+                  <button type="button" class="quick-chip quick-slot" data-sh="13:00" data-eh="17:00">Afternoon</button>
+                  <button type="button" class="quick-chip quick-slot" data-sh="08:00" data-eh="10:00">2h Early</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inline Conflict Notice -->
+          <div class="period-conflict-msg period-conflict-inline d-none">
+            <i class="mdi mdi-alert-circle-outline"></i>
+            <span class="msg-text"></span>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+    periodIndex++;
+    updatePeriodNumbers();
+    recalcTotal();
+    updateRemoveButtons();
+    validateAllPeriods();
+  }
+
+  // Calculate duration in days from start and end time inputs
+  function updateTimeDuration(row) {
+    const sTimeVal = row.querySelector('.period-start-time')?.value;
+    const eTimeVal = row.querySelector('.period-end-time')?.value;
+    const daysInput = row.querySelector('.period-days');
+    if (!sTimeVal || !eTimeVal || !daysInput) return;
+
+    const [sh, sm] = sTimeVal.split(':').map(Number);
+    const [eh, em] = eTimeVal.split(':').map(Number);
+    const diffMins = (eh * 60 + em) - (sh * 60 + sm);
+
+    if (diffMins > 0) {
+      const hours = diffMins / 60;
+      // 8 working hours = 1.0 day
+      const calculatedDays = (hours / 8).toFixed(2);
+      daysInput.value = calculatedDays;
+      recalcTotal();
+    }
+  }
+
   // Event Listeners
   document.getElementById('addPeriod').addEventListener('click', () => addPeriod('1.0'));
 
@@ -444,40 +729,166 @@
         return;
       }
       e.target.closest('.period-row').remove();
+      updatePeriodNumbers();
       recalcTotal();
       updateRemoveButtons();
+      validateAllPeriods();
       return;
     }
 
-    // Quick day presets
-    if (e.target.classList.contains('quick-day')) {
+    // Toggle: Switch to Full Day mode
+    const fullBtn = e.target.closest('.mode-btn-full');
+    if (fullBtn) {
       const row = e.target.closest('.period-row');
-      const input = row.querySelector('.period-days');
-      if (input) {
-        input.value = e.target.dataset.val;
-        recalcTotal();
+      const timeContainer = row.querySelector('.period-time-container');
+      const hourlyBtn = row.querySelector('.mode-btn-hourly');
+      fullBtn.classList.add('active');
+      if (hourlyBtn) hourlyBtn.classList.remove('active');
+      if (timeContainer) timeContainer.classList.add('d-none');
+
+      // Clear times
+      const sTimeInput = row.querySelector('.period-start-time');
+      const eTimeInput = row.querySelector('.period-end-time');
+      if (sTimeInput) sTimeInput.value = '';
+      if (eTimeInput) eTimeInput.value = '';
+
+      // Re-calculate full calendar days
+      const sDate = row.querySelector('.period-start')?.value;
+      const eDate = row.querySelector('.period-end')?.value;
+      const daysInput = row.querySelector('.period-days');
+      if (sDate && eDate && daysInput) {
+        const calDays = computeDaysBetween(sDate, eDate);
+        if (calDays) daysInput.value = calDays.toFixed(2);
       }
+      recalcTotal();
+      validateAllPeriods();
+      return;
+    }
+
+    // Toggle: Switch to Hourly mode
+    const hourlyBtn = e.target.closest('.mode-btn-hourly');
+    if (hourlyBtn) {
+      const row = e.target.closest('.period-row');
+      const timeContainer = row.querySelector('.period-time-container');
+      const fullBtnEl = row.querySelector('.mode-btn-full');
+      hourlyBtn.classList.add('active');
+      if (fullBtnEl) fullBtnEl.classList.remove('active');
+      if (timeContainer) timeContainer.classList.remove('d-none');
+
+      // Default hourly: keep same day
+      const sDateInput = row.querySelector('.period-start');
+      const eDateInput = row.querySelector('.period-end');
+      if (sDateInput && eDateInput && eDateInput.value !== sDateInput.value) {
+        eDateInput.value = sDateInput.value;
+      }
+
+      // Default time: 08:00 - 12:00 (4h = 0.5d) if not set
+      const sTimeInput = row.querySelector('.period-start-time');
+      const eTimeInput = row.querySelector('.period-end-time');
+      if (sTimeInput && !sTimeInput.value) sTimeInput.value = '08:00';
+      if (eTimeInput && !eTimeInput.value) eTimeInput.value = '12:00';
+
+      updateTimeDuration(row);
+      validateAllPeriods();
+      return;
+    }
+
+    // Quick Day presets
+    const quickDayBtn = e.target.closest('.quick-day');
+    if (quickDayBtn) {
+      const row = e.target.closest('.period-row');
+      const val = parseFloat(quickDayBtn.dataset.val);
+      const daysInput = row.querySelector('.period-days');
+      if (daysInput) daysInput.value = quickDayBtn.dataset.val;
+
+      if (val < 1.0) {
+        // Switch to Hourly mode
+        const hourlyBtnEl = row.querySelector('.mode-btn-hourly');
+        const fullBtnEl = row.querySelector('.mode-btn-full');
+        const timeContainer = row.querySelector('.period-time-container');
+        if (hourlyBtnEl) hourlyBtnEl.classList.add('active');
+        if (fullBtnEl) fullBtnEl.classList.remove('active');
+        if (timeContainer) timeContainer.classList.remove('d-none');
+
+        const sDateInput = row.querySelector('.period-start');
+        const eDateInput = row.querySelector('.period-end');
+        if (sDateInput && eDateInput) eDateInput.value = sDateInput.value;
+
+        const sTimeInput = row.querySelector('.period-start-time');
+        const eTimeInput = row.querySelector('.period-end-time');
+        if (val === 0.25) {
+          if (sTimeInput) sTimeInput.value = '08:00';
+          if (eTimeInput) eTimeInput.value = '10:00';
+        } else if (val === 0.5) {
+          if (sTimeInput) sTimeInput.value = '08:00';
+          if (eTimeInput) eTimeInput.value = '12:00';
+        }
+      } else {
+        // Switch to Full Day mode
+        const fullBtnEl = row.querySelector('.mode-btn-full');
+        const hourlyBtnEl = row.querySelector('.mode-btn-hourly');
+        const timeContainer = row.querySelector('.period-time-container');
+        if (fullBtnEl) fullBtnEl.classList.add('active');
+        if (hourlyBtnEl) hourlyBtnEl.classList.remove('active');
+        if (timeContainer) timeContainer.classList.add('d-none');
+
+        const sTimeInput = row.querySelector('.period-start-time');
+        const eTimeInput = row.querySelector('.period-end-time');
+        if (sTimeInput) sTimeInput.value = '';
+        if (eTimeInput) eTimeInput.value = '';
+      }
+
+      recalcTotal();
+      validateAllPeriods();
+      return;
+    }
+
+    // Quick Time Slot presets
+    const slotBtn = e.target.closest('.quick-slot');
+    if (slotBtn) {
+      const row = e.target.closest('.period-row');
+      const sTimeInput = row.querySelector('.period-start-time');
+      const eTimeInput = row.querySelector('.period-end-time');
+      if (sTimeInput) sTimeInput.value = slotBtn.dataset.sh;
+      if (eTimeInput) eTimeInput.value = slotBtn.dataset.eh;
+      updateTimeDuration(row);
+      validateAllPeriods();
+      return;
     }
   });
 
-  // Automatically update days if start or end date changed
+  // Date and Time change listeners
   container.addEventListener('change', function(e) {
+    const row = e.target.closest('.period-row');
+    if (!row) return;
+
+    // Date changes
     if (e.target.classList.contains('period-start') || e.target.classList.contains('period-end')) {
-      const row = e.target.closest('.period-row');
       const startVal = row.querySelector('.period-start').value;
       const endVal = row.querySelector('.period-end').value;
       const daysInput = row.querySelector('.period-days');
+      const isHourly = !row.querySelector('.period-time-container')?.classList.contains('d-none');
 
       if (startVal && endVal) {
         if (new Date(endVal) < new Date(startVal)) {
           row.querySelector('.period-end').value = startVal;
         }
-        const calculated = computeDaysBetween(startVal, row.querySelector('.period-end').value);
-        if (calculated && daysInput) {
-          daysInput.value = calculated.toFixed(2);
-          recalcTotal();
+
+        if (!isHourly) {
+          const calculated = computeDaysBetween(startVal, row.querySelector('.period-end').value);
+          if (calculated && daysInput) {
+            daysInput.value = calculated.toFixed(2);
+            recalcTotal();
+          }
         }
       }
+      validateAllPeriods();
+    }
+
+    // Time changes
+    if (e.target.classList.contains('period-start-time') || e.target.classList.contains('period-end-time')) {
+      updateTimeDuration(row);
+      validateAllPeriods();
     }
   });
 
@@ -485,15 +896,57 @@
     if (e.target.classList.contains('period-days')) {
       recalcTotal();
     }
+    if (e.target.classList.contains('period-start-time') || e.target.classList.contains('period-end-time')) {
+      const row = e.target.closest('.period-row');
+      if (row) {
+        updateTimeDuration(row);
+        validateAllPeriods();
+      }
+    }
   });
 
-  // Form submit validation
+  // Form Submit Validation
   document.getElementById('leaveForm').addEventListener('submit', function(e) {
     const rows = document.querySelectorAll('.period-row');
     if (rows.length === 0) {
       e.preventDefault();
       showNotice('Missing Leave Period', 'Please add at least one leave period row before submitting.', true);
       return;
+    }
+
+    // Validate each row's dates & times
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const sDate = r.querySelector('.period-start')?.value;
+      const eDate = r.querySelector('.period-end')?.value;
+
+      if (!sDate || !eDate) {
+        e.preventDefault();
+        showNotice('Missing Date', `Please fill in both Start and End Date for Period #${i + 1}.`, true);
+        return;
+      }
+
+      if (eDate < sDate) {
+        e.preventDefault();
+        showNotice('Invalid Date Range', `End Date cannot be before Start Date in Period #${i + 1}.`, true);
+        return;
+      }
+
+      const isHourly = !r.querySelector('.period-time-container')?.classList.contains('d-none');
+      if (isHourly) {
+        const sTime = r.querySelector('.period-start-time')?.value;
+        const eTime = r.querySelector('.period-end-time')?.value;
+        if (!sTime || !eTime) {
+          e.preventDefault();
+          showNotice('Missing Time Selection', `Please select both Start Time and End Time for Period #${i + 1}.`, true);
+          return;
+        }
+        if (sDate === eDate && eTime <= sTime) {
+          e.preventDefault();
+          showNotice('Invalid Time Interval', `End Time must be after Start Time in Period #${i + 1}.`, true);
+          return;
+        }
+      }
     }
 
     let sum = 0;
@@ -507,17 +960,352 @@
       showNotice('Invalid Duration', 'Total requested days must be greater than 0.', true);
       return;
     }
+
+    // Overlap / duplicate check
+    const isScheduleValid = validateAllPeriods();
+    if (!isScheduleValid) {
+      e.preventDefault();
+      showNotice(
+        'Duplicate / Overlapping Periods',
+        'Duplicate dates or overlapping time intervals were detected. Please review and fix the highlighted period conflicts before submitting.',
+        true
+      );
+      return;
+    }
   });
 
   // Initialize initial row(s) from hidden HTML data container
   const existingItems = document.querySelectorAll('.existing-period-item');
   if (existingItems && existingItems.length > 0) {
     existingItems.forEach(function(el) {
-      addPeriod(el.getAttribute('data-days'), el.getAttribute('data-start'), el.getAttribute('data-end'));
+      addPeriod(
+        el.getAttribute('data-days') || '1.0',
+        el.getAttribute('data-start'),
+        el.getAttribute('data-end'),
+        el.getAttribute('data-start-time') || '',
+        el.getAttribute('data-end-time') || ''
+      );
     });
   } else {
     addPeriod('1.0');
   }
   updateRemoveButtons();
+  validateAllPeriods();
 </script>
+
+<style>
+/* ── Period Row Card ──────────────────────────────────────────── */
+.period-row {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.period-row:hover {
+  border-color: #c7d4e8;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.07);
+}
+.period-row--conflict {
+  border-color: #f87171 !important;
+  background: #fff5f5 !important;
+}
+
+/* ── Period Header ───────────────────────────────────────────── */
+.period-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e9eef5;
+  min-height: 46px;
+}
+
+/* Period number chip */
+.period-number-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  padding: 3px 10px 3px 8px;
+}
+.period-num-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+}
+.period-badge {
+  color: #4f46e5;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Mode Pill Toggle ────────────────────────────────────────── */
+.period-mode-pills {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid #dde3ed;
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+.mode-pill i { font-size: 0.9rem; }
+.mode-pill.active {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 4px rgba(99,102,241,0.18);
+  font-weight: 600;
+}
+.mode-pill:not(.active):hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* Remove button */
+.period-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #fca5a5;
+  background: transparent;
+  color: #ef4444;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.period-remove-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+}
+.period-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Conflict badge pill */
+.conflict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* ── Period Body ─────────────────────────────────────────────── */
+.period-body {
+  padding: 16px;
+}
+
+/* ── Fields Row (dates + duration) ──────────────────────────── */
+.period-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.period-field-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 140px;
+  min-width: 130px;
+}
+.period-duration-group {
+  flex: 1 1 170px;
+}
+.time-presets-group {
+  flex: 1 1 200px;
+}
+
+.period-field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.req-star {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+/* Inputs */
+.period-input {
+  border: 1.5px solid #dde3ed;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  background: #fdfdff;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  height: 36px;
+}
+.period-input:focus {
+  outline: none;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+/* Duration input with inline unit */
+.duration-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #dde3ed;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fdfdff;
+  transition: border-color 0.15s;
+}
+.duration-input-wrap:focus-within {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.duration-input-wrap .period-input {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  flex: 1;
+  height: 34px;
+}
+.duration-input-wrap .period-input:focus {
+  border: none;
+  box-shadow: none;
+}
+.duration-unit {
+  background: #f1f5f9;
+  border-left: 1px solid #e2e8f0;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Arrow connector */
+.period-date-arrow {
+  align-items: center;
+  justify-content: center;
+  padding-top: 22px;
+  color: #94a3b8;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Vertical divider */
+.period-field-divider {
+  width: 1px;
+  background: #e2e8f0;
+  align-self: stretch;
+  margin-top: 22px;
+  flex-shrink: 0;
+}
+
+/* ── Quick Chips ─────────────────────────────────────────────── */
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 0.71rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  white-space: nowrap;
+}
+.quick-chip:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #4f46e5;
+}
+
+/* ── Time Section ────────────────────────────────────────────── */
+.period-time-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #dde3ed;
+}
+.time-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+.period-time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* ── Conflict inline notice ──────────────────────────────────── */
+.period-conflict-inline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────── */
+@media (max-width: 575px) {
+  .period-body { padding: 12px; }
+  .period-fields-row { gap: 8px; }
+  .period-field-group { flex: 1 1 100%; min-width: 0; }
+  .period-time-row { gap: 8px; }
+  .period-mode-pills { width: 100%; justify-content: center; }
+  .period-header { flex-direction: column; align-items: flex-start !important; gap: 8px !important; }
+}
+</style>
 {% endblock %}

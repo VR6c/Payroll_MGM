@@ -16,7 +16,7 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a>
+            <a href="{% url 'dashboard:home' %}">Dashboard</a>
           </li>
           {% if user.role != 'employee' %}
             <li class="breadcrumb-item">

@@ -1,124 +1,494 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Dashboard - Payroll MGM{% endblock %}
+{% block title %}Dashboard — Payroll MGM{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ==========================================================
+     Dashboard Design System — Consistent with Project Theme
+     ========================================================== */
+
+  /* Stat KPI Cards (Redesigned modern minimal UI — inspired by image2) */
+  .stat-card {
+    border: 1px solid rgba(226, 232, 240, 0.75) !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    padding: 1.35rem 1.45rem !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
+    border-color: rgba(203, 213, 225, 0.9) !important;
+  }
+
+  /* Clean vibrant standalone icon (like image2) */
+  .stat-kpi-icon {
+    font-size: 2.35rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+  .stat-card:hover .stat-kpi-icon {
+    transform: scale(1.08);
+  }
+
+  /* Vibrant icon accent colors */
+  .stat-kpi-icon-primary { color: #1F3BB3; }
+  .stat-kpi-icon-success { color: #059669; }
+  .stat-kpi-icon-warning { color: #D97706; }
+  .stat-kpi-icon-info { color: #0284C7; }
+  .stat-kpi-icon-purple { color: #7C3AED; }
+
+  /* KPI Typography hierarchy: Number on top, Label below */
+  .stat-kpi-value,
+  .stat-card h3,
+  .stat-card h4 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.2rem !important;
+  }
+  .stat-kpi-label {
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    line-height: 1.25 !important;
+  }
+  .stat-kpi-sub {
+    font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.2 !important;
+    margin-top: 0.15rem !important;
+  }
+
+  /* Section Title Label */
+  .dash-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Standard Chart Card */
+  .chart-card {
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 12px !important;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
+    transition: box-shadow 0.2s ease;
+  }
+  .chart-card:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+  }
+  .chart-card .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  /* Chart Canvas Containers */
+  .chart-container-260 {
+    position: relative;
+    height: 260px;
+    width: 100%;
+  }
+  .chart-container-220 {
+    position: relative;
+    height: 220px;
+    width: 100%;
+  }
+  .chart-container-190 {
+    position: relative;
+    height: 190px;
+    width: 100%;
+  }
+
+  /* Gauge Center Overlay */
+  .gauge-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 190px;
+  }
+  .gauge-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -46%);
+    text-align: center;
+    pointer-events: none;
+  }
+  .gauge-center-text .gauge-pct {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #1F3BB3;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .gauge-center-text .gauge-lbl {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
+  /* Legend Indicators */
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  /* Employee Avatar Badge */
+  .emp-avatar-sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #1F3BB3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  /* Table styling enhancements */
+  .dash-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .dash-table td {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    font-size: 0.85rem;
+    vertical-align: middle;
+  }
+
+  /* Attendance Period Segmented Pill Toggle */
+  .att-pill-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .att-pill-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    line-height: 1.35;
+    outline: none !important;
+  }
+  .att-pill-btn:hover:not(.active) {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .att-pill-btn.active {
+    background: #ffffff;
+    color: #1F3BB3;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+  }
+
+  /* Attendance Rate Gauge Segmented Pill Toggle */
+  .gauge-pill-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .gauge-pill-btn {
+    border: none;
+    background: transparent;
+    color: #166534;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    line-height: 1.3;
+    outline: none !important;
+  }
+  .gauge-pill-btn:hover:not(.active) {
+    color: #14532d;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .gauge-pill-btn.active {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+  }
+
+  @media (max-width: 576px) {
+    .chart-container-260 { height: 220px; }
+    .chart-container-220 { height: 180px; }
+    .gauge-box { min-height: 160px; }
+    .stat-card {
+      padding: 0.95rem 0.85rem !important;
+      border-radius: 12px !important;
+    }
+    .stat-kpi-icon {
+      font-size: 1.85rem !important;
+      margin-right: 0.75rem !important;
+    }
+    .stat-kpi-value,
+    .stat-card h3,
+    .stat-card h4 {
+      font-size: 1.25rem !important;
+    }
+    .stat-kpi-label {
+      font-size: 0.78rem !important;
+    }
+    .stat-kpi-sub {
+      font-size: 0.65rem !important;
+    }
+    .card-body {
+      padding: 1rem !important;
+    }
+    .chart-card .card-title {
+      font-size: 0.88rem !important;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="row">
-  <div class="col-sm-12">
+  <div class="col-12">
     <div class="home-tab">
-      <div class="d-sm-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+
+      <!-- Page Header -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 class="fw-bold text-dark mb-1">Dashboard</h2>
-          <p class="text-muted mb-0">Overview of organization metrics and quick operations</p>
+          {% if user.role == 'employee' %}
+            <h3 class="fw-bold text-dark mb-1"><i class="mdi mdi-view-dashboard-outline text-primary me-2"></i>My Dashboard</h3>
+            <p class="text-muted mb-0">Your personal attendance, leave &amp; payroll overview</p>
+          {% else %}
+            <h3 class="fw-bold text-dark mb-1">Analytics Dashboard</h3>
+            <p class="text-muted mb-0">Organization-wide attendance, leave &amp; employee metrics</p>
+          {% endif %}
         </div>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page"><i class="mdi mdi-home-outline me-1"></i>Dashboard</li>
-          </ol>
-        </nav>
       </div>
 
+      <!-- ==============================================================
+           EMPLOYEE VIEW
+           ============================================================== -->
       {% if user.role == 'employee' %}
-      <div class="row">
-        <div class="col-md-4 grid-margin stretch-card">
-          <div class="card card-tale bg-primary text-white">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <p class="mb-0">Today's Status</p>
-                <i class="mdi mdi-clock-check-outline fs-3"></i>
+
+      <!-- Employee Overview Stat Cards (Consistent with project design) -->
+      <p class="dash-section-label">My Overview</p>
+      <div class="row g-3 mb-4">
+
+        <!-- Today's Status -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-clock-check-outline stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0">{{ today_attendance.get_status_display|default:"Not In" }}</h3>
+                <span class="stat-kpi-label d-block">Today's Status</span>
+                <small class="stat-kpi-sub d-block">
+                  {% if today_attendance.check_in %}In: {{ today_attendance.check_in|date:"H:i" }}{% else %}No check-in today{% endif %}
+                </small>
               </div>
-              <h3 class="fw-bold mb-2">{{ today_attendance.get_status_display|default:"Not Checked In" }}</h3>
-              <p class="mb-0 small opacity-75">
-                {% if today_attendance.check_in %}
-                  In: {{ today_attendance.check_in|date:"H:i" }}
-                  {% if today_attendance.check_out %} | Out: {{ today_attendance.check_out|date:"H:i" }}{% endif %}
-                {% else %}
-                  No check-in record for today
-                {% endif %}
-              </p>
             </div>
           </div>
         </div>
 
-        <div class="col-md-4 grid-margin stretch-card">
-          <div class="card card-dark-blue bg-success text-white">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <p class="mb-0">Leave Balance</p>
-                <i class="mdi mdi-calendar-account fs-3"></i>
+        <!-- Leave Balance -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-calendar-account stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ leave_balance.remaining_days|default:"0" }}</h3>
+                <span class="stat-kpi-label d-block">Leave Balance</span>
+                <small class="stat-kpi-sub d-block">Days remaining &bull; {% now "Y" %}</small>
               </div>
-              <h3 class="fw-bold mb-2"><span class="counter-value" data-counter>{{ leave_balance.remaining_days|default:"0" }}</span> Days</h3>
-              <p class="mb-0 small opacity-75">Remaining for year {% now "Y" %}</p>
             </div>
           </div>
         </div>
 
-        <div class="col-md-4 grid-margin stretch-card">
-          <div class="card card-light-blue bg-info text-white">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <p class="mb-0">Latest Net Salary</p>
-                <i class="mdi mdi-cash-multiple fs-3"></i>
+        <!-- Latest Net Salary -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-cash-multiple stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0">${{ recent_payslips.0.net_salary|default:"—" }}</h3>
+                <span class="stat-kpi-label d-block">Net Salary</span>
+                <small class="stat-kpi-sub d-block">
+                  {% if recent_payslips.0 %}{{ recent_payslips.0.payroll_period|date:"M Y" }}{% else %}No payslips yet{% endif %}
+                </small>
               </div>
-              <h3 class="fw-bold mb-2">$<span class="counter-value" data-counter>{{ recent_payslips.0.net_salary|default:"N/A" }}</span></h3>
-              <p class="mb-0 small opacity-75">
-                {% if recent_payslips.0 %}
-                  Period: {{ recent_payslips.0.payroll_period|date:"M Y" }}
-                {% else %}
-                  No payslips generated yet
-                {% endif %}
-              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Working Hours -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-timer-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0">{% if today_attendance.working_hours %}{{ today_attendance.working_hours }} hrs{% else %}—{% endif %}</h3>
+                <span class="stat-kpi-label d-block">Working Hours</span>
+                <small class="stat-kpi-sub d-block">Logged hours today</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Employee Charts & Actions -->
+      <div class="row g-3 mb-4">
+        <!-- 30-Day Attendance Trend -->
+        <div class="col-lg-8">
+          <div class="card chart-card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0"><i class="mdi mdi-chart-line text-primary me-2"></i>My Attendance (Last 30 Days)</h5>
+                <span class="badge bg-light text-muted fw-semibold">Personal Activity</span>
+              </div>
+              <div class="chart-container-260">
+                <canvas id="empSparklineChart"></canvas>
+              </div>
+              <div class="d-flex flex-wrap gap-3 mt-3">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="legend-dot" style="background:#1F3BB3;"></span>
+                  <small class="text-muted fw-semibold">Present</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="legend-dot" style="background:#f59e0b;"></span>
+                  <small class="text-muted fw-semibold">Late</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Attendance Actions -->
+        <div class="col-lg-4">
+          <div class="card chart-card h-100">
+            <div class="card-body d-flex flex-column justify-content-between">
+              <div>
+                <h5 class="card-title mb-2"><i class="mdi mdi-flash text-warning me-2"></i>Quick Actions</h5>
+                <p class="text-muted small mb-4">Punch in/out your daily attendance directly.</p>
+
+                <div class="d-grid gap-2">
+                  <form method="post" action="{% url 'attendance:check_in' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100 py-2" {% if today_attendance.check_in %}disabled{% endif %}>
+                      <i class="mdi mdi-login me-1"></i> Check In
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'attendance:check_out' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-warning w-100 py-2" {% if not today_attendance.check_in or today_attendance.check_out %}disabled{% endif %}>
+                      <i class="mdi mdi-logout me-1"></i> Check Out
+                    </button>
+                  </form>
+                  <a href="{% url 'leave:create' %}" class="btn btn-outline-primary w-100 py-2 mt-1">
+                    <i class="mdi mdi-calendar-plus me-1"></i> Request Leave
+                  </a>
+                </div>
+              </div>
+
+              <div class="border-top pt-3 mt-3">
+                <small class="text-muted d-block mb-1">Today's punch record:</small>
+                <div class="d-flex justify-content-between small">
+                  <span>In: <strong class="text-dark">{{ today_attendance.check_in|date:"H:i"|default:"—" }}</strong></span>
+                  <span>Out: <strong class="text-dark">{{ today_attendance.check_out|date:"H:i"|default:"—" }}</strong></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-6 grid-margin stretch-card">
-          <div class="card">
+      <!-- Employee Leave Balance & Recent Requests -->
+      <div class="row g-3 mb-4">
+        <!-- Leave Balance Chart -->
+        <div class="col-lg-5">
+          <div class="card chart-card h-100">
             <div class="card-body">
-              <h4 class="card-title"><i class="mdi mdi-flash text-warning me-2"></i>Quick Attendance Actions</h4>
-              <p class="card-description">Mark your daily check-in and check-out time.</p>
-              <div class="d-flex flex-wrap gap-2">
-                <form method="post" action="{% url 'attendance:check_in' %}">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-success btn-icon-text text-white" {% if today_attendance.check_in %}disabled{% endif %}>
-                    <i class="mdi mdi-login btn-icon-prepend"></i> Check In
-                  </button>
-                </form>
-                <form method="post" action="{% url 'attendance:check_out' %}">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-warning btn-icon-text text-white" {% if not today_attendance.check_in or today_attendance.check_out %}disabled{% endif %}>
-                    <i class="mdi mdi-logout btn-icon-prepend"></i> Check Out
-                  </button>
-                </form>
-                <a href="{% url 'leave:create' %}" class="btn btn-outline-primary btn-icon-text">
-                  <i class="mdi mdi-calendar-plus btn-icon-prepend"></i> Request Leave
-                </a>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0"><i class="mdi mdi-calendar-check text-success me-2"></i>Leave Balances</h5>
+                <span class="badge bg-light text-muted fw-semibold">{% now "Y" %}</span>
+              </div>
+              <div class="chart-container-260">
+                <canvas id="leaveBalChart"></canvas>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="col-md-6 grid-margin stretch-card">
-          <div class="card">
+        <!-- Recent Leave Requests Table -->
+        <div class="col-lg-7">
+          <div class="card chart-card h-100">
             <div class="card-body">
-              <h4 class="card-title"><i class="mdi mdi-calendar-clock text-primary me-2"></i>My Recent Leave Requests</h4>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0"><i class="mdi mdi-calendar-clock text-primary me-2"></i>My Recent Leave Requests</h5>
+                <a href="{% url 'leave:create' %}" class="btn btn-sm btn-primary">+ New Request</a>
+              </div>
               {% if my_recent_leaves %}
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table class="table table-hover align-middle dash-table mb-0">
                     <thead>
                       <tr>
                         <th>Type</th>
                         <th>Status</th>
                         <th>Days</th>
+                        <th>Date</th>
                       </tr>
                     </thead>
                     <tbody>
                       {% for leave in my_recent_leaves %}
                         <tr>
-                          <td>{{ leave.leave_type.name }}</td>
+                          <td class="fw-semibold text-dark">{{ leave.leave_type.name }}</td>
                           <td>
                             {% if leave.status == 'approved' %}
                               <span class="badge bg-success">Approved</span>
@@ -130,59 +500,293 @@
                               <span class="badge bg-secondary">{{ leave.get_status_display }}</span>
                             {% endif %}
                           </td>
-                          <td>{{ leave.total_days }}</td>
+                          <td>{{ leave.total_days }} d</td>
+                          <td class="text-muted">{{ leave.created_at|date:"d M Y" }}</td>
                         </tr>
                       {% endfor %}
                     </tbody>
                   </table>
                 </div>
               {% else %}
-                <p class="text-muted">No recent leave requests found.</p>
+                <div class="d-flex flex-column align-items-center justify-content-center text-muted" style="min-height: 200px;">
+                  <i class="mdi mdi-calendar-remove-outline" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  <p class="mt-2 mb-0 small">No leave requests found.</p>
+                </div>
               {% endif %}
             </div>
           </div>
         </div>
       </div>
 
+      <!-- ==============================================================
+           ADMIN / HR VIEW
+           ============================================================== -->
       {% else %}
 
-      <div class="row">
-        <div class="col-sm-12">
-          <div class="statistics-details d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-3 bg-white rounded shadow-sm">
-            <div>
-              <p class="statistics-title text-muted mb-1">Active Employees</p>
-              <h3 class="rate-percentage fw-bold text-primary mb-0 counter-value" data-counter>{{ total_employees }}</h3>
-            </div>
-            <div>
-              <p class="statistics-title text-muted mb-1">Present Today</p>
-              <h3 class="rate-percentage fw-bold text-success mb-0 counter-value" data-counter>{{ present_today }}</h3>
-            </div>
-            <div>
-              <p class="statistics-title text-muted mb-1">Late Today</p>
-              <h3 class="rate-percentage fw-bold text-warning mb-0 counter-value" data-counter>{{ late_today }}</h3>
-            </div>
-            <div>
-              <p class="statistics-title text-muted mb-1">Pending Leaves</p>
-              <h3 class="rate-percentage fw-bold text-info mb-0 counter-value" data-counter>{{ pending_leaves }}</h3>
+      <!-- Admin Stat Cards (Consistent with users.html & lunch_breaks.html) -->
+      <p class="dash-section-label">Today's Overview</p>
+      <div class="row g-3 mb-4">
+
+        <!-- Active Employees -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-account-group stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ total_employees }}</h3>
+                <span class="stat-kpi-label d-block">Active Employees</span>
+                <small class="stat-kpi-sub d-block">Total headcount</small>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Present Today -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-account-check stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ present_today }}</h3>
+                <span class="stat-kpi-label d-block">Present Today</span>
+                <small class="stat-kpi-sub d-block">Checked in today</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Late Today -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ late_today }}</h3>
+                <span class="stat-kpi-label d-block">Late Today</span>
+                <small class="stat-kpi-sub d-block">Arrived late</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Leaves -->
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card border-0 h-100">
+            <div class="d-flex align-items-center">
+              <i class="mdi mdi-calendar-question stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
+              <div>
+                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ pending_leaves }}</h3>
+                <span class="stat-kpi-label d-block">Pending Leaves</span>
+                <small class="stat-kpi-sub d-block">Awaiting approval</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="row">
-        <div class="col-lg-8 grid-margin stretch-card">
-          <div class="card">
+      <!-- Attendance Analysis Row -->
+      <p class="dash-section-label">Attendance Analysis</p>
+      <div class="row g-3 mb-4">
+
+        <!-- Attendance Overview Bar Chart -->
+        <div class="col-lg-8">
+          <div class="card chart-card h-100">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="card-title mb-0"><i class="mdi mdi-account-group-outline text-primary me-2"></i>Recent Employees</h4>
-                <a href="{% url 'employees:list' %}" class="btn btn-sm btn-primary">View All</a>
+                <div>
+                  <h5 class="card-title mb-1">Attendance Overview</h5>
+                  <p class="text-muted small mb-0">Daily breakdown of present, late, and absent records</p>
+                </div>
+                <div class="att-pill-toggle" role="group" aria-label="Attendance period filter">
+                  <button type="button" class="att-pill-btn active" data-days="7">Last 7 Days</button>
+                  <button type="button" class="att-pill-btn" data-days="30">Last 30 Days</button>
+                </div>
+              </div>
+              <div class="chart-container-260">
+                <canvas id="attendanceChart"></canvas>
+              </div>
+              <div class="d-flex flex-wrap gap-4 mt-3 pt-2 border-top">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="legend-dot" style="background:#1F3BB3;"></span>
+                  <small class="text-muted fw-semibold">Present</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="legend-dot" style="background:#f59e0b;"></span>
+                  <small class="text-muted fw-semibold">Late</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="legend-dot" style="background:#ef4444;"></span>
+                  <small class="text-muted fw-semibold">Absent</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Rate Gauge -->
+        <div class="col-lg-4">
+          <div class="card chart-card h-100">
+            <div class="card-body d-flex flex-column justify-content-between">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <h5 class="card-title mb-0">Attendance Rate</h5>
+                <div class="gauge-pill-toggle" role="group" aria-label="Attendance rate period filter">
+                  <button type="button" class="gauge-pill-btn active" data-period="today">Today</button>
+                  <button type="button" class="gauge-pill-btn" data-period="7">7 Days</button>
+                  <button type="button" class="gauge-pill-btn" data-period="30">30 Days</button>
+                </div>
+              </div>
+
+              <!-- Gauge with overlay text -->
+              <div class="gauge-box flex-grow-1">
+                <div style="position:relative; width: 190px; height: 190px;">
+                  <canvas id="attendanceGauge"></canvas>
+                  <div class="gauge-center-text">
+                    <div class="gauge-pct" id="gaugePctText">{{ attendance_rate }}%</div>
+                    <div class="gauge-lbl">Present</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Summary counters below gauge -->
+              <div class="row text-center pt-3 border-top g-0 mt-2">
+                <div class="col-4 border-end">
+                  <div class="fw-bold text-primary fs-5 counter-value" id="gaugePresentCount" data-counter>{{ present_today }}</div>
+                  <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Present</small>
+                </div>
+                <div class="col-4 border-end">
+                  <div class="fw-bold text-warning fs-5 counter-value" id="gaugeLateCount" data-counter>{{ late_today }}</div>
+                  <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Late</small>
+                </div>
+                <div class="col-4">
+                  <div class="fw-bold text-dark fs-5 counter-value" id="gaugeTotalCount" data-counter>{{ total_employees }}</div>
+                  <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Total</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Late & Leave Analysis Row -->
+      <div class="row g-3 mb-4">
+
+        <!-- Late Arrivals Trend -->
+        <div class="col-lg-6">
+          <div class="card chart-card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h5 class="card-title mb-1">Late Analysis</h5>
+                  <p class="text-muted small mb-0">Daily late arrivals over the past 7 days</p>
+                </div>
+                <span class="badge bg-warning text-dark fw-semibold">7-Day Trend</span>
+              </div>
+              <div class="chart-container-220">
+                <canvas id="lateChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leave Status Doughnut -->
+        <div class="col-lg-6">
+          <div class="card chart-card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h5 class="card-title mb-1">Leave Analysis</h5>
+                  <p class="text-muted small mb-0">Leave requests status distribution for this year</p>
+                </div>
+                <span class="badge bg-info text-white fw-semibold">{% now "Y" %}</span>
+              </div>
+
+              <div class="row align-items-center g-2">
+                <div class="col-sm-6">
+                  <div class="chart-container-190">
+                    <canvas id="leaveStatusChart"></canvas>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="d-flex flex-column gap-2 ps-sm-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="legend-dot" style="background:#10b981;"></span>
+                        <span class="small fw-semibold text-secondary">Approved</span>
+                      </div>
+                      <span class="badge bg-success text-white fw-bold">{{ leave_approved }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="legend-dot" style="background:#f59e0b;"></span>
+                        <span class="small fw-semibold text-secondary">Pending</span>
+                      </div>
+                      <span class="badge bg-warning text-dark fw-bold">{{ leave_pending }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="legend-dot" style="background:#ef4444;"></span>
+                        <span class="small fw-semibold text-secondary">Rejected</span>
+                      </div>
+                      <span class="badge bg-danger text-white fw-bold">{{ leave_rejected }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="legend-dot" style="background:#94a3b8;"></span>
+                        <span class="small fw-semibold text-secondary">Cancelled</span>
+                      </div>
+                      <span class="badge bg-secondary text-white fw-bold">{{ leave_cancelled }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Leave Requests By Type & Recent Employees Row -->
+      <p class="dash-section-label">Leave Breakdown &amp; Employees</p>
+      <div class="row g-3 mb-4">
+
+        <!-- Leave by Type Bar Chart -->
+        <div class="col-lg-5">
+          <div class="card chart-card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h5 class="card-title mb-1">Leave Requests by Type</h5>
+                  <p class="text-muted small mb-0">Most requested leave categories</p>
+                </div>
+                <span class="badge bg-light text-muted border fw-semibold">{% now "Y" %}</span>
+              </div>
+              <div class="chart-container-260">
+                <canvas id="leaveTypeChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Employees Table -->
+        <div class="col-lg-7">
+          <div class="card chart-card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h5 class="card-title mb-1">Recent Employees</h5>
+                  <p class="text-muted small mb-0">Latest employee registrations</p>
+                </div>
+                <a href="{% url 'employees:list' %}" class="btn btn-sm btn-primary">
+                  View All <i class="mdi mdi-arrow-right ms-1"></i>
+                </a>
               </div>
               <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover align-middle dash-table mb-0">
                   <thead>
                     <tr>
-                      <th>Code</th>
-                      <th>Name</th>
+                      <th>Employee</th>
                       <th>Department</th>
                       <th>Position</th>
                       <th>Status</th>
@@ -191,13 +795,24 @@
                   <tbody>
                     {% for emp in recent_employees %}
                       <tr>
-                        <td class="fw-bold">{{ emp.employee_code }}</td>
-                        <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                        <td>{{ emp.department.name|default:"-" }}</td>
-                        <td>{{ emp.position.name|default:"-" }}</td>
+                        <td>
+                          <div class="d-flex align-items-center gap-2">
+                            <span class="emp-avatar-sm">{{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}</span>
+                            <div>
+                              <div class="fw-semibold text-dark">{{ emp.first_name }} {{ emp.last_name }}</div>
+                              <small class="text-muted">{{ emp.employee_code }}</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{{ emp.department.name|default:"—" }}</td>
+                        <td>{{ emp.position.name|default:"—" }}</td>
                         <td>
                           {% if emp.status == 'active' %}
                             <span class="badge bg-success">Active</span>
+                          {% elif emp.status == 'inactive' %}
+                            <span class="badge bg-secondary">Inactive</span>
+                          {% elif emp.status == 'resigned' %}
+                            <span class="badge bg-warning text-dark">Resigned</span>
                           {% else %}
                             <span class="badge bg-secondary">{{ emp.get_status_display }}</span>
                           {% endif %}
@@ -205,7 +820,7 @@
                       </tr>
                     {% empty %}
                       <tr>
-                        <td colspan="5" class="text-center text-muted">No employees available.</td>
+                        <td colspan="4" class="text-center text-muted py-4">No employees registered yet.</td>
                       </tr>
                     {% endfor %}
                   </tbody>
@@ -215,30 +830,618 @@
           </div>
         </div>
 
-        <div class="col-lg-4 grid-margin stretch-card">
-          <div class="card">
-            <div class="card-body">
-              <h4 class="card-title"><i class="mdi mdi-history text-info me-2"></i>System Activity Stream</h4>
-              <ul class="bullet-line-list ps-3 mt-3">
-                {% for act in recent_activities %}
-                  <li class="mb-3">
-                    <div class="d-flex justify-content-between">
-                      <p class="mb-0 fw-semibold">{{ act.action }} ({{ act.module }})</p>
-                      <small class="text-muted">{{ act.created_at|timesince }} ago</small>
-                    </div>
-                    <p class="text-muted small mb-0">{{ act.description }}</p>
-                  </li>
-                {% empty %}
-                  <p class="text-muted small">No recent activity logs.</p>
-                {% endfor %}
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
-      {% endif %}
 
-    </div>
+      {% endif %}{# end admin/employee if #}
+
+    </div>{# end home-tab #}
   </div>
 </div>
+
+<!-- ==============================================================
+     Data Islands: Django outputs clean JSON script tags for JS
+     ============================================================== -->
+{% if user.role == 'employee' %}
+{{ sparkline_labels|json_script:"mgm-sparkline-labels" }}
+{{ sparkline_present|json_script:"mgm-sparkline-present" }}
+{{ sparkline_late|json_script:"mgm-sparkline-late" }}
+{{ leave_bal_labels|json_script:"mgm-bal-labels" }}
+{{ leave_bal_used|json_script:"mgm-bal-used" }}
+{{ leave_bal_remaining|json_script:"mgm-bal-remaining" }}
+{% else %}
+{{ chart_labels_7|json_script:"mgm-att-labels" }}
+{{ chart_present_7|json_script:"mgm-att-present" }}
+{{ chart_late_7|json_script:"mgm-att-late" }}
+{{ chart_absent_7|json_script:"mgm-att-absent" }}
+{{ chart_labels_30|json_script:"mgm-att-labels-30" }}
+{{ chart_present_30|json_script:"mgm-att-present-30" }}
+{{ chart_late_30|json_script:"mgm-att-late-30" }}
+{{ chart_absent_30|json_script:"mgm-att-absent-30" }}
+{{ attendance_rate|json_script:"mgm-att-rate" }}
+{{ gauge_periods|json_script:"mgm-gauge-periods" }}
+{{ leave_doughnut_labels|json_script:"mgm-leave-dlabels" }}
+{{ leave_doughnut_data|json_script:"mgm-leave-ddata" }}
+{{ leave_type_labels|json_script:"mgm-leave-tlabels" }}
+{{ leave_type_data|json_script:"mgm-leave-tdata" }}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Local Chart.js v4.4.1 from Project Vendors -->
+<script src="{% static 'assets/vendors/chart.js/chart.umd.js' %}"></script>
+<script>
+/**
+ * Payroll MGM Dashboard Charts
+ * 100% Pure JavaScript: Reads data safely from JSON data-islands.
+ * Zero template expressions inside script tag = 0 linter errors.
+ */
+(function () {
+  'use strict';
+
+  // Helper to read data-island values safely
+  function mgmRead(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    try {
+      var val = JSON.parse(el.textContent);
+      if (typeof val === 'string') {
+        try { val = JSON.parse(val); } catch (_) {}
+      }
+      return val;
+    } catch (err) {
+      console.error('Failed to parse data island #' + id, err);
+      return null;
+    }
+  }
+
+  // Helper for linear gradients
+  function mgmGrad(ctx, topColor, botColor) {
+    var h = ctx.canvas.height || 220;
+    var g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, topColor);
+    g.addColorStop(1, botColor);
+    return g;
+  }
+
+  function initDashboardCharts() {
+    if (typeof Chart === 'undefined') {
+      console.warn('Chart.js is not loaded.');
+      return;
+    }
+
+    // Chart.js Global Typography & Tooltip Defaults
+    Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.plugins.legend.display = false;
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.94)';
+    Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#f1f5f9';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+    Chart.defaults.plugins.tooltip.boxPadding = 4;
+    Chart.defaults.plugins.tooltip.titleFont = { weight: '600', size: 12 };
+    Chart.defaults.plugins.tooltip.bodyFont = { size: 12 };
+
+    /* -------------------------------------------------------------
+       ADMIN CHARTS
+       ------------------------------------------------------------- */
+
+    // 1. Attendance Overview (Stacked bar with 7-day / 30-day filter)
+    var attCanvas = document.getElementById('attendanceChart');
+    if (attCanvas) {
+      var labels7 = mgmRead('mgm-att-labels') || [];
+      var present7 = mgmRead('mgm-att-present') || [];
+      var late7 = mgmRead('mgm-att-late') || [];
+      var absent7 = mgmRead('mgm-att-absent') || [];
+
+      var labels30 = mgmRead('mgm-att-labels-30') || [];
+      var present30 = mgmRead('mgm-att-present-30') || [];
+      var late30 = mgmRead('mgm-att-late-30') || [];
+      var absent30 = mgmRead('mgm-att-absent-30') || [];
+
+      var attendanceChartInstance = new Chart(attCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels7,
+          datasets: [
+            {
+              label: 'Present',
+              data: present7,
+              backgroundColor: '#1F3BB3',
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.52,
+              maxBarThickness: 36
+            },
+            {
+              label: 'Late',
+              data: late7,
+              backgroundColor: '#f59e0b',
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.52,
+              maxBarThickness: 36
+            },
+            {
+              label: 'Absent',
+              data: absent7,
+              backgroundColor: '#ef4444',
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.52,
+              maxBarThickness: 36
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              titleColor: '#ffffff',
+              bodyColor: '#f1f5f9',
+              padding: 10,
+              cornerRadius: 8,
+              boxPadding: 4,
+              filter: function (tooltipItem) {
+                // Filter out 0-staff entries so tooltip only shows active categories
+                return tooltipItem.raw > 0;
+              },
+              callbacks: {
+                label: function (c) {
+                  return ' ' + c.dataset.label + ': ' + c.raw + ' staff';
+                },
+                afterBody: function (items) {
+                  if (items.length > 1) {
+                    var sum = items.reduce(function (tot, it) { return tot + (it.raw || 0); }, 0);
+                    return '\n Total: ' + sum + ' staff';
+                  } else if (items.length === 0) {
+                    return ' No records';
+                  }
+                  return '';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              ticks: {
+                font: { size: 11 },
+                color: '#64748b',
+                maxRotation: 0,
+                autoSkip: false
+              }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: { precision: 0, font: { size: 11 }, color: '#64748b' }
+            }
+          }
+        }
+      });
+
+      // Filter switch handler (Segmented pill buttons: 7 Days vs 30 Days)
+      var pillButtons = document.querySelectorAll('.att-pill-btn');
+      if (pillButtons.length) {
+        pillButtons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var days = this.getAttribute('data-days');
+            if (this.classList.contains('active')) return;
+
+            pillButtons.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+
+            var is30 = days === '30';
+            var curLabels = is30 ? labels30 : labels7;
+            var curPresent = is30 ? present30 : present7;
+            var curLate = is30 ? late30 : late7;
+            var curAbsent = is30 ? absent30 : absent7;
+
+            attendanceChartInstance.data.labels = curLabels;
+            attendanceChartInstance.data.datasets[0].data = curPresent;
+            attendanceChartInstance.data.datasets[1].data = curLate;
+            attendanceChartInstance.data.datasets[2].data = curAbsent;
+
+            // Adjust bar thickness & border radius
+            var barThickness = is30 ? 14 : 36;
+            var barPct = is30 ? 0.72 : 0.52;
+            var radius = is30 ? 4 : 6;
+            attendanceChartInstance.data.datasets.forEach(function (ds) {
+              ds.maxBarThickness = barThickness;
+              ds.barPercentage = barPct;
+              ds.borderRadius = radius;
+            });
+
+            // Optimize x-axis tick density
+            if (is30) {
+              attendanceChartInstance.options.scales.x.ticks.maxTicksLimit = 10;
+              attendanceChartInstance.options.scales.x.ticks.autoSkip = true;
+            } else {
+              attendanceChartInstance.options.scales.x.ticks.maxTicksLimit = 7;
+              attendanceChartInstance.options.scales.x.ticks.autoSkip = false;
+            }
+
+            attendanceChartInstance.update();
+          });
+        });
+      }
+    }
+
+    // 2. Attendance Rate Gauge (Doughnut with Today, 7 Days, 30 Days filter)
+    var gaugeCanvas = document.getElementById('attendanceGauge');
+    if (gaugeCanvas) {
+      var gaugePeriods = mgmRead('mgm-gauge-periods') || {};
+      var defaultRate = parseFloat(mgmRead('mgm-att-rate')) || 0;
+      var curRate = (gaugePeriods.today && typeof gaugePeriods.today.rate === 'number')
+        ? gaugePeriods.today.rate
+        : defaultRate;
+
+      var gaugeChartInstance = new Chart(gaugeCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [curRate, Math.max(0, 100 - curRate)],
+            backgroundColor: ['#10b981', '#e2e8f0'],
+            borderWidth: 0,
+            hoverOffset: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '76%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (c) {
+                  return c.dataIndex === 0
+                    ? ' ' + curRate.toFixed(1) + '% Present'
+                    : ' ' + (100 - curRate).toFixed(1) + '% Absent';
+                }
+              }
+            }
+          },
+          animation: { animateRotate: true, duration: 800 }
+        }
+      });
+
+      // Gauge filter switch handler
+      var gaugeButtons = document.querySelectorAll('.gauge-pill-btn');
+      if (gaugeButtons.length) {
+        gaugeButtons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var period = this.getAttribute('data-period');
+            if (this.classList.contains('active')) return;
+
+            gaugeButtons.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+
+            var pData = gaugePeriods[period];
+            if (pData) {
+              curRate = parseFloat(pData.rate) || 0;
+
+              // Update gauge chart
+              gaugeChartInstance.data.datasets[0].data = [curRate, Math.max(0, 100 - curRate)];
+              gaugeChartInstance.update();
+
+              // Update center text
+              var pctEl = document.getElementById('gaugePctText');
+              if (pctEl) {
+                pctEl.textContent = curRate.toFixed(1) + '%';
+              }
+
+              // Update bottom counters
+              var presEl = document.getElementById('gaugePresentCount');
+              if (presEl) presEl.textContent = pData.present;
+
+              var lateEl = document.getElementById('gaugeLateCount');
+              if (lateEl) lateEl.textContent = pData.late;
+
+              var totEl = document.getElementById('gaugeTotalCount');
+              if (totEl) totEl.textContent = pData.total;
+            }
+          });
+        });
+      }
+    }
+
+    // 3. Late Analysis Trend (Line Chart)
+    var lateCanvas = document.getElementById('lateChart');
+    if (lateCanvas) {
+      var lateCtx = lateCanvas.getContext('2d');
+      var lateLabels = mgmRead('mgm-att-labels') || [];
+      var lateData = mgmRead('mgm-att-late') || [];
+
+      new Chart(lateCtx, {
+        type: 'line',
+        data: {
+          labels: lateLabels,
+          datasets: [{
+            label: 'Late Arrivals',
+            data: lateData,
+            borderColor: '#f59e0b',
+            backgroundColor: mgmGrad(lateCtx, 'rgba(245, 158, 11, 0.22)', 'rgba(245, 158, 11, 0.0)'),
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#f59e0b',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (c) {
+                  return ' Late: ' + c.raw + ' staff';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 }, color: '#64748b' }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: { precision: 0, font: { size: 11 }, color: '#64748b' }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Leave Status Breakdown (Doughnut)
+    var leaveCanvas = document.getElementById('leaveStatusChart');
+    if (leaveCanvas) {
+      var dLabels = mgmRead('mgm-leave-dlabels') || ['Approved', 'Pending', 'Rejected', 'Cancelled'];
+      var dData = mgmRead('mgm-leave-ddata') || [0, 0, 0, 0];
+      var hasData = dData.some(function (v) { return v > 0; });
+
+      new Chart(leaveCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: dLabels,
+          datasets: [{
+            data: hasData ? dData : [1],
+            backgroundColor: hasData
+              ? ['#10b981', '#f59e0b', '#ef4444', '#94a3b8']
+              : ['#e2e8f0'],
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverOffset: hasData ? 4 : 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (c) {
+                  if (!hasData) return ' No records';
+                  return ' ' + c.label + ': ' + c.raw + ' requests';
+                }
+              }
+            }
+          },
+          animation: { animateRotate: true, duration: 1000 }
+        }
+      });
+    }
+
+    // 5. Leave Requests by Type (Horizontal Bar)
+    var leaveTypeCanvas = document.getElementById('leaveTypeChart');
+    if (leaveTypeCanvas) {
+      var tLabels = mgmRead('mgm-leave-tlabels') || [];
+      var tData = mgmRead('mgm-leave-tdata') || [];
+      var palette = ['#1F3BB3', '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6', '#ec4899'];
+
+      if (tLabels.length === 0 || !tData.some(function (v) { return v > 0; })) {
+        var wrap = leaveTypeCanvas.parentElement;
+        if (wrap) {
+          wrap.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted" style="min-height:220px;"><i class="mdi mdi-calendar-blank-outline" style="font-size:2.8rem; opacity:0.35;"></i><p class="small mt-2 mb-0">No leave requests categorized yet.</p></div>';
+        }
+      } else {
+        new Chart(leaveTypeCanvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: tLabels,
+            datasets: [{
+              label: 'Requests',
+              data: tData,
+              backgroundColor: palette.slice(0, tData.length),
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.65
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (c) {
+                    return ' ' + c.raw + ' request' + (c.raw !== 1 ? 's' : '');
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                grid: { color: '#f1f5f9' },
+                ticks: { precision: 0, font: { size: 11 }, color: '#64748b' }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { font: { size: 11 }, color: '#64748b' }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    /* -------------------------------------------------------------
+       EMPLOYEE CHARTS
+       ------------------------------------------------------------- */
+
+    // 6. Employee 30-Day Attendance Sparkline
+    var empSparkCanvas = document.getElementById('empSparklineChart');
+    if (empSparkCanvas) {
+      var spCtx = empSparkCanvas.getContext('2d');
+      var spLabels = mgmRead('mgm-sparkline-labels') || [];
+      var spPresent = mgmRead('mgm-sparkline-present') || [];
+      var spLate = mgmRead('mgm-sparkline-late') || [];
+
+      new Chart(spCtx, {
+        type: 'line',
+        data: {
+          labels: spLabels,
+          datasets: [
+            {
+              label: 'Present',
+              data: spPresent,
+              borderColor: '#1F3BB3',
+              backgroundColor: mgmGrad(spCtx, 'rgba(31,59,179,.18)', 'rgba(31,59,179,0)'),
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 0,
+              pointHoverRadius: 5
+            },
+            {
+              label: 'Late',
+              data: spLate,
+              borderColor: '#f59e0b',
+              backgroundColor: mgmGrad(spCtx, 'rgba(245,158,11,.15)', 'rgba(245,158,11,0)'),
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 0,
+              pointHoverRadius: 5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (c) {
+                  return c.dataset.label + ': ' + (c.raw === 1 ? 'Yes' : 'No');
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { maxTicksLimit: 8, font: { size: 10 }, color: '#64748b' }
+            },
+            y: {
+              min: 0,
+              max: 1.2,
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                stepSize: 1,
+                font: { size: 10 },
+                callback: function (v) { return v === 1 ? '✓' : ''; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 7. Employee Leave Balance Bar Chart
+    var leaveBalCanvas = document.getElementById('leaveBalChart');
+    if (leaveBalCanvas) {
+      var balLabels = mgmRead('mgm-bal-labels') || [];
+      var balUsed = mgmRead('mgm-bal-used') || [];
+      var balRemaining = mgmRead('mgm-bal-remaining') || [];
+
+      new Chart(leaveBalCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: balLabels,
+          datasets: [
+            {
+              label: 'Used',
+              data: balUsed,
+              backgroundColor: '#ef4444',
+              borderRadius: 6,
+              borderSkipped: false
+            },
+            {
+              label: 'Remaining',
+              data: balRemaining,
+              backgroundColor: '#10b981',
+              borderRadius: 6,
+              borderSkipped: false
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { boxWidth: 10, font: { size: 11 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (c) {
+                  return ' ' + c.dataset.label + ': ' + c.raw + ' days';
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+            y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+  }
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboardCharts);
+  } else {
+    initDashboardCharts();
+  }
+})();
+</script>
 {% endblock %}

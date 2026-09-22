@@ -42,6 +42,8 @@ class LeavePeriod(models.Model):
     leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='periods')
     start_date = models.DateField()
     end_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     days = models.DecimalField(max_digits=6, decimal_places=2)
 
     objects = models.Manager()

@@ -4,38 +4,63 @@
 
 {% block extra_css %}
 <style>
-  /* Stat Cards */
+  /* Stat KPI Cards (Redesigned modern minimal UI — consistent with dashboard) */
   .stat-card {
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    border-radius: 14px;
-    background: #ffffff;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(226, 232, 240, 0.75) !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    padding: 1.35rem 1.45rem !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
+    border-color: rgba(203, 213, 225, 0.9) !important;
   }
-  .stat-icon-wrap {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
+
+  /* Clean vibrant standalone icon */
+  .stat-kpi-icon {
+    font-size: 2.35rem;
+    line-height: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: transform 0.25s ease;
   }
-  .stat-icon-primary {
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  .stat-card:hover .stat-kpi-icon {
+    transform: scale(1.08);
   }
-  .stat-icon-success {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+
+  /* Vibrant icon accent colors */
+  .stat-kpi-icon-primary { color: #1F3BB3; }
+  .stat-kpi-icon-success { color: #059669; }
+  .stat-kpi-icon-warning { color: #D97706; }
+  .stat-kpi-icon-info    { color: #0284C7; }
+
+  /* KPI Typography hierarchy: Number on top, Label below */
+  .stat-kpi-value,
+  .stat-card h3,
+  .stat-card h4 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.2rem !important;
   }
-  .stat-icon-warning {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  .stat-kpi-label {
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    line-height: 1.25 !important;
   }
-  .stat-icon-info {
-    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+  .stat-kpi-sub {
+    font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.2 !important;
+    margin-top: 0.15rem !important;
   }
 
   /* High-Contrast Beautiful Badges */
@@ -136,21 +161,23 @@
       width: 100% !important;
     }
     .stat-card {
-      padding: 0.85rem !important;
+      padding: 0.95rem 0.85rem !important;
+      border-radius: 12px !important;
     }
-    .stat-icon-wrap {
-      width: 38px !important;
-      height: 38px !important;
-      border-radius: 10px !important;
+    .stat-kpi-icon {
+      font-size: 1.85rem !important;
+      margin-right: 0.75rem !important;
     }
-    .stat-icon-wrap i {
-      font-size: 1.15rem !important;
-    }
+    .stat-kpi-value,
+    .stat-card h3,
     .stat-card h4 {
       font-size: 1.25rem !important;
     }
-    .stat-formula-text {
-      font-size: 0.85rem !important;
+    .stat-kpi-label {
+      font-size: 0.78rem !important;
+    }
+    .stat-kpi-sub {
+      font-size: 0.65rem !important;
     }
     .filter-btn-group {
       width: 100% !important;
@@ -191,19 +218,14 @@
     <!-- Top Header & Actions -->
     <div class="d-flex justify-content-between align-items-start page-header-wrap mb-4">
       <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-          <div class="stat-icon-wrap stat-icon-primary" style="width: 36px; height: 36px; border-radius: 9px;">
-            <i class="mdi mdi-silverware-fork-knife text-white fs-5"></i>
-          </div>
-          <h3 class="fw-bold text-dark mb-0">Lunch Break & Rest Settings</h3>
-        </div>
+        <h3 class="fw-bold text-dark mb-1">Lunch Break & Rest Settings</h3>
         <p class="text-muted mb-0 small">Configure lunch break windows and automatic working hours deductions</p>
       </div>
 
       <div class="d-flex flex-column align-items-start align-items-md-end gap-2 header-actions-wrap">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}" class="text-decoration-none text-muted"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}" class="text-decoration-none text-muted">Dashboard</a></li>
             <li class="breadcrumb-item text-muted">Attendance</li>
             <li class="breadcrumb-item active fw-semibold text-primary" aria-current="page">Lunch Breaks</li>
           </ol>
@@ -217,18 +239,16 @@
       </div>
     </div>
 
-    <!-- Quick Metric Cards -->
+    <!-- Quick Metric Cards (Dashboard Style) -->
     <div class="row g-3 mb-4">
       <!-- Total Policies -->
       <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100 p-3" style="border-left: 4px solid #3B82F6 !important;">
+        <div class="card stat-card border-0 h-100">
           <div class="d-flex align-items-center">
-            <div class="stat-icon-wrap stat-icon-primary me-3">
-              <i class="mdi mdi-silverware-fork-knife text-white fs-4"></i>
-            </div>
+            <i class="mdi mdi-silverware-fork-knife stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
             <div>
-              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Total Policies</span>
-              <h4 class="fw-bold mb-0 text-dark counter-value" data-counter>{{ total_breaks }}</h4>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ total_breaks }}</h3>
+              <span class="stat-kpi-label d-block">Total Policies</span>
             </div>
           </div>
         </div>
@@ -236,14 +256,12 @@
 
       <!-- Active Breaks -->
       <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100 p-3" style="border-left: 4px solid #10B981 !important;">
+        <div class="card stat-card border-0 h-100">
           <div class="d-flex align-items-center">
-            <div class="stat-icon-wrap stat-icon-success me-3">
-              <i class="mdi mdi-check-circle-outline text-white fs-4"></i>
-            </div>
+            <i class="mdi mdi-check-circle-outline stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
             <div>
-              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Active Breaks</span>
-              <h4 class="fw-bold mb-0 text-success counter-value" data-counter>{{ active_breaks }}</h4>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ active_breaks }}</h3>
+              <span class="stat-kpi-label d-block">Active Breaks</span>
             </div>
           </div>
         </div>
@@ -251,14 +269,12 @@
 
       <!-- Auto-Deduct Enabled -->
       <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100 p-3" style="border-left: 4px solid #F59E0B !important;">
+        <div class="card stat-card border-0 h-100">
           <div class="d-flex align-items-center">
-            <div class="stat-icon-wrap stat-icon-warning me-3">
-              <i class="mdi mdi-clock-check-outline text-white fs-4"></i>
-            </div>
+            <i class="mdi mdi-clock-check-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
             <div>
-              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Auto-Deduct</span>
-              <h4 class="fw-bold mb-0 text-warning counter-value" data-counter>{{ auto_deduct_breaks }}</h4>
+              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ auto_deduct_breaks }}</h3>
+              <span class="stat-kpi-label d-block">Auto-Deduct</span>
             </div>
           </div>
         </div>
@@ -266,15 +282,13 @@
 
       <!-- Standard Rule Formula -->
       <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100 p-3" style="border-left: 4px solid #06B6D4 !important;">
+        <div class="card stat-card border-0 h-100">
           <div class="d-flex align-items-center">
-            <div class="stat-icon-wrap stat-icon-info me-3">
-              <i class="mdi mdi-calculator text-white fs-4"></i>
-            </div>
+            <i class="mdi mdi-calculator stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
             <div>
-              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Rule Formula</span>
-              <div class="fw-bold text-dark stat-formula-text">9h &rarr; 8h count</div>
-              <small class="text-muted" style="font-size: 0.75rem;">1h lunch deducted</small>
+              <h3 class="stat-kpi-value mb-0" style="font-size: 1.35rem !important;">9h &rarr; 8h count</h3>
+              <span class="stat-kpi-label d-block">Rule Formula</span>
+              <small class="stat-kpi-sub d-block">1h lunch deducted</small>
             </div>
           </div>
         </div>

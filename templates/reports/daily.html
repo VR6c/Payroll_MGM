@@ -13,7 +13,7 @@
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}"><i class="mdi mdi-home-outline me-1"></i>Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
           <li class="breadcrumb-item text-muted">Report</li>
           <li class="breadcrumb-item active" aria-current="page">Daily Reports</li>
         </ol>
@@ -112,7 +112,7 @@
           <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap text-muted mt-2"
             style="font-size: 13px;">
             <span>
-              <i class="mdi mdi-calendar-clock text-primary me-1"></i>Date: <strong class="text-dark">{{ report_date_str }}</strong>
+              Date: <strong class="text-dark">{{ report_date_str }}</strong>
             </span>
             {% if selected_dept %}
             {% for d in departments %}
