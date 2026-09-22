@@ -19,10 +19,10 @@
           </ol>
         </nav>
         <div class="d-flex gap-2 flex-wrap">
-          <a href="{% url 'attendance:export_excel' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&from_date={{ request.GET.from_date }}&to_date={{ request.GET.to_date }}" class="btn btn-outline-success shadow-sm">
+          <a href="{% url 'attendance:export_excel' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&from_date={{ request.GET.from_date }}&to_date={{ request.GET.to_date }}&employee={{ request.GET.employee }}" class="btn btn-outline-success shadow-sm">
             <i class="mdi mdi-file-excel-outline me-1"></i> Export Excel
           </a>
-          <a href="{% url 'attendance:export_pdf' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&from_date={{ request.GET.from_date }}&to_date={{ request.GET.to_date }}" class="btn btn-outline-danger shadow-sm">
+          <a href="{% url 'attendance:export_pdf' %}?type={{ request.GET.type }}&status={{ request.GET.status }}&from_date={{ request.GET.from_date }}&to_date={{ request.GET.to_date }}&employee={{ request.GET.employee }}" class="btn btn-outline-danger shadow-sm">
             <i class="mdi mdi-file-pdf-box me-1"></i> Export PDF
           </a>
           {% if user.role in 'super_admin,hr_admin,manager' %}
@@ -41,7 +41,18 @@
           {% if request.GET.type %}
           <input type="hidden" name="type" value="{{ request.GET.type }}">
           {% endif %}
-          <div class="col-md-3">
+          <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+            <label class="form-label small fw-semibold text-muted mb-1">Employee</label>
+            <select name="employee" id="filterEmployee" class="form-select">
+              <option value="">-- All Employees --</option>
+              {% for emp in filter_employees %}
+              <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                {{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_code }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
             <label class="form-label small fw-semibold text-muted mb-1">Status</label>
             <select name="status" class="form-select">
               <option value="">-- All Statuses --</option>
@@ -52,21 +63,21 @@
               <option value="overtime" {% if request.GET.status == 'overtime' %}selected{% endif %}>Overtime</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
             <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
             <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
           </div>
-          <div class="col-md-3">
+          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
             <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
             <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold text-muted mb-1">&nbsp;</label>
+          <div class="col-12 col-sm-6 col-md-12 col-lg-3">
+            <label class="form-label small fw-semibold text-muted mb-1 d-none d-lg-block">&nbsp;</label>
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary text-white w-100">
+              <button type="submit" class="btn btn-primary text-white flex-grow-1">
                 <i class="mdi mdi-magnify me-1"></i> Filter Report
               </button>
-              {% if request.GET.from_date or request.GET.to_date or request.GET.status or request.GET.date %}
+              {% if request.GET.from_date or request.GET.to_date or request.GET.status or request.GET.date or request.GET.employee or request.GET.search %}
               <a href="{% url 'attendance:report' %}{% if request.GET.type %}?type={{ request.GET.type }}{% endif %}" class="btn btn-outline-secondary" title="Reset Filters">
                 <i class="mdi mdi-refresh"></i>
               </a>
@@ -470,6 +481,19 @@
     var $statusSelect = $('#bulkStatusSelect');
     var $checkInInput = $('#checkInTimeInput');
     var $checkOutInput = $('#checkOutTimeInput');
+
+    // Initialize Select2 on filterEmployee with search enabled
+    if ($.fn.select2) {
+      if ($('#filterEmployee').hasClass("select2-hidden-accessible")) {
+        $('#filterEmployee').select2('destroy');
+      }
+      $('#filterEmployee').select2({
+        width: '100%',
+        minimumResultsForSearch: 0,
+        placeholder: '-- All Employees --',
+        allowClear: true
+      });
+    }
 
     // Initialize Select2 specifically on bulkEmployeeSelect with search & multiselect UX
     function setupBulkSelect2() {

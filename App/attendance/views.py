@@ -5,7 +5,8 @@ from django.urls import reverse_lazy
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Q
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
 from django.views.generic import View, ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
@@ -70,6 +71,8 @@ class WorkScheduleListView(RoleRequiredMixin, ListView):
     template_name = 'attendance/schedules.html'
     context_object_name = 'employees'
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.schedules'
 
     def get_paginate_by(self, queryset):
         limit = self.request.GET.get('limit', '10')
@@ -143,6 +146,8 @@ class WorkScheduleListView(RoleRequiredMixin, ListView):
 
 class SaveEmployeeScheduleView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.schedules'
 
     def post(self, request, *args, **kwargs):
         try:
@@ -161,6 +166,8 @@ class SaveEmployeeScheduleView(RoleRequiredMixin, View):
 
 class GetEmployeeScheduleView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.schedules'
 
     def get(self, request, emp_id, *args, **kwargs):
         emp = get_object_or_404(Employee, pk=emp_id)
@@ -171,6 +178,8 @@ class GetEmployeeScheduleView(RoleRequiredMixin, View):
 
 class ExportScheduleView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.export'
 
     def get(self, request, *args, **kwargs):
         response = HttpResponse(content_type='text/csv')
@@ -212,6 +221,8 @@ class ExportScheduleView(RoleRequiredMixin, View):
 
 class AttendanceCreateView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.bulk'
 
     def post(self, request, *args, **kwargs):
         # 1. Retrieve employees: can be 'employees' list or 'employee' single
@@ -386,6 +397,8 @@ class AttendanceUpdateView(RoleRequiredMixin, UpdateView):
     form_class = AttendanceForm
     success_url = reverse_lazy('attendance:report')
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.record'
 
     def form_valid(self, form):
         att = form.save(commit=False)
@@ -414,6 +427,8 @@ class AttendanceDeleteView(RoleRequiredMixin, DeleteView):
     model = Attendance
     success_url = reverse_lazy('attendance:report')
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.record'
 
     def post(self, request, *args, **kwargs):
         messages.success(self.request, "Attendance record deleted successfully!")
@@ -426,6 +441,8 @@ class LunchBreakListView(RoleRequiredMixin, ListView):
     context_object_name = 'breaks'
     paginate_by = 20
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.breaks'
 
     def get_queryset(self):
         qs = LunchBreak.objects.select_related('company').all()
@@ -455,6 +472,8 @@ class LunchBreakCreateView(RoleRequiredMixin, CreateView):
     form_class = LunchBreakForm
     success_url = reverse_lazy('attendance:lunch_breaks')
     required_roles = ['super_admin', 'hr_admin']
+    required_module = 'attendance'
+    required_permission = 'attendance.breaks'
 
     def form_valid(self, form):
         messages.success(self.request, f"Lunch break '{form.cleaned_data.get('name')}' created successfully!")
@@ -472,6 +491,8 @@ class LunchBreakUpdateView(RoleRequiredMixin, UpdateView):
     form_class = LunchBreakForm
     success_url = reverse_lazy('attendance:lunch_breaks')
     required_roles = ['super_admin', 'hr_admin']
+    required_module = 'attendance'
+    required_permission = 'attendance.breaks'
 
     def form_valid(self, form):
         messages.success(self.request, f"Lunch break '{form.cleaned_data.get('name')}' updated successfully!")
@@ -488,6 +509,8 @@ class LunchBreakDeleteView(RoleRequiredMixin, DeleteView):
     model = LunchBreak
     success_url = reverse_lazy('attendance:lunch_breaks')
     required_roles = ['super_admin', 'hr_admin']
+    required_module = 'attendance'
+    required_permission = 'attendance.breaks'
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
@@ -496,7 +519,7 @@ class LunchBreakDeleteView(RoleRequiredMixin, DeleteView):
         return super().post(request, *args, **kwargs)
 
 
-def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date=None, to_date=None, date_str=None):
+def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date=None, to_date=None, date_str=None, employee=None, search=None):
     if filter_type == 'checkin_early':
         qs = qs.filter(
             Q(status='present') | Q(check_in__time__lte=datetime.time(8, 0), check_in__isnull=False)
@@ -540,6 +563,32 @@ def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date
         qs = qs.filter(date__lte=to_date)
     if date_str and not from_date and not to_date:
         qs = qs.filter(date=date_str)
+
+    if employee:
+        emp_str = str(employee).strip()
+        if emp_str.isdigit():
+            qs = qs.filter(employee_id=int(emp_str))
+        else:
+            qs = qs.annotate(
+                full_name=Concat('employee__first_name', Value(' '), 'employee__last_name')
+            ).filter(
+                Q(employee__first_name__icontains=emp_str) |
+                Q(employee__last_name__icontains=emp_str) |
+                Q(full_name__icontains=emp_str) |
+                Q(employee__employee_code__iexact=emp_str)
+            )
+
+    if search:
+        search_str = str(search).strip()
+        qs = qs.annotate(
+            full_name=Concat('employee__first_name', Value(' '), 'employee__last_name')
+        ).filter(
+            Q(employee__first_name__icontains=search_str) |
+            Q(employee__last_name__icontains=search_str) |
+            Q(full_name__icontains=search_str) |
+            Q(employee__employee_code__icontains=search_str)
+        )
+
     return qs
 
 
@@ -549,6 +598,8 @@ class AttendanceReportView(RoleRequiredMixin, ListView):
     context_object_name = 'attendances'
     paginate_by = 50
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.view'
 
     def get_queryset(self):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
@@ -559,12 +610,15 @@ class AttendanceReportView(RoleRequiredMixin, ListView):
             from_date=self.request.GET.get('from_date'),
             to_date=self.request.GET.get('to_date'),
             date_str=self.request.GET.get('date'),
+            employee=self.request.GET.get('employee'),
+            search=self.request.GET.get('search'),
         )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['active_type'] = self.request.GET.get('type', '')
         ctx['employees'] = Employee.objects.filter(status='active').select_related('department', 'position').order_by('department__name', 'first_name')
+        ctx['filter_employees'] = Employee.objects.all().select_related('department', 'position').order_by('first_name', 'last_name')
         ctx['departments'] = Department.objects.all().order_by('name')
         ctx['form'] = AttendanceForm()
         return ctx
@@ -572,6 +626,8 @@ class AttendanceReportView(RoleRequiredMixin, ListView):
 
 class AttendanceReportExcelExportView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.export'
 
     def get(self, request, *args, **kwargs):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
@@ -582,6 +638,8 @@ class AttendanceReportExcelExportView(RoleRequiredMixin, View):
             from_date=request.GET.get('from_date'),
             to_date=request.GET.get('to_date'),
             date_str=request.GET.get('date'),
+            employee=request.GET.get('employee'),
+            search=request.GET.get('search'),
         )
 
         generated_by = request.user.get_full_name() or request.user.username
@@ -597,6 +655,8 @@ class AttendanceReportExcelExportView(RoleRequiredMixin, View):
 
 class AttendanceReportPdfExportView(RoleRequiredMixin, View):
     required_roles = ['super_admin', 'hr_admin', 'manager']
+    required_module = 'attendance'
+    required_permission = 'attendance.export'
 
     def get(self, request, *args, **kwargs):
         qs = Attendance.objects.select_related('employee', 'employee__department', 'employee__position').all().order_by('-date')
@@ -607,6 +667,8 @@ class AttendanceReportPdfExportView(RoleRequiredMixin, View):
             from_date=request.GET.get('from_date'),
             to_date=request.GET.get('to_date'),
             date_str=request.GET.get('date'),
+            employee=request.GET.get('employee'),
+            search=request.GET.get('search'),
         )
 
         generated_by = request.user.get_full_name() or request.user.username

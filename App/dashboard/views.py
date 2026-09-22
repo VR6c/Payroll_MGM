@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.db.models import Count, Q
 from accounts.mixins import RoleRequiredMixin
@@ -12,12 +13,45 @@ from leave.models import LeaveRequest, LeaveBalance
 class DashboardView(RoleRequiredMixin, TemplateView):
     template_name = 'dashboard/home.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+
+        user = request.user
+        # Check if user has permission to view the executive or personal dashboard
+        has_dash_access = (
+            user.is_superuser
+            or getattr(user, 'role', None) in ['super_admin', 'hr_admin', 'manager']
+            or user.has_module_access('dashboard')
+            or (user.role == 'employee' and getattr(user, 'employee_profile', None))
+        )
+        if has_dash_access:
+            return super().dispatch(request, *args, **kwargs)
+
+        # For custom roles without dashboard access, redirect to first permitted module
+        if user.has_module_access('attendance'):
+            return redirect('attendance:report')
+        if user.has_module_access('employees'):
+            return redirect('employees:list')
+        if user.has_module_access('leave'):
+            return redirect('leave:my_leaves')
+        if user.has_module_access('overtime'):
+            return redirect('overtime:list')
+        if user.has_module_access('payroll'):
+            return redirect('payroll:list')
+        if user.has_module_access('reports'):
+            return redirect('reports:daily')
+        if user.has_permission('users.manage'):
+            return redirect('accounts:user_list')
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
         today = timezone.localdate()
 
-        if user.role == 'employee':
+        if user.role == 'employee' or (getattr(user, 'employee_profile', None) and not user.has_module_access('dashboard')):
             emp = getattr(user, 'employee_profile', None)
             if emp:
                 ctx['today_attendance'] = Attendance.objects.filter(employee=emp, date=today).first()

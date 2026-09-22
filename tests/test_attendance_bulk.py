@@ -269,6 +269,43 @@ class AttendanceBulkCreateTests(TestCase):
         self.assertEqual(len(attendances), 1)
         self.assertEqual(attendances[0].date, datetime.date(2026, 8, 15))
 
+    def test_attendance_report_employee_filter(self):
+        """Test filtering the attendance report by employee id, name, or code."""
+        att_alice = Attendance.objects.create(employee=self.emp1, date=datetime.date(2026, 9, 10), status='present')
+        att_bob = Attendance.objects.create(employee=self.emp2, date=datetime.date(2026, 9, 10), status='present')
+
+        # Filter by employee ID
+        url_id = reverse('attendance:report') + f'?employee={self.emp1.id}'
+        resp_id = self.client.get(url_id)
+        self.assertEqual(resp_id.status_code, 200)
+        atts = list(resp_id.context['attendances'])
+        self.assertEqual(len(atts), 1)
+        self.assertEqual(atts[0].employee, self.emp1)
+
+        # Filter by employee first name
+        url_name = reverse('attendance:report') + '?employee=Bob'
+        resp_name = self.client.get(url_name)
+        self.assertEqual(resp_name.status_code, 200)
+        atts_bob = list(resp_name.context['attendances'])
+        self.assertEqual(len(atts_bob), 1)
+        self.assertEqual(atts_bob[0].employee, self.emp2)
+
+        # Filter by employee full name
+        url_full = reverse('attendance:report') + '?employee=Alice+Smith'
+        resp_full = self.client.get(url_full)
+        self.assertEqual(resp_full.status_code, 200)
+        atts_full = list(resp_full.context['attendances'])
+        self.assertEqual(len(atts_full), 1)
+        self.assertEqual(atts_full[0].employee, self.emp1)
+
+        # Filter by employee code
+        url_code = reverse('attendance:report') + '?employee=EMP-B02'
+        resp_code = self.client.get(url_code)
+        self.assertEqual(resp_code.status_code, 200)
+        atts_code = list(resp_code.context['attendances'])
+        self.assertEqual(len(atts_code), 1)
+        self.assertEqual(atts_code[0].employee, self.emp2)
+
     def test_attendance_update_with_time_inputs(self):
         """Test editing an attendance record using HH:MM time inputs."""
         att = Attendance.objects.create(

@@ -332,3 +332,49 @@ class RoleManagementTests(TestCase):
         self.assertTrue(test_user.has_permission('attendance.export'))
         self.assertFalse(test_user.has_permission('attendance.breaks'))
 
+    def test_custom_role_view_access_and_redirection(self):
+        role = Role.objects.create(
+            name='Attendance Specialist',
+            code='att_spec',
+            description='Only attendance allowed',
+            permissions=['attendance.view', 'attendance.schedules']
+        )
+        custom_user = User.objects.create_user(
+            username='att_spec_user',
+            password='specpassword123',
+            role='att_spec'
+        )
+        self.client.force_login(custom_user)
+
+        # 1. Visiting /dashboard/ redirects to permitted module /attendance/report/
+        dash_response = self.client.get(reverse('dashboard:home'))
+        self.assertEqual(dash_response.status_code, 302)
+        self.assertEqual(dash_response.url, reverse('attendance:report'))
+
+        # 2. Accessing permitted attendance report succeeds
+        att_response = self.client.get(reverse('attendance:report'))
+        self.assertEqual(att_response.status_code, 200)
+
+        # 3. Accessing unauthorized modules returns 403
+        emp_response = self.client.get(reverse('employees:list'))
+        self.assertEqual(emp_response.status_code, 403)
+
+        payroll_response = self.client.get(reverse('payroll:list'))
+        self.assertEqual(payroll_response.status_code, 403)
+
+        # 4. Sidebar template renders only permitted modules
+        from django.template.loader import render_to_string
+        from django.test import RequestFactory
+        req = RequestFactory().get(reverse('attendance:report'))
+        req.user = custom_user
+        sidebar_html = render_to_string('partials/_sidebar.html', request=req)
+
+        self.assertIn('data-title="Attendance"', sidebar_html)
+        self.assertIn('Work Day / Time', sidebar_html)
+        self.assertNotIn('data-title="Payroll"', sidebar_html)
+        self.assertNotIn('data-title="Leave"', sidebar_html)
+        self.assertNotIn('data-title="Overtime"', sidebar_html)
+        self.assertNotIn('data-title="Reports"', sidebar_html)
+        self.assertNotIn('Users & RBAC', sidebar_html)
+
+

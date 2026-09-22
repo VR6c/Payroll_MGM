@@ -12,17 +12,53 @@ class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
             return False
         if user.is_superuser or getattr(user, 'role', None) == 'super_admin':
             return True
-        if not self.required_roles and not self.required_module and not self.required_permission:
-            return True
-        if self.required_roles and getattr(user, 'role', None) in self.required_roles:
-            return True
-        if self.required_permission and hasattr(user, 'has_permission'):
-            if user.has_permission(self.required_permission):
+
+        # 1. Granular permission check
+        if self.required_permission:
+            if hasattr(user, 'has_permission') and user.has_permission(self.required_permission):
                 return True
-        if self.required_module and hasattr(user, 'has_module_access'):
-            if user.has_module_access(self.required_module):
+            return False
+
+        # 2. Module check
+        if self.required_module:
+            if hasattr(user, 'has_module_access') and user.has_module_access(self.required_module):
                 return True
-        return False
+            return False
+
+        # 3. Infer module from request resolver
+        app_name = None
+        if hasattr(self.request, 'resolver_match') and self.request.resolver_match:
+            app_name = getattr(self.request.resolver_match, 'app_name', None)
+
+        app_to_module = {
+            'dashboard': 'dashboard',
+            'attendance': 'attendance',
+            'employees': 'employees',
+            'leave': 'leave',
+            'overtime': 'overtime',
+            'payroll': 'payroll',
+            'reports': 'reports',
+            'activities': 'activities',
+            'accounts': 'users',
+        }
+        module_key = app_to_module.get(app_name)
+
+        # For custom roles: verify module access
+        if hasattr(user, 'role_obj') and user.role_obj and not user.role_obj.is_system:
+            if module_key and hasattr(user, 'has_module_access'):
+                return user.has_module_access(module_key)
+            return False
+
+        # 4. System roles fallback (hr_admin, manager, employee)
+        if self.required_roles:
+            user_role = getattr(user, 'role', None)
+            if user_role in self.required_roles:
+                if module_key and hasattr(user, 'has_module_access') and getattr(user, 'role_obj', None):
+                    return user.has_module_access(module_key)
+                return True
+            return False
+
+        return True
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
