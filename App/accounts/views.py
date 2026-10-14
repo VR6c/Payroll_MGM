@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -51,13 +51,22 @@ class UserManagementListView(RoleRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         all_users = User.objects.all()
 
-        ctx['total_users'] = all_users.count()
-        ctx['super_admin_count'] = all_users.filter(role='super_admin').count()
-        ctx['hr_admin_count'] = all_users.filter(role='hr_admin').count()
-        ctx['manager_count'] = all_users.filter(role='manager').count()
-        ctx['employee_count'] = all_users.filter(role='employee').count()
-        ctx['active_users_count'] = all_users.filter(is_active=True).count()
-        ctx['inactive_users_count'] = all_users.filter(is_active=False).count()
+        user_stats = all_users.aggregate(
+            total=Count('id'),
+            super_admin=Count('id', filter=Q(role='super_admin')),
+            hr_admin=Count('id', filter=Q(role='hr_admin')),
+            manager=Count('id', filter=Q(role='manager')),
+            employee=Count('id', filter=Q(role='employee')),
+            active=Count('id', filter=Q(is_active=True)),
+            inactive=Count('id', filter=Q(is_active=False)),
+        )
+        ctx['total_users'] = user_stats['total'] or 0
+        ctx['super_admin_count'] = user_stats['super_admin'] or 0
+        ctx['hr_admin_count'] = user_stats['hr_admin'] or 0
+        ctx['manager_count'] = user_stats['manager'] or 0
+        ctx['employee_count'] = user_stats['employee'] or 0
+        ctx['active_users_count'] = user_stats['active'] or 0
+        ctx['inactive_users_count'] = user_stats['inactive'] or 0
 
         ctx['create_form'] = UserCreateForm()
         ctx['password_reset_form'] = UserAdminPasswordResetForm()
@@ -209,9 +218,14 @@ class RoleListView(RoleRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         all_roles = Role.objects.all()
 
-        ctx['total_roles'] = all_roles.count()
-        ctx['system_roles_count'] = all_roles.filter(is_system=True).count()
-        ctx['custom_roles_count'] = all_roles.filter(is_system=False).count()
+        role_stats = all_roles.aggregate(
+            total=Count('id'),
+            system=Count('id', filter=Q(is_system=True)),
+            custom=Count('id', filter=Q(is_system=False)),
+        )
+        ctx['total_roles'] = role_stats['total'] or 0
+        ctx['system_roles_count'] = role_stats['system'] or 0
+        ctx['custom_roles_count'] = role_stats['custom'] or 0
         ctx['total_assigned_users'] = User.objects.count()
 
         ctx['create_role_form'] = RoleForm()

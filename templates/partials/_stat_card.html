@@ -1,0 +1,14 @@
+<div class="{{ col_class|default:'col-6 col-xl-3' }}">
+  <div class="card stat-card border-0 h-100">
+    <div class="d-flex align-items-center">
+      <i class="mdi {{ icon|default:'mdi-chart-line' }} stat-kpi-icon stat-kpi-icon-{{ color|default:'primary' }} me-3 me-sm-4"></i>
+      <div>
+        <h3 class="stat-kpi-value mb-0 {% if counter|default:True %}counter-value{% endif %}" {% if counter|default:True %}data-counter{% endif %}>{{ value|default:0 }}</h3>
+        <span class="stat-kpi-label d-block">{{ label }}</span>
+        {% if sub %}
+        <span class="stat-kpi-sub d-block text-muted">{{ sub }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

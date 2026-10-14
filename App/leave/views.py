@@ -15,199 +15,14 @@ from companies.services import get_default_company
 from employees.models import Employee
 from .models import LeavePeriod, LeaveRequest, LeaveType, LeaveBalance
 from .forms import LeaveRequestForm, LeaveTypeForm, LeaveBalanceForm
-from .services import LeaveService
+from django.db.models import Count, Q
+from .services import (
+    LeaveService,
+    check_periods_overlap,
+    parse_and_validate_leave_periods,
+    _create_leave_periods,
+)
 
-
-def check_periods_overlap(p1, p2):
-    """
-    Checks whether two leave periods overlap.
-    p1 and p2 can be dicts or LeavePeriod model instances.
-    """
-    s1 = p1['start_date'] if isinstance(p1, dict) else p1.start_date
-    e1 = p1['end_date'] if isinstance(p1, dict) else p1.end_date
-    s2 = p2['start_date'] if isinstance(p2, dict) else p2.start_date
-    e2 = p2['end_date'] if isinstance(p2, dict) else p2.end_date
-
-    t_s1 = p1.get('start_time') if isinstance(p1, dict) else getattr(p1, 'start_time', None)
-    t_e1 = p1.get('end_time') if isinstance(p1, dict) else getattr(p1, 'end_time', None)
-    t_s2 = p2.get('start_time') if isinstance(p2, dict) else getattr(p2, 'start_time', None)
-    t_e2 = p2.get('end_time') if isinstance(p2, dict) else getattr(p2, 'end_time', None)
-
-    latest_start = max(s1, s2)
-    earliest_end = min(e1, e2)
-
-    # Date ranges do not intersect
-    if latest_start > earliest_end:
-        return False
-
-    # Date ranges intersect: check if single-day hourly non-overlapping window
-    if latest_start == earliest_end and s1 == e1 and s2 == e2 and t_s1 and t_e1 and t_s2 and t_e2:
-        # Both are single-day with defined times: no overlap if one ends before or when other starts
-        if t_e1 <= t_s2 or t_e2 <= t_s1:
-            return False
-        return True
-
-    # Otherwise (e.g. multi-day or at least one is full day or overlapping times)
-    return True
-
-
-def parse_and_validate_leave_periods(post_data, employee=None, exclude_leave_id=None):
-    """
-    Parses and validates leave periods from POST data.
-    Ensures:
-    - At least one period is provided.
-    - Dates are valid and start_date <= end_date.
-    - Days > 0.
-    - If hourly times are provided, start_time < end_time.
-    - No two periods within the same submission duplicate or overlap.
-    - No submitted period conflicts with existing approved or pending leaves for the employee.
-    Returns (cleaned_periods_list, error_message).
-    """
-    period_indices = {match.group(1) for key in post_data.keys() if (match := re.match(r'^periods-(\d+)-start_date$', key))}
-    if not period_indices:
-        return None, "Please specify at least one leave period."
-
-    cleaned_periods = []
-    for idx in sorted(period_indices, key=int):
-        s_date_str = post_data.get(f'periods-{idx}-start_date')
-        e_date_str = post_data.get(f'periods-{idx}-end_date')
-        days_str = post_data.get(f'periods-{idx}-days')
-        s_time_str = post_data.get(f'periods-{idx}-start_time')
-        e_time_str = post_data.get(f'periods-{idx}-end_time')
-
-        if not s_date_str or not e_date_str or not days_str:
-            return None, f"Period #{int(idx) + 1} has missing required date or duration fields."
-
-        try:
-            s_date = datetime.date.fromisoformat(s_date_str.strip())
-            e_date = datetime.date.fromisoformat(e_date_str.strip())
-        except (ValueError, TypeError):
-            return None, f"Period #{int(idx) + 1} contains an invalid date format."
-
-        if e_date < s_date:
-            return None, f"Period #{int(idx) + 1} End Date ({e_date_str}) cannot be before Start Date ({s_date_str})."
-
-        try:
-            days_val = Decimal(str(days_str).strip())
-            if days_val <= Decimal('0'):
-                return None, f"Period #{int(idx) + 1} duration must be greater than 0."
-        except Exception:
-            return None, f"Period #{int(idx) + 1} duration is not a valid number."
-
-        s_time = None
-        e_time = None
-        if s_time_str and s_time_str.strip() and e_time_str and e_time_str.strip():
-            try:
-                s_time = datetime.time.fromisoformat(s_time_str.strip())
-                e_time = datetime.time.fromisoformat(e_time_str.strip())
-            except (ValueError, TypeError):
-                return None, f"Period #{int(idx) + 1} contains an invalid time format."
-
-            if s_date == e_date and e_time <= s_time:
-                return None, f"Period #{int(idx) + 1} End Time ({e_time_str}) must be after Start Time ({s_time_str})."
-
-        cleaned_periods.append({
-            'index': int(idx) + 1,
-            'start_date': s_date,
-            'end_date': e_date,
-            'start_time': s_time,
-            'end_time': e_time,
-            'days': days_val
-        })
-
-    if not cleaned_periods:
-        return None, "Please specify at least one valid leave period."
-
-    # 1. Intra-request overlap check (between periods in the same submission)
-    for i in range(len(cleaned_periods)):
-        for j in range(i + 1, len(cleaned_periods)):
-            p1 = cleaned_periods[i]
-            p2 = cleaned_periods[j]
-            if check_periods_overlap(p1, p2):
-                if p1['start_date'] == p2['start_date'] and p1['end_date'] == p2['end_date']:
-                    if not p1['start_time'] or not p2['start_time']:
-                        return None, (
-                            f"Duplicate date detected: Period #{p1['index']} and Period #{p2['index']} "
-                            f"both cover {p1['start_date']}. Please remove duplicate dates or specify distinct hours."
-                        )
-                    else:
-                        return None, (
-                            f"Overlapping hours detected: Period #{p1['index']} ({p1['start_time'].strftime('%H:%M')}-{p1['end_time'].strftime('%H:%M')}) "
-                            f"and Period #{p2['index']} ({p2['start_time'].strftime('%H:%M')}-{p2['end_time'].strftime('%H:%M')}) "
-                            f"conflict on {p1['start_date']}."
-                        )
-                else:
-                    return None, (
-                        f"Overlapping periods detected: Period #{p1['index']} ({p1['start_date']} to {p1['end_date']}) "
-                        f"and Period #{p2['index']} ({p2['start_date']} to {p2['end_date']}) overlap."
-                    )
-
-    # 2. Database collision check (against employee's active leaves)
-    if employee:
-        active_requests = LeaveRequest.objects.filter(
-            employee=employee,
-            status__in=[LeaveRequest.Status.PENDING, LeaveRequest.Status.APPROVED]
-        )
-        if exclude_leave_id:
-            active_requests = active_requests.exclude(pk=exclude_leave_id)
-
-        existing_periods = LeavePeriod.objects.filter(
-            leave_request__in=active_requests
-        ).select_related('leave_request', 'leave_request__leave_type')
-
-        for new_p in cleaned_periods:
-            for ex in existing_periods:
-                if check_periods_overlap(new_p, ex):
-                    t_new = f" ({new_p['start_time'].strftime('%H:%M')}-{new_p['end_time'].strftime('%H:%M')})" if new_p['start_time'] else ""
-                    t_ex = f" ({ex.start_time.strftime('%H:%M')}-{ex.end_time.strftime('%H:%M')})" if ex.start_time else ""
-                    return None, (
-                        f"Leave conflict: Requested period {new_p['start_date']}{t_new} to {new_p['end_date']} "
-                        f"conflicts with existing {ex.leave_request.get_status_display()} leave request #{ex.leave_request.id} "
-                        f"({ex.start_date}{t_ex} to {ex.end_date}, {ex.leave_request.leave_type.name})."
-                    )
-
-    return cleaned_periods, None
-
-
-def _create_leave_periods(leave_request, periods_input):
-    """
-    Creates LeavePeriod instances from either cleaned periods list or raw POST data.
-    """
-    if isinstance(periods_input, list):
-        for p in periods_input:
-            LeavePeriod.objects.create(
-                leave_request=leave_request,
-                start_date=p['start_date'],
-                end_date=p['end_date'],
-                start_time=p.get('start_time'),
-                end_time=p.get('end_time'),
-                days=p['days']
-            )
-        return
-
-    # Fallback for raw POST dict
-    period_indices = {match.group(1) for key in periods_input.keys() if (match := re.match(r'^periods-(\d+)-start_date$', key))}
-    for idx in sorted(period_indices, key=int):
-        start_date = periods_input.get(f'periods-{idx}-start_date')
-        end_date = periods_input.get(f'periods-{idx}-end_date')
-        days = periods_input.get(f'periods-{idx}-days')
-        start_time_str = periods_input.get(f'periods-{idx}-start_time') or None
-        end_time_str = periods_input.get(f'periods-{idx}-end_time') or None
-        if start_date and end_date and days:
-            try:
-                days_val = Decimal(str(days))
-                s_time = datetime.time.fromisoformat(start_time_str.strip()) if start_time_str else None
-                e_time = datetime.time.fromisoformat(end_time_str.strip()) if end_time_str else None
-                LeavePeriod.objects.create(
-                    leave_request=leave_request,
-                    start_date=start_date,
-                    end_date=end_date,
-                    start_time=s_time,
-                    end_time=e_time,
-                    days=days_val
-                )
-            except Exception:
-                continue
 
 
 class LeaveRequestCreateView(LoginRequiredMixin, CreateView):
@@ -355,10 +170,16 @@ class LeaveRequestListView(LoginRequiredMixin, ListView):
         ctx['is_admin_or_mgr'] = True
 
         base_qs = LeaveRequest.objects.all()
-        ctx['total_count'] = base_qs.count()
-        ctx['pending_count'] = base_qs.filter(status=LeaveRequest.Status.PENDING).count()
-        ctx['approved_count'] = base_qs.filter(status=LeaveRequest.Status.APPROVED).count()
-        ctx['rejected_count'] = base_qs.filter(status=LeaveRequest.Status.REJECTED).count()
+        counts = base_qs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status=LeaveRequest.Status.PENDING)),
+            approved=Count('id', filter=Q(status=LeaveRequest.Status.APPROVED)),
+            rejected=Count('id', filter=Q(status=LeaveRequest.Status.REJECTED)),
+        )
+        ctx['total_count'] = counts['total'] or 0
+        ctx['pending_count'] = counts['pending'] or 0
+        ctx['approved_count'] = counts['approved'] or 0
+        ctx['rejected_count'] = counts['rejected'] or 0
 
         ctx['employees'] = Employee.objects.filter(status='active').order_by('first_name', 'last_name')
         ctx['current_status'] = self.request.GET.get('status', '')
@@ -399,10 +220,16 @@ class MyLeaveListView(LoginRequiredMixin, ListView):
 
         if employee:
             base_qs = LeaveRequest.objects.filter(employee=employee)
-            ctx['total_count'] = base_qs.count()
-            ctx['pending_count'] = base_qs.filter(status=LeaveRequest.Status.PENDING).count()
-            ctx['approved_count'] = base_qs.filter(status=LeaveRequest.Status.APPROVED).count()
-            ctx['rejected_count'] = base_qs.filter(status=LeaveRequest.Status.REJECTED).count()
+            counts = base_qs.aggregate(
+                total=Count('id'),
+                pending=Count('id', filter=Q(status=LeaveRequest.Status.PENDING)),
+                approved=Count('id', filter=Q(status=LeaveRequest.Status.APPROVED)),
+                rejected=Count('id', filter=Q(status=LeaveRequest.Status.REJECTED)),
+            )
+            ctx['total_count'] = counts['total'] or 0
+            ctx['pending_count'] = counts['pending'] or 0
+            ctx['approved_count'] = counts['approved'] or 0
+            ctx['rejected_count'] = counts['rejected'] or 0
             ctx['balances'] = LeaveBalance.objects.filter(
                 employee=employee,
                 year=timezone.now().year

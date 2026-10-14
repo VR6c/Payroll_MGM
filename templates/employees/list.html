@@ -28,18 +28,20 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="card mb-4">
+    <div class="card filter-card">
       <div class="card-body">
-        <h5 class="card-title text-muted mb-3"><i class="mdi mdi-filter-variant me-1"></i>Filter Employees</h5>
         <form method="get" class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label small fw-semibold text-muted mb-1">Search</label>
-            <input type="text" name="search" class="form-control"
-              placeholder="Search name or code..."
-              value="{{ request.GET.search }}">
+          <div class="col-12 col-md-5">
+            <label class="filter-label">Search</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input type="text" name="search" class="form-control"
+                placeholder="Search by name, employee code, or email..."
+                value="{{ request.GET.search }}">
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-semibold text-muted mb-1">Department</label>
+          <div class="col-6 col-md-3">
+            <label class="filter-label">Department</label>
             <select name="department" class="form-select">
               <option value="">All Departments</option>
               {% for dept in filter_form.department.field.queryset %}
@@ -47,8 +49,8 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+          <div class="col-6 col-md-2">
+            <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">All Status</option>
               {% for val, label in filter_form.status.field.choices %}
@@ -56,11 +58,16 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label small fw-semibold text-muted mb-1">&nbsp;</label>
-            <button type="submit" class="btn btn-primary text-white w-100">
-              <i class="mdi mdi-magnify me-1"></i> Filter
-            </button>
+          <div class="col-12 col-md-2">
+            <label class="filter-label d-none d-md-block">&nbsp;</label>
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter
+              </button>
+              <a href="{% url 'employees:list' %}" class="filter-btn-reset" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
           </div>
         </form>
       </div>
@@ -68,7 +75,7 @@
 
 
     <!-- Employee Table Card -->
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -101,26 +108,28 @@
                 <td>{{ emp.position.name|default:"-" }}</td>
                 <td>
                   {% if emp.status == 'active' %}
-                    <span class="badge bg-success">Active</span>
+                    <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
                   {% elif emp.status == 'inactive' %}
-                    <span class="badge bg-secondary">Inactive</span>
+                    <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
                   {% elif emp.status == 'resigned' %}
-                    <span class="badge bg-warning text-dark">Resigned</span>
+                    <span class="badge-status-warning"><i class="mdi mdi-account-remove-outline"></i> Resigned</span>
                   {% elif emp.status == 'terminated' %}
-                    <span class="badge bg-danger">Terminated</span>
+                    <span class="badge-status-danger"><i class="mdi mdi-account-cancel-outline"></i> Terminated</span>
                   {% else %}
-                    <span class="badge bg-info">{{ emp.get_status_display }}</span>
+                    <span class="badge-status-secondary">{{ emp.get_status_display }}</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
-                  <a href="{% url 'employees:detail' emp.pk %}" class="btn btn-sm btn-outline-primary me-1" title="View Detail">
-                    <i class="mdi mdi-eye"></i>
-                  </a>
-                  {% if user.role in 'super_admin,hr_admin,manager' %}
-                  <a href="{% url 'employees:update' emp.pk %}" class="btn btn-sm btn-outline-primary" title="Edit Employee">
-                    <i class="mdi mdi-pencil"></i>
-                  </a>
-                  {% endif %}
+                  <div class="table-action-group justify-content-end">
+                    <a href="{% url 'employees:detail' emp.pk %}" class="btn btn-sm btn-outline-primary" title="View Detail">
+                      <i class="mdi mdi-eye"></i>
+                    </a>
+                    {% if user.role in 'super_admin,hr_admin,manager' %}
+                    <a href="{% url 'employees:update' emp.pk %}" class="btn btn-sm btn-outline-primary" title="Edit Employee">
+                      <i class="mdi mdi-pencil"></i>
+                    </a>
+                    {% endif %}
+                  </div>
                 </td>
               </tr>
               {% empty %}

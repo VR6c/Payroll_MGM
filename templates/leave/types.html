@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -50,26 +50,28 @@
                 <td><span class="fw-semibold text-dark">{{ lt.default_days }} Days</span></td>
                 <td>
                   {% if lt.paid %}
-                  <span class="badge bg-success">Paid</span>
+                  <span class="badge-status-approved">Paid</span>
                   {% else %}
-                  <span class="badge bg-warning text-dark">Unpaid</span>
+                  <span class="badge-status-pending">Unpaid</span>
                   {% endif %}
                 </td>
                 <td>
                   {% if lt.status %}
-                  <span class="badge bg-success">Active</span>
+                  <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
                   {% else %}
-                  <span class="badge bg-secondary">Inactive</span>
+                  <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
-                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editLeaveTypeModal{{ lt.id }}">
-                    <i class="mdi mdi-pencil"></i> Edit
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteLeaveTypeModal{{ lt.id }}">
-                    <i class="mdi mdi-trash-can-outline"></i> Delete
-                  </button>
+                  <div class="table-action-group justify-content-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLeaveTypeModal{{ lt.id }}">
+                      <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteLeaveTypeModal{{ lt.id }}">
+                      <i class="mdi mdi-trash-can-outline"></i> Delete
+                    </button>
+                  </div>
 
                   <!-- Edit Modal -->
                   <div class="modal fade text-start" id="editLeaveTypeModal{{ lt.id }}" tabindex="-1" aria-hidden="true">

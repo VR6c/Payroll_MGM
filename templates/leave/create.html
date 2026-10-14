@@ -589,8 +589,14 @@
                 <i class="mdi mdi-calendar-arrow-right text-primary"></i> Start Date
                 <span class="req-star">*</span>
               </label>
-              <input type="date" name="periods-${currIdx}-start_date"
-                class="period-input period-start" value="${sDate}" required>
+              <div class="input-group component-select-date date-picker-group period-date-wrap">
+                <input type="text" name="periods-${currIdx}-start_date"
+                  class="period-input period-start select-date-input"
+                  value="${sDate}" placeholder="YYYY-MM-DD" autocomplete="off" required>
+                <span class="input-group-text select-date-trigger text-muted" role="button" tabindex="0" title="Open calendar">
+                  <i class="mdi mdi-calendar"></i>
+                </span>
+              </div>
             </div>
 
             <!-- Arrow connector (hidden on mobile) -->
@@ -604,8 +610,14 @@
                 <i class="mdi mdi-calendar-arrow-left text-primary"></i> End Date
                 <span class="req-star">*</span>
               </label>
-              <input type="date" name="periods-${currIdx}-end_date"
-                class="period-input period-end" value="${eDate}" required>
+              <div class="input-group component-select-date date-picker-group period-date-wrap">
+                <input type="text" name="periods-${currIdx}-end_date"
+                  class="period-input period-end select-date-input"
+                  value="${eDate}" placeholder="YYYY-MM-DD" autocomplete="off" required>
+                <span class="input-group-text select-date-trigger text-muted" role="button" tabindex="0" title="Open calendar">
+                  <i class="mdi mdi-calendar"></i>
+                </span>
+              </div>
             </div>
 
             <!-- Divider -->
@@ -645,8 +657,14 @@
                   <i class="mdi mdi-clock-start text-primary"></i> Start Time
                   <span class="req-star">*</span>
                 </label>
-                <input type="time" name="periods-${currIdx}-start_time"
-                  class="period-input period-start-time" value="${sTime}">
+                <div class="input-group period-date-wrap">
+                  <input type="text" name="periods-${currIdx}-start_time"
+                    class="period-input period-start-time select-time-input"
+                    value="${sTime}" placeholder="HH:MM" autocomplete="off">
+                  <span class="input-group-text select-time-trigger period-time-trigger" role="button" tabindex="0" title="Select time">
+                    <i class="mdi mdi-clock-outline"></i>
+                  </span>
+                </div>
               </div>
 
               <!-- Time Arrow -->
@@ -660,8 +678,14 @@
                   <i class="mdi mdi-clock-end text-primary"></i> End Time
                   <span class="req-star">*</span>
                 </label>
-                <input type="time" name="periods-${currIdx}-end_time"
-                  class="period-input period-end-time" value="${eTime}">
+                <div class="input-group period-date-wrap">
+                  <input type="text" name="periods-${currIdx}-end_time"
+                    class="period-input period-end-time select-time-input"
+                    value="${eTime}" placeholder="HH:MM" autocomplete="off">
+                  <span class="input-group-text select-time-trigger period-time-trigger" role="button" tabindex="0" title="Select time">
+                    <i class="mdi mdi-clock-outline"></i>
+                  </span>
+                </div>
               </div>
 
               <!-- Time Preset Chips -->
@@ -1174,6 +1198,70 @@
   outline: none;
   border-color: #818cf8;
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+.period-date-wrap {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+}
+.period-date-wrap .period-input {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  flex: 1 1 auto !important;
+  width: 1% !important;
+  box-shadow: none !important;
+}
+.period-date-wrap .select-date-trigger,
+.period-date-wrap .select-time-trigger {
+  border: 1px solid #CBD5E1 !important;
+  border-left: none !important;
+  border-top-right-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+  padding: 0 10px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  font-size: 0.9rem !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease;
+  outline: none !important;
+}
+.period-date-wrap .select-date-trigger:focus,
+.period-date-wrap .select-date-trigger:focus-visible,
+.period-date-wrap .select-time-trigger:focus,
+.period-date-wrap .select-time-trigger:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.period-date-wrap:hover .period-input,
+.period-date-wrap:hover .select-date-trigger,
+.period-date-wrap:hover .select-time-trigger {
+  border-color: #94a3b8 !important;
+}
+.period-date-wrap:focus-within {
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+.period-date-wrap:focus-within .period-input,
+.period-date-wrap:focus-within .select-date-trigger,
+.period-date-wrap:focus-within .select-time-trigger {
+  border-color: #3b82f6 !important;
 }
 
 /* Duration input with inline unit */

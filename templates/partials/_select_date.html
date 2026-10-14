@@ -1,0 +1,58 @@
+{% comment %}
+==========================================================================
+Payroll MGM - Reusable Select Date Component (partials/_select_date.html)
+==========================================================================
+Usage:
+  {% include 'partials/_select_date.html' with name='date' label='Date' value=report_date_str wrapper_class='col-12 col-sm-6 col-lg-3' %}
+  {% include 'partials/_select_date.html' with name='from_date' label='From Date' value=from_date_str %}
+Parameters:
+  - name (required): Field name for GET/POST submission
+  - label (optional): Label text displayed above the input
+  - value (optional): Pre-filled date value (YYYY-MM-DD format)
+  - id (optional): Element ID (defaults to name)
+  - wrapper_class (optional): Outer column/wrapper class (e.g. 'col-md-3 col-sm-6')
+  - show_label (optional): Boolean, defaults to True
+  - required (optional): Boolean / truthy
+  - disabled (optional): Boolean / truthy
+  - min (optional): Earliest selectable date
+  - max (optional): Latest selectable date
+  - placeholder (optional): Placeholder string
+  - classes (optional): Extra CSS classes for the input
+  - icon (optional): Custom icon class (defaults to 'mdi mdi-calendar')
+==========================================================================
+{% endcomment %}
+
+{% if wrapper_class %}
+<div class="{{ wrapper_class }} component-select-date-wrap">
+{% else %}
+<div class="component-select-date-wrap">
+{% endif %}
+
+  {% if show_label|default:True and label %}
+  <label class="form-label filter-label mb-1" {% if id %}for="{{ id }}"{% endif %}>
+    {{ label }}{% if required %}<span class="text-danger ms-1">*</span>{% endif %}
+  </label>
+  {% endif %}
+
+  <div class="input-group component-select-date date-picker-group">
+    <input type="text"
+           name="{{ name }}"
+           {% if id %}id="{{ id }}"{% endif %}
+           class="form-control select-date-input {{ classes|default:'' }}"
+           value="{{ value|default:'' }}"
+           placeholder="{{ placeholder|default:'YYYY-MM-DD' }}"
+           {% if min %}data-min="{{ min }}"{% endif %}
+           {% if max %}data-max="{{ max }}"{% endif %}
+           {% if required %}required{% endif %}
+           {% if disabled %}disabled{% endif %}
+           autocomplete="off">
+    <span class="input-group-text select-date-trigger text-muted"
+          role="button"
+          tabindex="0"
+          aria-label="Open date picker for {{ label|default:name }}"
+          title="Open calendar">
+      <i class="{{ icon|default:'mdi mdi-calendar' }}"></i>
+    </span>
+  </div>
+
+</div>

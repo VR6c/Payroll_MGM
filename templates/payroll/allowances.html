@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -49,12 +49,14 @@
                 <td>${{ struct.housing }}</td>
                 <td>${{ struct.meal_allowance }}</td>
                 <td>${{ struct.other_allowance }}</td>
-                <td><span class="badge bg-primary text-white fw-bold">${{ struct.transportation|add:struct.housing|add:struct.meal_allowance|add:struct.other_allowance }}</span></td>
+                <td><span class="badge-status-approved fw-bold">${{ struct.transportation|add:struct.housing|add:struct.meal_allowance|add:struct.other_allowance }}</span></td>
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
-                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editAllowModal{{ struct.id }}">
-                    <i class="mdi mdi-pencil"></i> Edit Allowances
-                  </button>
+                  <div class="table-action-group justify-content-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAllowModal{{ struct.id }}">
+                      <i class="mdi mdi-pencil"></i> Edit Allowances
+                    </button>
+                  </div>
 
                   <!-- Edit Allowances Modal -->
                   <div class="modal fade text-start" id="editAllowModal{{ struct.id }}" tabindex="-1" aria-hidden="true">

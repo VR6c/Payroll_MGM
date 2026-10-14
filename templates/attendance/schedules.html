@@ -519,8 +519,8 @@
     <form method="get" action="{% url 'attendance:schedules' %}" id="filterForm">
       <div class="row g-3 align-items-end">
         <div class="col-lg-3 col-md-6">
-          <label class="form-label mb-1">Department</label>
-          <select name="department" class="form-select form-select-sm">
+          <label class="filter-label">Department</label>
+          <select name="department" class="form-select">
             <option value="">All Departments</option>
             {% for d in departments %}
             <option value="{{ d.id }}" {% if active_department == d.id %}selected{% endif %}>{{ d.name }}
@@ -530,8 +530,8 @@
         </div>
 
         <div class="col-lg-3 col-md-6">
-          <label class="form-label mb-1">Position</label>
-          <select name="position" class="form-select form-select-sm">
+          <label class="filter-label">Position</label>
+          <select name="position" class="form-select">
             <option value="">All Positions</option>
             {% for p in positions %}
             <option value="{{ p.id }}" {% if active_position == p.id %}selected{% endif %}>{{ p.name }}
@@ -541,8 +541,8 @@
         </div>
 
         <div class="col-lg-2 col-md-6">
-          <label class="form-label mb-1">Rows</label>
-          <select name="limit" class="form-select form-select-sm">
+          <label class="filter-label">Rows</label>
+          <select name="limit" class="form-select">
             <option value="10" {% if active_limit == '10' %}selected{% endif %}>10</option>
             <option value="25" {% if active_limit == '25' %}selected{% endif %}>25</option>
             <option value="50" {% if active_limit == '50' %}selected{% endif %}>50</option>
@@ -552,13 +552,11 @@
         </div>
 
         <div class="col-lg-4 col-md-6">
-          <label class="form-label mb-1">Employee</label>
-          <div class="input-group input-group-sm">
+          <label class="filter-label">Employee</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
             <input type="text" name="search" class="form-control" placeholder="Name, employee code, email..."
               value="{{ active_search }}">
-            <button type="submit" class="btn btn-primary px-3">
-              <i class="mdi mdi-magnify me-1"></i> Search
-            </button>
           </div>
         </div>
 

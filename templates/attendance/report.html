@@ -35,15 +35,15 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="card mb-4">
+    <div class="card filter-card">
       <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
           {% if request.GET.type %}
           <input type="hidden" name="type" value="{{ request.GET.type }}">
           {% endif %}
           <div class="col-12 col-sm-6 col-md-3 col-lg-3">
-            <label class="form-label small fw-semibold text-muted mb-1">Employee</label>
-            <select name="employee" id="filterEmployee" class="form-select">
+            <label class="filter-label">Employee</label>
+            <select name="employee" id="filterEmployee" class="form-select select2">
               <option value="">-- All Employees --</option>
               {% for emp in filter_employees %}
               <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
@@ -53,7 +53,7 @@
             </select>
           </div>
           <div class="col-6 col-sm-6 col-md-3 col-lg-2">
-            <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+            <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">-- All Statuses --</option>
               <option value="present" {% if request.GET.status == 'present' %}selected{% endif %}>Present</option>
@@ -63,32 +63,24 @@
               <option value="overtime" {% if request.GET.status == 'overtime' %}selected{% endif %}>Overtime</option>
             </select>
           </div>
-          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
-            <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
-            <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
-          </div>
-          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
-            <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
-            <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
-          </div>
+          {% include 'partials/_select_date.html' with name='from_date' label='From Date' value=request.GET.from_date wrapper_class='col-6 col-sm-6 col-md-3 col-lg-2' %}
+          {% include 'partials/_select_date.html' with name='to_date' label='To Date' value=request.GET.to_date wrapper_class='col-6 col-sm-6 col-md-3 col-lg-2' %}
           <div class="col-12 col-sm-6 col-md-12 col-lg-3">
-            <label class="form-label small fw-semibold text-muted mb-1 d-none d-lg-block">&nbsp;</label>
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary text-white flex-grow-1">
-                <i class="mdi mdi-magnify me-1"></i> Filter Report
+            <label class="filter-label d-none d-lg-block">&nbsp;</label>
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter Report
               </button>
-              {% if request.GET.from_date or request.GET.to_date or request.GET.status or request.GET.date or request.GET.employee or request.GET.search %}
-              <a href="{% url 'attendance:report' %}{% if request.GET.type %}?type={{ request.GET.type }}{% endif %}" class="btn btn-outline-secondary" title="Reset Filters">
+              <a href="{% url 'attendance:report' %}{% if request.GET.type %}?type={{ request.GET.type }}{% endif %}" class="filter-btn-reset" title="Reset Filters">
                 <i class="mdi mdi-refresh"></i>
               </a>
-              {% endif %}
             </div>
           </div>
         </form>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -168,10 +160,7 @@
                               <input type="text" class="form-control" value="{{ a.employee.first_name }} {{ a.employee.last_name }}" disabled>
                               <input type="hidden" name="employee" value="{{ a.employee.id }}">
                             </div>
-                            <div class="mb-3">
-                              <label class="form-label fw-bold">Date</label>
-                              <input type="date" name="date" class="form-control" value="{{ a.date|date:'Y-m-d' }}" required>
-                            </div>
+                            {% include 'partials/_select_date.html' with name='date' label='Date' value=a.date|date:'Y-m-d' required=True wrapper_class='mb-3' %}
                             <div class="mb-3">
                               <label class="form-label fw-bold">Check In Time</label>
                               <input type="time" name="check_in" class="form-control edit-check-in" value="{{ a.check_in|time:'H:i' }}">
@@ -240,232 +229,282 @@
 
 <!-- Add Attendance Modal (Multi-Employee & Multi-Date) -->
 <div class="modal fade" id="addAttendanceModal" tabindex="-1" aria-labelledby="addAttendanceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <form method="post" action="{% url 'attendance:create' %}" id="addAttendanceForm" class="modal-content border-0 shadow-lg" style="border-radius: 16px; max-height: calc(100vh - 60px);">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable attendance-modal-dialog">
+    <form method="post" action="{% url 'attendance:create' %}" id="addAttendanceForm" class="modal-content attendance-modal-content border-0">
       {% csrf_token %}
-      <div class="modal-header border-bottom px-4 py-3 bg-white flex-shrink-0">
-        <div>
-          <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-1" id="addAttendanceModalLabel">
-            <span class="rounded-circle me-2 d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background-color: #eef2ff; color: #1F3BB3;">
-              <i class="mdi mdi-calendar-check fs-5"></i>
-            </span>
-            Mark / Add Attendance
-          </h5>
-          <p class="text-muted small mb-0">Record attendance for one or more employees across single or multiple dates</p>
+      
+      <!-- Modal Header -->
+      <div class="modal-header attendance-modal-header flex-shrink-0">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attendance-header-icon">
+            <i class="mdi mdi-calendar-check"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2" id="addAttendanceModalLabel">
+              Mark / Add Attendance
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-xs fw-semibold">Bulk Mode</span>
+            </h5>
+            <p class="text-muted small mb-0 mt-0">Record attendance for one or more employees across single or multiple dates</p>
+          </div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body px-4 py-3" style="overflow-y: auto; overscroll-behavior: contain;">
+      <!-- Modal Body -->
+      <div class="modal-body attendance-modal-body" style="overflow-y: auto; overscroll-behavior: contain;">
+        
         <!-- 1. Employee Selection Section -->
-          <div class="card border border-light-subtle rounded-3 p-3 mb-3 bg-white shadow-sm">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+        <div class="attendance-section-card">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+            <div class="d-flex align-items-center">
+              <span class="attendance-step-badge">1</span>
               <div>
                 <label class="form-label fw-bold text-dark mb-0">
-                  <i class="mdi mdi-account-multiple-outline text-primary me-1"></i> Select Employees <span class="text-danger">*</span>
+                  Select Employees <span class="text-danger">*</span>
                 </label>
-                <div class="text-muted small">Choose individual employees or select all active staff</div>
-              </div>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" id="btnSelectAllEmployees" title="Select all active employees">
-                  <i class="mdi mdi-check-all me-1"></i>Select All ({{ employees|length }})
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" id="btnClearEmployees" title="Clear employee selection">
-                  <i class="mdi mdi-close me-1"></i>Clear
-                </button>
+                <div class="text-muted small" style="font-size: 0.78rem;">Choose individual employees or select all active staff</div>
               </div>
             </div>
-
-            {% if departments %}
-            <div class="mb-2">
-              <select id="deptFilterSelect" class="form-select form-select-sm bg-light">
-                <option value="">-- Quick Select by Department (Optional) --</option>
-                {% for dept in departments %}
-                <option value="{{ dept.id }}">{{ dept.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            {% endif %}
-
-            <select name="employees" id="bulkEmployeeSelect" class="form-select" multiple="multiple" required>
-              {% for emp in employees %}
-              <option value="{{ emp.id }}" data-dept="{{ emp.department_id|default:'' }}">
-                {{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_code }}) {% if emp.department %}- {{ emp.department.name }}{% endif %}
-              </option>
-              {% endfor %}
-            </select>
-
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="badge" id="empCountBadge" style="background-color: #eef2ff !important; color: #1F3BB3 !important; border: 1px solid #c7d2fe !important; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px;">
-                <i class="mdi mdi-account-check me-1"></i>0 employees selected
-              </span>
-              <small class="text-muted">Hold Cmd/Ctrl or use search to select multiple</small>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-subtle-primary" id="btnSelectAllEmployees" title="Select all active employees">
+                <i class="mdi mdi-check-all me-1"></i>Select All ({{ employees|length }})
+              </button>
+              <button type="button" class="btn btn-subtle-secondary" id="btnClearEmployees" title="Clear employee selection">
+                <i class="mdi mdi-close me-1"></i>Clear
+              </button>
             </div>
           </div>
 
-          <!-- 2. Date Selection Section -->
-          <div class="card border border-light-subtle rounded-3 p-3 mb-3 bg-white shadow-sm">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+          {% if departments %}
+          <div class="mb-2">
+            <select id="deptFilterSelect" class="form-select form-select-sm bg-light">
+              <option value="">-- Quick Select by Department (Optional) --</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+          <select name="employees" id="bulkEmployeeSelect" class="form-select" multiple="multiple" required>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}" data-dept="{{ emp.department_id|default:'' }}">
+              {{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_code }}) {% if emp.department %}- {{ emp.department.name }}{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+
+          <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2">
+            <span class="badge" id="empCountBadge" style="background-color: #EEF2FF !important; color: #1F3BB3 !important; border: 1px solid #C7D2FE !important; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px;">
+              <i class="mdi mdi-account-check me-1"></i>0 employees selected
+            </span>
+            <small class="text-muted" style="font-size: 0.75rem;"><i class="mdi mdi-cursor-default-click-outline me-1"></i>Hold Cmd/Ctrl or type to search</small>
+          </div>
+        </div>
+
+        <!-- 2. Date Selection Section -->
+        <div class="attendance-section-card">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+            <div class="d-flex align-items-center">
+              <span class="attendance-step-badge">2</span>
               <div>
                 <label class="form-label fw-bold text-dark mb-0">
                   Date Selection <span class="text-danger">*</span>
                 </label>
-                <div class="text-muted small">Choose a single date or define a date range</div>
-              </div>
-
-              <!-- Segmented Date Mode Switcher -->
-              <div class="btn-group btn-group-sm" role="group" aria-label="Date Mode">
-                <input type="radio" class="btn-check" name="date_mode" id="dateModeSingle" value="single" checked autocomplete="off">
-                <label class="btn btn-outline-primary px-3" for="dateModeSingle">
-                  <i class="mdi mdi-calendar me-1"></i>Single Date
-                </label>
-
-                <input type="radio" class="btn-check" name="date_mode" id="dateModeRange" value="range" autocomplete="off">
-                <label class="btn btn-outline-primary px-3" for="dateModeRange">
-                  <i class="mdi mdi-calendar-range me-1"></i>Date Range
-                </label>
+                <div class="text-muted small" style="font-size: 0.78rem;">Choose a single date or define a date interval</div>
               </div>
             </div>
 
-            <!-- Single Date Pane -->
-            <div id="singleDatePane" class="mt-2">
-              <label class="form-label small fw-semibold text-muted mb-1">Attendance Date</label>
-              <input type="date" name="date" id="singleDateInput" class="form-control" value="{% now 'Y-m-d' %}">
-            </div>
+            <!-- Segmented Date Mode Switcher -->
+            <div class="segmented-date-control" role="group" aria-label="Date Mode">
+              <input type="radio" class="btn-check" name="date_mode" id="dateModeSingle" value="single" checked autocomplete="off">
+              <label class="btn" for="dateModeSingle">
+                <i class="mdi mdi-calendar me-1"></i>Single Date
+              </label>
 
-            <!-- Date Range Pane -->
-            <div id="dateRangePane" class="mt-2" style="display: none;">
-              <div class="row g-2 mb-2">
-                <div class="col-sm-6">
-                  <label class="form-label small fw-semibold text-muted mb-1">From Date (Start)</label>
-                  <input type="date" name="start_date" id="startDateInput" class="form-control" value="{% now 'Y-m-d' %}">
-                </div>
-                <div class="col-sm-6">
-                  <label class="form-label small fw-semibold text-muted mb-1">To Date (End)</label>
-                  <input type="date" name="end_date" id="endDateInput" class="form-control" value="{% now 'Y-m-d' %}">
-                </div>
-              </div>
-
-              <!-- Quick Range Presets -->
-              <div class="d-flex flex-wrap align-items-center gap-1 mb-3">
-                <span class="small text-muted fw-semibold me-1"><i class="mdi mdi-lightning-bolt-outline text-warning"></i>Quick Range:</span>
-                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="preset5Days">+5 Days</button>
-                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="preset7Days">+7 Days (1 Wk)</button>
-                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="preset14Days">+14 Days (2 Wks)</button>
-                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="presetThisMonth">This Month</button>
-              </div>
-
-              <!-- Weekday Filter -->
-              <div class="bg-light p-2 rounded-2 border">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="small fw-bold text-dark"><i class="mdi mdi-filter-variant me-1 text-primary"></i>Included Weekdays:</span>
-                  <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" id="btnWeekdaysOnly" title="Exclude Saturday and Sunday holidays">Mon–Fri Only (Exclude Weekends/Holidays)</button>
-                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 ms-1" id="btnAllDays" title="Include all 7 days">All 7 Days</button>
-                  </div>
-                </div>
-                <div class="d-flex flex-wrap gap-2" id="weekdayCheckboxes">
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd0" value="0" checked>
-                    <label class="form-check-label small fw-semibold" for="wd0">Mon</label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd1" value="1" checked>
-                    <label class="form-check-label small fw-semibold" for="wd1">Tue</label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd2" value="2" checked>
-                    <label class="form-check-label small fw-semibold" for="wd2">Wed</label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd3" value="3" checked>
-                    <label class="form-check-label small fw-semibold" for="wd3">Thu</label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd4" value="4" checked>
-                    <label class="form-check-label small fw-semibold" for="wd4">Fri</label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd5" value="5" checked>
-                    <label class="form-check-label small fw-semibold" for="wd5">Sat <span class="text-muted fw-normal" style="font-size: 0.72rem;">(Holiday)</span></label>
-                  </div>
-                  <div class="form-check form-check-inline m-0">
-                    <input class="form-check-input weekday-cb" type="checkbox" name="weekdays" id="wd6" value="6" checked>
-                    <label class="form-check-label small fw-semibold" for="wd6">Sun <span class="text-muted fw-normal" style="font-size: 0.72rem;">(Holiday)</span></label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Calculated date count badge -->
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="badge" id="dateCountBadge" style="background-color: #f1f5f9 !important; color: #334155 !important; border: 1px solid #cbd5e1 !important; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px;">
-                <i class="mdi mdi-calendar-check me-1"></i>1 date selected
-              </span>
-              <small class="text-muted" id="dateRangeNotice"></small>
+              <input type="radio" class="btn-check" name="date_mode" id="dateModeRange" value="range" autocomplete="off">
+              <label class="btn" for="dateModeRange">
+                <i class="mdi mdi-calendar-range me-1"></i>Date Range
+              </label>
             </div>
           </div>
 
-          <!-- 3. Attendance Status & Time Schedule -->
-          <div class="card border border-light-subtle rounded-3 p-3 mb-3 bg-white shadow-sm">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label fw-bold text-dark mb-1">
-                  <i class="mdi mdi-list-status text-primary me-1"></i> Attendance Status <span class="text-danger">*</span>
-                </label>
-                <select name="status" id="bulkStatusSelect" class="form-select" required>
-                  <option value="present" selected>Present</option>
-                  <option value="late">Late</option>
-                  <option value="absent">Absent</option>
-                  <option value="checkout_early">Checkout Early</option>
-                  <option value="overtime">Overtime</option>
-                </select>
-                <span class="form-text text-muted small" id="statusHint">Standard full day presence</span>
+          <!-- Single Date Pane -->
+          <div id="singleDatePane" class="mt-2">
+            {% now 'Y-m-d' as default_att_date %}
+            {% include 'partials/_select_date.html' with name='date' id='singleDateInput' label='Attendance Date' value=default_att_date %}
+          </div>
+
+          <!-- Date Range Pane -->
+          <div id="dateRangePane" class="mt-2" style="display: none;">
+            <div class="row g-2 mb-2">
+              {% include 'partials/_select_date.html' with name='start_date' id='startDateInput' label='From Date (Start)' value=default_att_date wrapper_class='col-12 col-sm-6' %}
+              {% include 'partials/_select_date.html' with name='end_date' id='endDateInput' label='To Date (End)' value=default_att_date wrapper_class='col-12 col-sm-6' %}
+            </div>
+
+            <!-- Quick Range Presets -->
+            <div class="quick-preset-bar">
+              <span class="small text-muted fw-semibold me-1"><i class="mdi mdi-lightning-bolt text-warning"></i> Quick Range:</span>
+              <button type="button" class="btn btn-preset-chip" id="preset5Days">+5 Days</button>
+              <button type="button" class="btn btn-preset-chip" id="preset7Days">+7 Days (1 Wk)</button>
+              <button type="button" class="btn btn-preset-chip" id="preset14Days">+14 Days (2 Wks)</button>
+              <button type="button" class="btn btn-preset-chip" id="presetThisMonth">This Month</button>
+            </div>
+
+            <!-- Weekday Filter Box with Interactive Chips -->
+            <div class="weekday-filter-box">
+              <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                <span class="small fw-bold text-dark"><i class="mdi mdi-filter-variant me-1 text-primary"></i>Included Weekdays:</span>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-xs btn-subtle-primary py-1 px-2" id="btnWeekdaysOnly" title="Exclude Saturday and Sunday holidays">Mon–Fri Workdays</button>
+                  <button type="button" class="btn btn-xs btn-subtle-secondary py-1 px-2" id="btnAllDays" title="Include all 7 days">All 7 Days</button>
+                </div>
               </div>
-              <div class="col-md-4" id="checkInCol">
-                <label class="form-label fw-bold text-dark mb-1">
-                  <i class="mdi mdi-clock-in text-success me-1"></i> Check In Time
-                </label>
-                <input type="time" name="check_in_time" id="checkInTimeInput" class="form-control" value="08:00">
-                <span class="form-text text-muted small">Standard start time</span>
-              </div>
-              <div class="col-md-4" id="checkOutCol">
-                <label class="form-label fw-bold text-dark mb-1">
-                  <i class="mdi mdi-clock-out text-danger me-1"></i> Check Out Time
-                </label>
-                <input type="time" name="check_out_time" id="checkOutTimeInput" class="form-control" value="17:00">
-                <span class="form-text text-muted small">Standard finish time</span>
+              
+              <div class="weekday-pills-row" id="weekdayCheckboxes">
+                <div class="weekday-pill-item">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd0" value="0" checked>
+                  <label class="weekday-pill-btn" for="wd0">
+                    <span>Mon</span>
+                    <span class="day-tag">Work</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd1" value="1" checked>
+                  <label class="weekday-pill-btn" for="wd1">
+                    <span>Tue</span>
+                    <span class="day-tag">Work</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd2" value="2" checked>
+                  <label class="weekday-pill-btn" for="wd2">
+                    <span>Wed</span>
+                    <span class="day-tag">Work</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd3" value="3" checked>
+                  <label class="weekday-pill-btn" for="wd3">
+                    <span>Thu</span>
+                    <span class="day-tag">Work</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd4" value="4" checked>
+                  <label class="weekday-pill-btn" for="wd4">
+                    <span>Fri</span>
+                    <span class="day-tag">Work</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item is-weekend">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd5" value="5" checked>
+                  <label class="weekday-pill-btn" for="wd5">
+                    <span>Sat</span>
+                    <span class="day-tag">Weekend</span>
+                  </label>
+                </div>
+                <div class="weekday-pill-item is-weekend">
+                  <input class="weekday-cb" type="checkbox" name="weekdays" id="wd6" value="6" checked>
+                  <label class="weekday-pill-btn" for="wd6">
+                    <span>Sun</span>
+                    <span class="day-tag">Weekend</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 4. Duplicate Policy & Live Preview Banner -->
-          <div class="d-flex flex-column gap-2">
-            <div class="form-check form-switch p-3 bg-light rounded-3 border mb-0">
-              <input class="form-check-input ms-0 me-2" type="checkbox" name="overwrite" id="overwriteSwitch" value="true" checked>
-              <label class="form-check-label fw-semibold text-dark" for="overwriteSwitch">
+          <!-- Calculated date count badge -->
+          <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2">
+            <span class="badge" id="dateCountBadge" style="background-color: #F1F5F9 !important; color: #334155 !important; border: 1px solid #CBD5E1 !important; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px;">
+              <i class="mdi mdi-calendar-check me-1"></i>1 date selected
+            </span>
+            <small class="text-muted" id="dateRangeNotice"></small>
+          </div>
+        </div>
+
+        <!-- 3. Attendance Status & Time Schedule -->
+        <div class="attendance-section-card">
+          <div class="d-flex align-items-center mb-2">
+            <span class="attendance-step-badge">3</span>
+            <div>
+              <label class="form-label fw-bold text-dark mb-0">
+                Attendance Status & Schedule <span class="text-danger">*</span>
+              </label>
+              <div class="text-muted small" style="font-size: 0.78rem;">Define status and recorded check-in / check-out times</div>
+            </div>
+          </div>
+          
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold text-secondary mb-1 small">
+                <i class="mdi mdi-list-status text-primary me-1"></i> Status
+              </label>
+              <select name="status" id="bulkStatusSelect" class="form-select" required>
+                <option value="present" selected>Present</option>
+                <option value="late">Late</option>
+                <option value="absent">Absent</option>
+                <option value="checkout_early">Checkout Early</option>
+                <option value="overtime">Overtime</option>
+              </select>
+              <span class="form-text text-muted small" id="statusHint" style="font-size: 0.75rem;">Standard full day presence</span>
+            </div>
+            
+            <div class="col-6 col-md-4" id="checkInCol">
+              <label class="form-label fw-semibold text-secondary mb-1 small">
+                <i class="mdi mdi-clock-in text-success me-1"></i> Check In Time
+              </label>
+              <div class="input-group component-select-time time-picker-group">
+                <input type="text" name="check_in_time" id="checkInTimeInput" class="form-control select-time-input" value="08:00" autocomplete="off" placeholder="HH:MM">
+                <span class="input-group-text select-time-trigger text-muted" role="button" tabindex="0" title="Open time picker">
+                  <i class="mdi mdi-clock-outline"></i>
+                </span>
+              </div>
+              <span class="form-text text-muted small" style="font-size: 0.75rem;">Standard start time</span>
+            </div>
+            
+            <div class="col-6 col-md-4" id="checkOutCol">
+              <label class="form-label fw-semibold text-secondary mb-1 small">
+                <i class="mdi mdi-clock-out text-danger me-1"></i> Check Out Time
+              </label>
+              <div class="input-group component-select-time time-picker-group">
+                <input type="text" name="check_out_time" id="checkOutTimeInput" class="form-control select-time-input" value="17:00" autocomplete="off" placeholder="HH:MM">
+                <span class="input-group-text select-time-trigger text-muted" role="button" tabindex="0" title="Open time picker">
+                  <i class="mdi mdi-clock-outline"></i>
+                </span>
+              </div>
+              <span class="form-text text-muted small" style="font-size: 0.75rem;">Standard finish time</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Duplicate Policy -->
+        <div class="mb-1">
+          <!-- Overwrite Switch Card -->
+          <div class="overwrite-switch-card">
+            <div class="form-check form-switch p-0 m-0">
+              <input class="form-check-input m-0" type="checkbox" name="overwrite" id="overwriteSwitch" value="true" checked>
+            </div>
+            <div>
+              <label class="form-check-label fw-bold text-dark d-block mb-0 cursor-pointer" for="overwriteSwitch">
                 Overwrite / Update existing records
               </label>
-              <div class="text-muted small ps-0">If attendance already exists for an employee on a selected date, overwrite it with these values. If unchecked, existing records will be left untouched.</div>
-            </div>
-
-            <!-- Live Calculation Summary Card -->
-            <div class="alert d-flex align-items-center mb-0 py-2 px-3 rounded-3" style="background-color: #eff6ff !important; border: 1px solid #bfdbfe !important; color: #1e40af !important;">
-              <i class="mdi mdi-flash fs-4 me-2" style="color: #1F3BB3;"></i>
-              <div class="small fw-semibold" id="bulkSummaryText" style="color: #1e40af !important;">
-                Ready to record: 0 employees × 1 date = 0 attendance records
-              </div>
+              <div class="text-muted small" style="font-size: 0.76rem; line-height: 1.35;">If attendance already exists for an employee on a selected date, overwrite it with these values. If unchecked, existing records will remain untouched.</div>
             </div>
           </div>
         </div>
 
-        <div class="modal-footer border-top px-4 py-3 bg-white flex-shrink-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary text-white shadow-sm px-4" id="btnSaveAttendance">
-            <i class="mdi mdi-check-circle me-1"></i> Save Records
-          </button>
-        </div>
-      </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer attendance-modal-footer flex-shrink-0">
+        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary text-white shadow-sm px-4" id="btnSaveAttendance">
+          <i class="mdi mdi-check-circle me-1"></i> Save Records
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}
@@ -613,11 +652,12 @@
         var val = parseInt($(this).val());
         $(this).prop('checked', val >= 0 && val <= 4);
       });
+      $('.weekday-cb').trigger('change');
       updateEstimator();
     });
 
     $('#btnAllDays').on('click', function () {
-      $('.weekday-cb').prop('checked', true);
+      $('.weekday-cb').prop('checked', true).trigger('change');
       updateEstimator();
     });
 
@@ -749,11 +789,13 @@
         $('#dateRangeNotice').text('');
       }
 
-      $('#bulkSummaryText').html(
-        'Ready to record: <strong>' + empSelected + ' employee' + (empSelected !== 1 ? 's' : '') + '</strong> × ' +
-        '<strong>' + dateCount + ' date' + (dateCount !== 1 ? 's' : '') + '</strong> = ' +
-        '<strong>' + totalRecords + ' attendance record' + (totalRecords !== 1 ? 's' : '') + '</strong>'
-      );
+      if ($('#bulkSummaryText').length) {
+        $('#bulkSummaryText').html(
+          'Ready to record: <strong>' + empSelected + ' employee' + (empSelected !== 1 ? 's' : '') + '</strong> × ' +
+          '<strong>' + dateCount + ' date' + (dateCount !== 1 ? 's' : '') + '</strong> = ' +
+          '<strong>' + totalRecords + ' attendance record' + (totalRecords !== 1 ? 's' : '') + '</strong>'
+        );
+      }
     }
   });
 </script>

@@ -35,7 +35,7 @@
     </div>
 
     <!-- Types Table Card -->
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -66,14 +66,14 @@
                 </td>
                 <td>
                   {% if ot.status %}
-                  <span class="badge bg-success">Active</span>
+                  <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
                   {% else %}
-                  <span class="badge bg-secondary">Inactive</span>
+                  <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
-                  <div class="d-flex justify-content-end align-items-center gap-1">
+                  <div class="table-action-group justify-content-end">
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                       data-bs-target="#editTypeModal{{ ot.id }}">
                       <i class="mdi mdi-pencil"></i> Edit

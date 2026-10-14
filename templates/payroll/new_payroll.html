@@ -310,8 +310,13 @@
               <label class="form-label fw-bold text-dark small mb-1">
                 <i class="mdi mdi-calendar-month text-primary me-1"></i>PAYROLL PERIOD
               </label>
-              <input type="month" name="payroll_period" id="payrollPeriod" class="form-control clean-month-input w-100"
-                value="2026-09" required>
+              <div class="input-group component-select-month month-picker-group">
+                <input type="text" name="payroll_period" id="payrollPeriod" class="form-control select-month-input clean-month-input"
+                  value="2026-09" placeholder="YYYY-MM" autocomplete="off" required>
+                <span class="input-group-text select-month-trigger text-muted" role="button" tabindex="0" title="Select payroll period">
+                  <i class="mdi mdi-calendar-month"></i>
+                </span>
+              </div>
             </div>
 
             <!-- Formula Dropdown -->

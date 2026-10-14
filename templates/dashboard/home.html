@@ -6,69 +6,8 @@
 {% block extra_css %}
 <style>
   /* ==========================================================
-     Dashboard Design System — Consistent with Project Theme
+     Dashboard Specific Components (Charts, Gauges, Toggles)
      ========================================================== */
-
-  /* Stat KPI Cards (Redesigned modern minimal UI — inspired by image2) */
-  .stat-card {
-    border: 1px solid rgba(226, 232, 240, 0.75) !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-    padding: 1.35rem 1.45rem !important;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-  .stat-card:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
-    border-color: rgba(203, 213, 225, 0.9) !important;
-  }
-
-  /* Clean vibrant standalone icon (like image2) */
-  .stat-kpi-icon {
-    font-size: 2.35rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.25s ease;
-  }
-  .stat-card:hover .stat-kpi-icon {
-    transform: scale(1.08);
-  }
-
-  /* Vibrant icon accent colors */
-  .stat-kpi-icon-primary { color: #1F3BB3; }
-  .stat-kpi-icon-success { color: #059669; }
-  .stat-kpi-icon-warning { color: #D97706; }
-  .stat-kpi-icon-info { color: #0284C7; }
-  .stat-kpi-icon-purple { color: #7C3AED; }
-
-  /* KPI Typography hierarchy: Number on top, Label below */
-  .stat-kpi-value,
-  .stat-card h3,
-  .stat-card h4 {
-    font-size: 1.65rem !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-    line-height: 1.15 !important;
-    letter-spacing: -0.02em !important;
-    margin-bottom: 0.2rem !important;
-  }
-  .stat-kpi-label {
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    color: #64748b !important;
-    line-height: 1.25 !important;
-  }
-  .stat-kpi-sub {
-    font-size: 0.72rem !important;
-    color: #94a3b8 !important;
-    line-height: 1.2 !important;
-    margin-top: 0.15rem !important;
-  }
-
   /* Section Title Label */
   .dash-section-label {
     font-size: 0.72rem;
@@ -265,25 +204,6 @@
     .chart-container-260 { height: 220px; }
     .chart-container-220 { height: 180px; }
     .gauge-box { min-height: 160px; }
-    .stat-card {
-      padding: 0.95rem 0.85rem !important;
-      border-radius: 12px !important;
-    }
-    .stat-kpi-icon {
-      font-size: 1.85rem !important;
-      margin-right: 0.75rem !important;
-    }
-    .stat-kpi-value,
-    .stat-card h3,
-    .stat-card h4 {
-      font-size: 1.25rem !important;
-    }
-    .stat-kpi-label {
-      font-size: 0.78rem !important;
-    }
-    .stat-kpi-sub {
-      font-size: 0.65rem !important;
-    }
     .card-body {
       padding: 1rem !important;
     }

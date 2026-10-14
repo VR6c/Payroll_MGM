@@ -2,246 +2,6 @@
 
 {% block title %}Users & RBAC Management - Payroll MGM{% endblock %}
 
-{% block extra_css %}
-<style>
-  /* ==========================================================
-     Stat Cards (Consistent with lunch_breaks.html & Project Theme)
-     ========================================================== */
-  /* Stat KPI Cards (Redesigned modern minimal UI — consistent with dashboard) */
-  .stat-card {
-    border: 1px solid rgba(226, 232, 240, 0.75) !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-    padding: 1.35rem 1.45rem !important;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-  .stat-card:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
-    border-color: rgba(203, 213, 225, 0.9) !important;
-  }
-
-  /* Clean vibrant standalone icon */
-  .stat-kpi-icon {
-    font-size: 2.35rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.25s ease;
-  }
-  .stat-card:hover .stat-kpi-icon {
-    transform: scale(1.08);
-  }
-
-  /* Vibrant icon accent colors */
-  .stat-kpi-icon-primary { color: #1F3BB3; }
-  .stat-kpi-icon-purple { color: #7C3AED; }
-  .stat-kpi-icon-success { color: #059669; }
-  .stat-kpi-icon-warning { color: #D97706; }
-
-  /* KPI Typography hierarchy: Number on top, Label below */
-  .stat-kpi-value,
-  .stat-card h3,
-  .stat-card h4 {
-    font-size: 1.65rem !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-    line-height: 1.15 !important;
-    letter-spacing: -0.02em !important;
-    margin-bottom: 0.2rem !important;
-  }
-  .stat-kpi-label {
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    color: #64748b !important;
-    line-height: 1.25 !important;
-  }
-
-  /* ==========================================================
-     Segmented Navigation Control (Pill Switcher)
-     ========================================================== */
-  .segmented-nav {
-    display: inline-flex;
-    padding: 4px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  }
-  .segmented-nav-link {
-    padding: 7px 18px;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #64748b;
-    text-decoration: none !important;
-    transition: all 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .segmented-nav-link:hover {
-    color: #1F3BB3;
-    background: #f8fafc;
-  }
-  .segmented-nav-link.active {
-    background: #1F3BB3;
-    color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(31, 59, 179, 0.25);
-  }
-
-  /* ==========================================================
-     Users Table Architecture & Responsive Layout
-     ========================================================== */
-  .table-card {
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    border-radius: 14px;
-    background: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    overflow: hidden;
-  }
-  .users-table {
-    min-width: 1020px;
-    margin-bottom: 0;
-  }
-  .users-table thead th {
-    font-size: 0.73rem !important;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 700 !important;
-    color: #475569 !important;
-    background-color: #f8fafc !important;
-    border-bottom: 2px solid #e2e8f0 !important;
-    padding: 13px 14px !important;
-    white-space: nowrap;
-  }
-  .users-table tbody td {
-    padding: 13px 14px !important;
-    vertical-align: middle !important;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  .users-table thead th.ps-4,
-  .users-table tbody td.ps-4 {
-    padding-left: 1.5rem !important;
-  }
-  .users-table thead th.pe-4,
-  .users-table tbody td.pe-4 {
-    padding-right: 1.5rem !important;
-  }
-
-  .user-avatar-initials {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.85rem;
-    background: #eef2ff;
-    color: #1F3BB3;
-    flex-shrink: 0;
-  }
-
-  /* Action Icon Buttons - Exact 34px Square Proportions */
-  .action-btn-icon {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    max-width: 34px !important;
-    padding: 0 !important;
-    border-radius: 8px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 1rem !important;
-    line-height: 1 !important;
-    transition: all 0.15s ease-in-out;
-  }
-
-  /* ==========================================================
-     Modal Layout & Responsive Scroll Container
-     ========================================================== */
-  .modal-dialog-scroll-fixed {
-    max-height: calc(100vh - 2.5rem);
-  }
-  .modal-content-scroll-fixed {
-    max-height: calc(100vh - 2.5rem);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .modal-body-scrollable {
-    overflow-y: auto !important;
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    max-height: calc(100vh - 13rem) !important;
-  }
-  .modal-body-scrollable::-webkit-scrollbar {
-    width: 6px;
-  }
-  .modal-body-scrollable::-webkit-scrollbar-track {
-    background: #f8fafc;
-  }
-  .modal-body-scrollable::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-  }
-  .modal-body-scrollable::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
-
-  /* ==========================================================
-     Responsive Media Queries
-     ========================================================== */
-  @media (max-width: 767.98px) {
-    .page-header-wrap {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 1rem !important;
-    }
-    .header-actions-wrap {
-      width: 100% !important;
-      align-items: stretch !important;
-    }
-    .header-actions-wrap .btn {
-      width: 100% !important;
-    }
-    .stat-card {
-      padding: 0.95rem 0.85rem !important;
-      border-radius: 12px !important;
-    }
-    .stat-kpi-icon {
-      font-size: 1.85rem !important;
-      margin-right: 0.75rem !important;
-    }
-    .stat-kpi-value,
-    .stat-card h3,
-    .stat-card h4 {
-      font-size: 1.25rem !important;
-    }
-    .stat-kpi-label {
-      font-size: 0.78rem !important;
-    }
-  }
-
-  @media (max-width: 575.98px) {
-    .segmented-nav {
-      display: flex;
-      width: 100%;
-    }
-    .segmented-nav-link {
-      flex: 1;
-      justify-content: center;
-      padding: 8px 10px;
-      font-size: 0.8rem;
-    }
-  }
-</style>
-{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -338,13 +98,13 @@
     </div>
 
     <!-- Filter & Search Card -->
-    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 12px;">
-      <div class="card-body p-3">
+    <div class="card filter-card">
+      <div class="card-body">
         <form method="get" class="row g-2 align-items-center">
           <div class="col-12 col-md-5 col-lg-5">
             <div class="input-group">
-              <span class="input-group-text bg-light border-end-0 text-muted"><i class="mdi mdi-magnify"></i></span>
-              <input type="text" name="search" class="form-control border-start-0" placeholder="Search by username, full name, email..." value="{{ active_search }}">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input type="text" name="search" class="form-control" placeholder="Search by username, full name, email..." value="{{ active_search }}">
             </div>
           </div>
 
@@ -365,14 +125,15 @@
             </select>
           </div>
 
-          <div class="col-12 col-md-2 col-lg-2 d-flex gap-2">
-            <button type="submit" class="btn btn-primary text-white flex-grow-1">
-              <i class="mdi mdi-filter-variant me-1"></i>
-              <span>Filter</span>
-            </button>
-            <a href="{% url 'accounts:user_list' %}" class="btn btn-light border text-muted px-3" title="Reset Filters">
-              <i class="mdi mdi-refresh"></i>
-            </a>
+          <div class="col-12 col-md-2 col-lg-2">
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter
+              </button>
+              <a href="{% url 'accounts:user_list' %}" class="filter-btn-reset" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
           </div>
         </form>
       </div>

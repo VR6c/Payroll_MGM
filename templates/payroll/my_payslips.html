@@ -19,7 +19,7 @@
       </nav>
     </div>
 
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -42,11 +42,11 @@
                 <td class="fw-bold text-success fs-6">${{ p.net_salary }}</td>
                 <td>
                   {% if p.status == 'paid' %}
-                    <span class="badge bg-success">Paid</span>
+                    <span class="badge-status-approved"><i class="mdi mdi-check-circle-outline"></i> Paid</span>
                   {% elif p.status == 'approved' %}
-                    <span class="badge bg-info">Approved</span>
+                    <span class="badge-status-info"><i class="mdi mdi-checkbox-marked-circle-outline"></i> Approved</span>
                   {% else %}
-                    <span class="badge bg-secondary">{{ p.get_status_display }}</span>
+                    <span class="badge-status-secondary">{{ p.get_status_display }}</span>
                   {% endif %}
                 </td>
                 <td class="text-end">

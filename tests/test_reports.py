@@ -16,6 +16,7 @@ if not getattr(BaseContext, '_copy_patched', False):
     BaseContext.__copy__ = _safe_context_copy
     BaseContext._copy_patched = True
 
+from django.utils import timezone
 from accounts.models import User
 from companies.models import Company, Department, Position
 from employees.models import Employee
@@ -65,16 +66,16 @@ class ReportsAndExportsIntegrationTests(TestCase):
         self.att1 = Attendance.objects.create(
             employee=self.emp1,
             date=today,
-            check_in=datetime.combine(today, datetime.min.time()) + timedelta(hours=8, minutes=0),
-            check_out=datetime.combine(today, datetime.min.time()) + timedelta(hours=17, minutes=0),
+            check_in=timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=8, minutes=0)),
+            check_out=timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=17, minutes=0)),
             working_hours=timedelta(hours=9),
             status=Attendance.Status.PRESENT
         )
         self.att2 = Attendance.objects.create(
             employee=self.emp2,
             date=today,
-            check_in=datetime.combine(today, datetime.min.time()) + timedelta(hours=8, minutes=45),
-            check_out=datetime.combine(today, datetime.min.time()) + timedelta(hours=17, minutes=30),
+            check_in=timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=8, minutes=45)),
+            check_out=timezone.make_aware(datetime.combine(today, datetime.min.time()) + timedelta(hours=17, minutes=30)),
             working_hours=timedelta(hours=8, minutes=45),
             status=Attendance.Status.LATE
         )

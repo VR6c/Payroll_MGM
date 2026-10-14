@@ -32,7 +32,7 @@
 
     <div class="row">
       <div class="col-md-4 grid-margin stretch-card">
-        <div class="card">
+        <div class="card border-0 shadow-sm" style="border-radius: 14px;">
           <div class="card-body text-center">
             <div class="mb-3">
               {% if object.photo %}
@@ -48,13 +48,13 @@
             <span class="badge bg-light text-dark border mb-3">Code: {{ object.employee_code }}</span>
             <div class="d-block mt-2">
               {% if object.status == 'active' %}
-                <span class="badge bg-success">Active</span>
+                <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
               {% elif object.status == 'inactive' %}
-                <span class="badge bg-secondary">Inactive</span>
+                <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
               {% elif object.status == 'resigned' %}
-                <span class="badge bg-warning text-dark">Resigned</span>
+                <span class="badge-status-warning"><i class="mdi mdi-account-remove-outline"></i> Resigned</span>
               {% else %}
-                <span class="badge bg-danger">{{ object.get_status_display }}</span>
+                <span class="badge-status-danger">{{ object.get_status_display }}</span>
               {% endif %}
             </div>
           </div>
@@ -62,7 +62,7 @@
       </div>
 
       <div class="col-md-8 grid-margin stretch-card">
-        <div class="card">
+        <div class="card border-0 shadow-sm" style="border-radius: 14px;">
           <div class="card-body">
             <h4 class="card-title text-primary"><i class="mdi mdi-information-outline me-2"></i>Employment Information</h4>
             <div class="row mt-4">

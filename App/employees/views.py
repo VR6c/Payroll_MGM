@@ -94,13 +94,18 @@ class PositionListView(RoleRequiredMixin, ListView):
     required_roles = ['super_admin', 'hr_admin', 'manager']
 
     def get_queryset(self):
-        return Position.objects.select_related('company', 'department').all()
+        qs = Position.objects.select_related('company', 'department').all()
+        q = self.request.GET.get('search', '').strip()
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(department__name__icontains=q))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['form'] = PositionForm()
         ctx['companies'] = Company.objects.all()
         ctx['departments'] = Department.objects.filter(status=True)
+        ctx['active_search'] = self.request.GET.get('search', '').strip()
         return ctx
 
 
@@ -152,12 +157,17 @@ class DepartmentListView(RoleRequiredMixin, ListView):
     required_roles = ['super_admin', 'hr_admin', 'manager']
 
     def get_queryset(self):
-        return Department.objects.select_related('company').all()
+        qs = Department.objects.select_related('company').all()
+        q = self.request.GET.get('search', '').strip()
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['form'] = DepartmentForm()
         ctx['companies'] = Company.objects.all()
+        ctx['active_search'] = self.request.GET.get('search', '').strip()
         return ctx
 
 
@@ -201,12 +211,17 @@ class BranchListView(RoleRequiredMixin, ListView):
     required_roles = ['super_admin', 'hr_admin', 'manager']
 
     def get_queryset(self):
-        return Branch.objects.select_related('company').all()
+        qs = Branch.objects.select_related('company').all()
+        q = self.request.GET.get('search', '').strip()
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(code__icontains=q) | Q(phone__icontains=q) | Q(address__icontains=q))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['form'] = BranchForm()
         ctx['companies'] = Company.objects.all()
+        ctx['active_search'] = self.request.GET.get('search', '').strip()
         return ctx
 
 

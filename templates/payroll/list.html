@@ -30,11 +30,11 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="card mb-4">
+    <div class="card filter-card">
       <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+          <div class="col-12 col-md-5">
+            <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">-- All Statuses --</option>
               <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
@@ -44,21 +44,23 @@
               <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
             </select>
           </div>
-          <div class="col-md-5">
-            <label class="form-label small fw-semibold text-muted mb-1">Period (YYYY-MM-DD)</label>
-            <input type="date" name="period" class="form-control" value="{{ request.GET.period }}">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small fw-semibold text-muted mb-1">&nbsp;</label>
-            <button type="submit" class="btn btn-primary text-white w-100">
-              <i class="mdi mdi-magnify me-1"></i> Filter
-            </button>
+          {% include 'partials/_select_date.html' with name='period' label='Period' value=request.GET.period wrapper_class='col-12 col-md-4' %}
+          <div class="col-12 col-md-3">
+            <label class="filter-label d-none d-md-block">&nbsp;</label>
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter
+              </button>
+              <a href="{% url 'payroll:list' %}" class="filter-btn-reset" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
           </div>
         </form>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">

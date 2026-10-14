@@ -19,14 +19,38 @@
           </ol>
         </nav>
         {% if user.role in 'super_admin,hr_admin' %}
-        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addBranchModal">
           <i class="mdi mdi-plus me-1"></i> Add New Branch
         </button>
         {% endif %}
       </div>
     </div>
 
-    <div class="card">
+    <!-- Filter & Search Card -->
+    <div class="card filter-card">
+      <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+          <div class="col-12 col-md-8 col-lg-9">
+            <div class="input-group">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input type="text" name="search" class="form-control" placeholder="Search branch by name, code, phone, or address..." value="{{ active_search }}">
+            </div>
+          </div>
+          <div class="col-12 col-md-4 col-lg-3">
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter
+              </button>
+              <a href="{% url 'employees:branches' %}" class="filter-btn-reset" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -55,19 +79,21 @@
                 <td>{{ branch.address|default:"-" }}</td>
                 <td>
                   {% if branch.status %}
-                  <span class="badge bg-success">Active</span>
+                  <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
                   {% else %}
-                  <span class="badge bg-secondary">Inactive</span>
+                  <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
-                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editBranchModal{{ branch.id }}">
-                    <i class="mdi mdi-pencil"></i> Edit
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBranchModal{{ branch.id }}">
-                    <i class="mdi mdi-trash-can-outline"></i> Delete
-                  </button>
+                  <div class="table-action-group justify-content-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBranchModal{{ branch.id }}">
+                      <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBranchModal{{ branch.id }}">
+                      <i class="mdi mdi-trash-can-outline"></i> Delete
+                    </button>
+                  </div>
 
                   <!-- Edit Modal -->
                   <div class="modal fade text-start" id="editBranchModal{{ branch.id }}" tabindex="-1" aria-hidden="true">

@@ -102,10 +102,12 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         else:
             # --- Admin KPI ---
             ctx['total_employees'] = Employee.objects.filter(status='active').count()
-            ctx['present_today'] = Attendance.objects.filter(
-                date=today, status__in=['present', 'late', 'overtime', 'checkout_early']
-            ).count()
-            ctx['late_today'] = Attendance.objects.filter(date=today, status='late').count()
+            today_att_stats = Attendance.objects.filter(date=today).aggregate(
+                present=Count('id', filter=Q(status__in=['present', 'late', 'overtime', 'checkout_early'])),
+                late=Count('id', filter=Q(status='late')),
+            )
+            ctx['present_today'] = today_att_stats['present'] or 0
+            ctx['late_today'] = today_att_stats['late'] or 0
             ctx['pending_leaves'] = LeaveRequest.objects.filter(status='pending').count()
             ctx['recent_employees'] = Employee.objects.select_related(
                 'department', 'position', 'company'
@@ -117,19 +119,21 @@ class DashboardView(RoleRequiredMixin, TemplateView):
                 Attendance.objects
                 .filter(date__gte=thirty_days_ago, date__lte=today)
                 .values('date', 'status')
+                .annotate(count=Count('id'))
             )
             att_map = {}
             for rec in att_30_qs:
                 d = rec['date']
                 s = rec['status']
+                cnt = rec['count']
                 if d not in att_map:
                     att_map[d] = {'present': 0, 'late': 0, 'absent': 0}
                 if s in ('present', 'overtime', 'checkout_early'):
-                    att_map[d]['present'] += 1
+                    att_map[d]['present'] += cnt
                 elif s == 'late':
-                    att_map[d]['late'] += 1
+                    att_map[d]['late'] += cnt
                 elif s == 'absent':
-                    att_map[d]['absent'] += 1
+                    att_map[d]['absent'] += cnt
 
             # 30-day series
             labels_30 = []
@@ -209,10 +213,16 @@ class DashboardView(RoleRequiredMixin, TemplateView):
 
             # --- Leave Analysis: status breakdown (all time / this year) ---
             leave_qs = LeaveRequest.objects.filter(created_at__year=today.year)
-            leave_approved = leave_qs.filter(status='approved').count()
-            leave_pending = leave_qs.filter(status='pending').count()
-            leave_rejected = leave_qs.filter(status='rejected').count()
-            leave_cancelled = leave_qs.filter(status='cancelled').count()
+            leave_stats = leave_qs.aggregate(
+                approved=Count('id', filter=Q(status='approved')),
+                pending=Count('id', filter=Q(status='pending')),
+                rejected=Count('id', filter=Q(status='rejected')),
+                cancelled=Count('id', filter=Q(status='cancelled')),
+            )
+            leave_approved = leave_stats['approved'] or 0
+            leave_pending = leave_stats['pending'] or 0
+            leave_rejected = leave_stats['rejected'] or 0
+            leave_cancelled = leave_stats['cancelled'] or 0
             ctx['leave_approved'] = leave_approved
             ctx['leave_pending'] = leave_pending
             ctx['leave_rejected'] = leave_rejected

@@ -26,7 +26,7 @@
     </div>
 
     <!-- Table Card -->
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -65,15 +65,15 @@
                 <td class="fw-bold text-success">${{ ot.overtime_amount|floatformat:2 }}</td>
                 <td>
                   {% if ot.status == 'approved' %}
-                    <span class="badge bg-success">Approved</span>
+                    <span class="badge-status-approved"><i class="mdi mdi-check-circle-outline"></i> Approved</span>
                   {% elif ot.status == 'pending' %}
-                    <span class="badge bg-warning text-dark">Pending</span>
+                    <span class="badge-status-pending"><i class="mdi mdi-clock-outline"></i> Pending</span>
                   {% elif ot.status == 'rejected' %}
-                    <span class="badge bg-danger">Rejected</span>
+                    <span class="badge-status-rejected"><i class="mdi mdi-close-circle-outline"></i> Rejected</span>
                   {% elif ot.status == 'cancelled' %}
-                    <span class="badge bg-secondary">Cancelled</span>
+                    <span class="badge-status-cancelled"><i class="mdi mdi-cancel"></i> Cancelled</span>
                   {% else %}
-                    <span class="badge bg-secondary">{{ ot.get_status_display }}</span>
+                    <span class="badge-status-secondary">{{ ot.get_status_display }}</span>
                   {% endif %}
                 </td>
                 <td>{{ ot.created_at|date:"M d, Y" }}</td>
@@ -126,10 +126,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label fw-bold">Overtime Date <span class="text-danger">*</span></label>
-            <input type="date" name="date" class="form-control" required id="id_my_ot_date">
-          </div>
+          {% include 'partials/_select_date.html' with name='date' id='id_my_ot_date' label='Overtime Date' required=True wrapper_class='mb-3' %}
 
           <div class="mb-3">
             <label class="form-label fw-bold">Overtime Type / Policy</label>

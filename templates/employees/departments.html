@@ -19,25 +19,49 @@
           </ol>
         </nav>
         {% if user.role in 'super_admin,hr_admin' %}
-        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
           <i class="mdi mdi-plus me-1"></i> Add New Department
         </button>
         {% endif %}
       </div>
     </div>
 
-    <div class="card">
+    <!-- Filter & Search Card -->
+    <div class="card filter-card">
+      <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+          <div class="col-12 col-md-8 col-lg-9">
+            <div class="input-group">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input type="text" name="search" class="form-control" placeholder="Search department by name or description..." value="{{ active_search }}">
+            </div>
+          </div>
+          <div class="col-12 col-md-4 col-lg-3">
+            <div class="filter-actions">
+              <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
+                <i class="mdi mdi-filter-variant"></i> Filter
+              </button>
+              <a href="{% url 'employees:departments' %}" class="filter-btn-reset" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
       <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
             <thead>
               <tr class="table-light">
-                <th>#</th>
+                <th style="width: 50px;">#</th>
                 <th>Department Name</th>
                 <th>Company</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th class="text-end">Actions</th>
+                <th class="text-end" style="width: 160px;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -49,19 +73,21 @@
                 <td>{{ dept.description|default:"-" }}</td>
                 <td>
                   {% if dept.status %}
-                  <span class="badge bg-success">Active</span>
+                  <span class="badge-status-active"><i class="mdi mdi-check-circle-outline"></i> Active</span>
                   {% else %}
-                  <span class="badge bg-secondary">Inactive</span>
+                  <span class="badge-status-inactive"><i class="mdi mdi-close-circle-outline"></i> Inactive</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
-                  <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editDepartmentModal{{ dept.id }}">
-                    <i class="mdi mdi-pencil"></i> Edit
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDepartmentModal{{ dept.id }}">
-                    <i class="mdi mdi-trash-can-outline"></i> Delete
-                  </button>
+                  <div class="table-action-group justify-content-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDepartmentModal{{ dept.id }}">
+                      <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDepartmentModal{{ dept.id }}">
+                      <i class="mdi mdi-trash-can-outline"></i> Delete
+                    </button>
+                  </div>
 
                   <!-- Edit Modal -->
                   <div class="modal fade text-start" id="editDepartmentModal{{ dept.id }}" tabindex="-1" aria-hidden="true">
