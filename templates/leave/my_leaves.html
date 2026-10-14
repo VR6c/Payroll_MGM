@@ -2,81 +2,6 @@
 
 {% block title %}{% if is_admin_or_mgr %}Leave Requests & Approvals{% else %}My Leave Requests{% endif %} - Payroll MGM{% endblock %}
 
-{% block extra_css %}
-<style>
-  /* Stat KPI Cards (Consistent with Dashboard Style) */
-  .stat-card {
-    border: 1px solid rgba(226, 232, 240, 0.75) !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-    padding: 1.35rem 1.45rem !important;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-  .stat-card:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03) !important;
-    border-color: rgba(203, 213, 225, 0.9) !important;
-  }
-
-  /* Clean vibrant standalone icon */
-  .stat-kpi-icon {
-    font-size: 2.35rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.25s ease;
-  }
-  .stat-card:hover .stat-kpi-icon {
-    transform: scale(1.08);
-  }
-
-  /* Vibrant icon accent colors */
-  .stat-kpi-icon-primary { color: #1F3BB3; }
-  .stat-kpi-icon-warning { color: #D97706; }
-  .stat-kpi-icon-success { color: #059669; }
-  .stat-kpi-icon-danger  { color: #DC2626; }
-
-  /* KPI Typography hierarchy: Number on top, Label below */
-  .stat-kpi-value,
-  .stat-card h3,
-  .stat-card h4 {
-    font-size: 1.65rem !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-    line-height: 1.15 !important;
-    letter-spacing: -0.02em !important;
-    margin-bottom: 0.2rem !important;
-  }
-  .stat-kpi-label {
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    color: #64748b !important;
-    line-height: 1.25 !important;
-  }
-
-  @media (max-width: 575.98px) {
-    .stat-card {
-      padding: 0.95rem 0.85rem !important;
-      border-radius: 12px !important;
-    }
-    .stat-kpi-icon {
-      font-size: 1.85rem !important;
-      margin-right: 0.75rem !important;
-    }
-    .stat-kpi-value,
-    .stat-card h3,
-    .stat-card h4 {
-      font-size: 1.25rem !important;
-    }
-    .stat-kpi-label {
-      font-size: 0.78rem !important;
-    }
-  }
-</style>
-{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -95,7 +20,7 @@
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
-            {% if user.role != 'employee' %}
+            {% if is_admin_or_mgr %}
             <li class="breadcrumb-item text-muted">Leave</li>
             {% else %}
             <li class="breadcrumb-item text-muted">Self-Service</li>
@@ -111,66 +36,18 @@
       </div>
     </div>
 
-    <!-- Stat Counters (Dashboard Style) -->
-    <div class="row g-3 mb-4">
-      <!-- Total Requests -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-calendar-blank-multiple stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ total_count }}</h3>
-              <span class="stat-kpi-label d-block">Total Requests</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Pending Approvals -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ pending_count }}</h3>
-              <span class="stat-kpi-label d-block">Pending Approvals</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Approved -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-check-circle-outline stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ approved_count }}</h3>
-              <span class="stat-kpi-label d-block">Approved</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Rejected -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-close-circle-outline stat-kpi-icon stat-kpi-icon-danger me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ rejected_count }}</h3>
-              <span class="stat-kpi-label d-block">Rejected</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    {% if not is_admin_or_mgr and not request.user.employee_profile %}
+    <div class="alert alert-info border-0 shadow-sm mb-4">
+      <i class="mdi mdi-information-outline me-1"></i> No employee profile is linked to your user account. To submit or view personal leave requests, an employee profile must be associated with your account.
     </div>
+    {% endif %}
 
-    <!-- Filter Card (for Admins / Managers) -->
+    <!-- Filter Card -->
     {% if is_admin_or_mgr %}
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body py-3">
-        <form method="get" class="row g-2 align-items-center">
+        <form method="get" class="row g-2 align-items-end">
           <div class="col-12 col-md-5">
             <label class="small text-muted fw-semibold d-block mb-1">Filter by Employee</label>
             <select name="employee" class="form-select select2">
@@ -192,13 +69,42 @@
               <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
             </select>
           </div>
-          <div class="col-12 col-md-3 d-flex gap-2 align-items-end pt-3 pt-md-0 mt-md-3">
-            <button type="submit" class="btn btn-primary text-white flex-grow-1">
-              <i class="mdi mdi-filter-outline me-1"></i> Filter
-            </button>
-            <a href="{% url 'leave:my_leaves' %}" class="btn btn-light" title="Reset Filters">
-              <i class="mdi mdi-refresh"></i>
-            </a>
+          <div class="col-12 col-md-3">
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary text-white flex-grow-1 text-nowrap">
+                <i class="mdi mdi-filter-outline me-1"></i> Filter
+              </button>
+              <a href="{% url 'leave:list' %}" class="btn btn-light d-inline-flex align-items-center justify-content-center" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-12 col-md-9">
+            <label class="small text-muted fw-semibold d-block mb-1">Filter by Status</label>
+            <select name="status" class="form-select">
+              <option value="">-- All Statuses --</option>
+              <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+              <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-3">
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary text-white flex-grow-1 text-nowrap">
+                <i class="mdi mdi-filter-outline me-1"></i> Filter
+              </button>
+              <a href="{% url 'leave:my_leaves' %}" class="btn btn-light d-inline-flex align-items-center justify-content-center" title="Reset Filters">
+                <i class="mdi mdi-refresh"></i>
+              </a>
+            </div>
           </div>
         </form>
       </div>

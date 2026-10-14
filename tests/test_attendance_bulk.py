@@ -93,7 +93,7 @@ class AttendanceBulkCreateTests(TestCase):
             self.assertEqual(rec.check_in.minute, 30)
             self.assertEqual(rec.check_out.hour, 17)
             self.assertEqual(rec.check_out.minute, 30)
-            self.assertEqual(rec.working_hours, datetime.timedelta(hours=9))
+            self.assertEqual(rec.working_hours, datetime.timedelta(hours=8))
 
     def test_multi_employee_date_range_with_weekdays(self):
         """Test marking attendance for multiple employees across a date range with weekday filtering."""
@@ -228,7 +228,7 @@ class AttendanceBulkCreateTests(TestCase):
         rec = Attendance.objects.filter(employee=self.emp1, date='2026-09-15').first()
         self.assertIsNotNone(rec)
         self.assertEqual(rec.status, 'present')
-        self.assertEqual(rec.working_hours, datetime.timedelta(hours=9))
+        self.assertEqual(rec.working_hours, datetime.timedelta(hours=8))
 
     def test_validation_missing_employee(self):
         """Test error handling when no employees are submitted."""
@@ -329,7 +329,7 @@ class AttendanceBulkCreateTests(TestCase):
         self.assertEqual(att.check_in.minute, 30)
         self.assertEqual(att.check_out.hour, 17)
         self.assertEqual(att.check_out.minute, 30)
-        self.assertEqual(att.working_hours, datetime.timedelta(hours=9))
+        self.assertEqual(att.working_hours, datetime.timedelta(hours=8))
 
     def test_attendance_update_absent_clears_times(self):
         """Test editing an attendance record to absent clears check-in/out and working hours."""

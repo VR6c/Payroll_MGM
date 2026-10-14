@@ -336,8 +336,8 @@ class AttendanceCreateView(RoleRequiredMixin, View):
                 record_status = status
                 if record_status == 'early_leave':
                     record_status = Attendance.Status.CHECKOUT_EARLY
-                elif record_status in ('present', '', None) and (ci_dt or co_dt):
-                    record_status = AttendanceService.determine_status(emp, d, ci_dt, co_dt, user_status=None)
+                elif not record_status and (ci_dt or co_dt):
+                    record_status = AttendanceService.determine_status(emp, d, ci_dt, co_dt)
 
                 existing = Attendance.objects.filter(employee=emp, date=d).first()
                 if existing:
@@ -408,9 +408,9 @@ class AttendanceUpdateView(RoleRequiredMixin, UpdateView):
             att.working_hours = None
         if att.status == 'early_leave':
             att.status = Attendance.Status.CHECKOUT_EARLY
-        elif att.status == 'present' and (att.check_in or att.check_out):
+        elif not att.status and (att.check_in or att.check_out):
             att.status = AttendanceService.determine_status(
-                att.employee, att.date, att.check_in, att.check_out, user_status=None
+                att.employee, att.date, att.check_in, att.check_out
             )
         att.save()
         messages.success(self.request, "Attendance record updated successfully!")
@@ -564,14 +564,16 @@ def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date
     if date_str and not from_date and not to_date:
         qs = qs.filter(date=date_str)
 
+    has_full_name = False
     if employee:
         emp_str = str(employee).strip()
         if emp_str.isdigit():
             qs = qs.filter(employee_id=int(emp_str))
         else:
-            qs = qs.annotate(
-                full_name=Concat('employee__first_name', Value(' '), 'employee__last_name')
-            ).filter(
+            if not has_full_name:
+                qs = qs.annotate(full_name=Concat('employee__first_name', Value(' '), 'employee__last_name'))
+                has_full_name = True
+            qs = qs.filter(
                 Q(employee__first_name__icontains=emp_str) |
                 Q(employee__last_name__icontains=emp_str) |
                 Q(full_name__icontains=emp_str) |
@@ -580,9 +582,10 @@ def apply_attendance_report_filters(qs, filter_type=None, status=None, from_date
 
     if search:
         search_str = str(search).strip()
-        qs = qs.annotate(
-            full_name=Concat('employee__first_name', Value(' '), 'employee__last_name')
-        ).filter(
+        if not has_full_name:
+            qs = qs.annotate(full_name=Concat('employee__first_name', Value(' '), 'employee__last_name'))
+            has_full_name = True
+        qs = qs.filter(
             Q(employee__first_name__icontains=search_str) |
             Q(employee__last_name__icontains=search_str) |
             Q(full_name__icontains=search_str) |

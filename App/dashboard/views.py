@@ -34,7 +34,7 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         if user.has_module_access('employees'):
             return redirect('employees:list')
         if user.has_module_access('leave'):
-            return redirect('leave:my_leaves')
+            return redirect('leave:list')
         if user.has_module_access('overtime'):
             return redirect('overtime:list')
         if user.has_module_access('payroll'):

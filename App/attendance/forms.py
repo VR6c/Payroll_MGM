@@ -131,10 +131,10 @@ class AttendanceForm(forms.ModelForm):
         employee = cleaned_data.get('employee')
         if status == 'early_leave':
             cleaned_data['status'] = 'checkout_early'
-        elif status in ('present', '', None) and employee and date_val and (ci_dt or co_dt):
+        elif not status and employee and date_val and (ci_dt or co_dt):
             from .services import AttendanceService
             cleaned_data['status'] = AttendanceService.determine_status(
-                employee, date_val, ci_dt, co_dt, user_status=status
+                employee, date_val, ci_dt, co_dt
             )
 
         return cleaned_data

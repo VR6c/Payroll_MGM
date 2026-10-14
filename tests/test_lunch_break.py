@@ -18,6 +18,7 @@ class LunchBreakModelTest(TestCase):
             first_name='John',
             last_name='Doe',
             email='john@test.com',
+            join_date=datetime.date(2023, 1, 1),
             basic_salary=1000
         )
         # Ensure only our test lunch break exists
@@ -86,7 +87,7 @@ class LunchBreakModelTest(TestCase):
         self.lunch_break.delete()  # completely remove so default fallback does not apply if status was false
         # When no break exists, test default behavior
         net_hours = Attendance.calculate_net_working_hours(ci, co, employee=self.employee, date=today)
-        self.assertEqual(net_hours, datetime.timedelta(hours=8))
+        self.assertEqual(net_hours, datetime.timedelta(hours=9))
 
     def test_custom_lunch_break_duration(self):
         """Test: custom 1.5h lunch break (11:30 to 13:00) deducts 1.5 hours from 9 hours -> 7.5 hours."""
@@ -192,6 +193,8 @@ class AttendanceCreationWorkingHoursTest(TestCase):
             employee_code='EMP99',
             first_name='Bob',
             last_name='Smith',
+            email='worker1@test.com',
+            join_date=datetime.date(2023, 1, 1),
             basic_salary=2000
         )
         LunchBreak.objects.all().delete()

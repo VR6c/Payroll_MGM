@@ -183,7 +183,7 @@ class OvertimeApproveView(RoleRequiredMixin, View):
         ot = get_object_or_404(OvertimeRequest, pk=pk)
         OvertimeService.approve_request(ot, request.user)
         messages.success(request, f"Overtime request for {ot.employee} approved successfully.")
-        return redirect(request.META.get('HTTP_REFERER', 'overtime:list'))
+        return redirect(request.META.get('HTTP_REFERER') or 'overtime:list')
 
 
 class OvertimeRejectView(RoleRequiredMixin, View):
@@ -194,7 +194,7 @@ class OvertimeRejectView(RoleRequiredMixin, View):
         reason = request.POST.get('rejection_reason', '')
         OvertimeService.reject_request(ot, request.user, reason)
         messages.info(request, f"Overtime request for {ot.employee} rejected.")
-        return redirect(request.META.get('HTTP_REFERER', 'overtime:list'))
+        return redirect(request.META.get('HTTP_REFERER') or 'overtime:list')
 
 
 # ==========================================

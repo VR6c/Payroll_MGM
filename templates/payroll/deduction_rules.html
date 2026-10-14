@@ -215,64 +215,7 @@
       </div>
     </div>
 
-    <!-- KPI Summary Row (Dashboard Style) -->
-    <div class="row g-3 mb-4">
-      <!-- Total Rules -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-format-list-bulleted stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ total_rules }}</h3>
-              <span class="stat-kpi-label d-block">Total Rules</span>
-              <small class="stat-kpi-sub d-block">configured</small>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Active Rules -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-check-circle-outline stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ active_rules }}</h3>
-              <span class="stat-kpi-label d-block">Active Rules</span>
-              <small class="stat-kpi-sub d-block">in effect</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lateness Tiers -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ late_rules_count }}</h3>
-              <span class="stat-kpi-label d-block">Lateness Tiers</span>
-              <small class="stat-kpi-sub d-block">active rules</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Absent / Unpaid -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-account-cancel-outline stat-kpi-icon stat-kpi-icon-danger me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ absent_rules_count }}</h3>
-              <span class="stat-kpi-label d-block">Absent / Unpaid</span>
-              <small class="stat-kpi-sub d-block">active rules</small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Category Filter Bar (Touch-friendly & Horizontal Scrolling on Mobile) -->
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">

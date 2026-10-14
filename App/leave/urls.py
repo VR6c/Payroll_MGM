@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    LeaveRequestListView,
     LeaveRequestCreateView, LeaveRequestUpdateView, LeaveRequestDeleteView,
     MyLeaveListView,
     LeaveApproveView, LeaveRejectView, LeaveCancelView,
@@ -10,7 +11,9 @@ from .views import (
 app_name = 'leave'
 
 urlpatterns = [
-    path('', MyLeaveListView.as_view(), name='my_leaves'),
+    path('', LeaveRequestListView.as_view(), name='list'),
+    path('requests/', LeaveRequestListView.as_view(), name='requests'),
+    path('my/', MyLeaveListView.as_view(), name='my_leaves'),
     path('create/', LeaveRequestCreateView.as_view(), name='create'),
     path('<int:pk>/edit/', LeaveRequestUpdateView.as_view(), name='edit'),
     path('<int:pk>/delete/', LeaveRequestDeleteView.as_view(), name='delete'),

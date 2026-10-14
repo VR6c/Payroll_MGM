@@ -1,4 +1,5 @@
 from django import forms
+from companies.models import Department, Position, Branch
 from .models import Employee
 
 class EmployeeForm(forms.ModelForm):
@@ -23,15 +24,12 @@ class EmployeeFilterForm(forms.Form):
 
     def __init__(self, *args, company=None, **kwargs):
         super().__init__(*args, **kwargs)
-        from companies.models import Department, Branch
         if company:
             self.fields['branch'].queryset = Branch.objects.filter(company=company, status=True)
             self.fields['department'].queryset = Department.objects.filter(company=company, status=True)
         else:
             self.fields['branch'].queryset = Branch.objects.filter(status=True)
             self.fields['department'].queryset = Department.objects.filter(status=True)
-
-from companies.models import Department, Position, Branch
 
 class DepartmentForm(forms.ModelForm):
     class Meta:

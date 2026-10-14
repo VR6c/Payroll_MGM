@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -317,6 +317,56 @@ class LeaveRequestCreateView(LoginRequiredMixin, CreateView):
         return redirect(self.success_url)
 
 
+class LeaveRequestListView(LoginRequiredMixin, ListView):
+    template_name = 'leave/my_leaves.html'
+    context_object_name = 'leaves'
+    paginate_by = 20
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user = request.user
+        is_admin_or_mgr = (
+            user.role in ['super_admin', 'hr_admin', 'manager']
+            or user.is_superuser
+            or (hasattr(user, 'role_obj') and user.role_obj and not user.role_obj.is_system and user.has_permission('leave.view'))
+        )
+        if not is_admin_or_mgr:
+            return redirect('leave:my_leaves')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = LeaveRequest.objects.select_related(
+            'employee', 'employee__department', 'employee__position',
+            'leave_type', 'approved_by'
+        ).prefetch_related('periods').order_by('-created_at')
+
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        employee_filter = self.request.GET.get('employee')
+        if employee_filter:
+            qs = qs.filter(employee_id=employee_filter)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_admin_or_mgr'] = True
+
+        base_qs = LeaveRequest.objects.all()
+        ctx['total_count'] = base_qs.count()
+        ctx['pending_count'] = base_qs.filter(status=LeaveRequest.Status.PENDING).count()
+        ctx['approved_count'] = base_qs.filter(status=LeaveRequest.Status.APPROVED).count()
+        ctx['rejected_count'] = base_qs.filter(status=LeaveRequest.Status.REJECTED).count()
+
+        ctx['employees'] = Employee.objects.filter(status='active').order_by('first_name', 'last_name')
+        ctx['current_status'] = self.request.GET.get('status', '')
+        ctx['current_employee'] = self.request.GET.get('employee', '')
+        ctx['reset_url'] = reverse('leave:list')
+        return ctx
+
+
 class MyLeaveListView(LoginRequiredMixin, ListView):
     template_name = 'leave/my_leaves.html'
     context_object_name = 'leaves'
@@ -324,44 +374,48 @@ class MyLeaveListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        is_admin_or_mgr = user.role in ['super_admin', 'hr_admin', 'manager'] or user.is_superuser
-        qs = LeaveRequest.objects.select_related(
+        employee = getattr(user, 'employee_profile', None)
+        if not employee:
+            return LeaveRequest.objects.none()
+
+        qs = LeaveRequest.objects.filter(
+            employee=employee
+        ).select_related(
             'employee', 'employee__department', 'employee__position',
             'leave_type', 'approved_by'
         ).prefetch_related('periods').order_by('-created_at')
 
-        if not is_admin_or_mgr:
-            employee = getattr(user, 'employee_profile', None)
-            if not employee:
-                return LeaveRequest.objects.none()
-            qs = qs.filter(employee=employee)
-        else:
-            status_filter = self.request.GET.get('status')
-            if status_filter:
-                qs = qs.filter(status=status_filter)
-            employee_filter = self.request.GET.get('employee')
-            if employee_filter:
-                qs = qs.filter(employee_id=employee_filter)
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
 
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
-        is_admin_or_mgr = user.role in ['super_admin', 'hr_admin', 'manager'] or user.is_superuser
-        ctx['is_admin_or_mgr'] = is_admin_or_mgr
+        employee = getattr(user, 'employee_profile', None)
+        ctx['is_admin_or_mgr'] = False
 
-        base_qs = LeaveRequest.objects.all() if is_admin_or_mgr else LeaveRequest.objects.filter(employee=getattr(user, 'employee_profile', None))
-        ctx['total_count'] = base_qs.count()
-        ctx['pending_count'] = base_qs.filter(status=LeaveRequest.Status.PENDING).count()
-        ctx['approved_count'] = base_qs.filter(status=LeaveRequest.Status.APPROVED).count()
-        ctx['rejected_count'] = base_qs.filter(status=LeaveRequest.Status.REJECTED).count()
+        if employee:
+            base_qs = LeaveRequest.objects.filter(employee=employee)
+            ctx['total_count'] = base_qs.count()
+            ctx['pending_count'] = base_qs.filter(status=LeaveRequest.Status.PENDING).count()
+            ctx['approved_count'] = base_qs.filter(status=LeaveRequest.Status.APPROVED).count()
+            ctx['rejected_count'] = base_qs.filter(status=LeaveRequest.Status.REJECTED).count()
+            ctx['balances'] = LeaveBalance.objects.filter(
+                employee=employee,
+                year=timezone.now().year
+            ).select_related('leave_type')
+        else:
+            ctx['total_count'] = 0
+            ctx['pending_count'] = 0
+            ctx['approved_count'] = 0
+            ctx['rejected_count'] = 0
+            ctx['balances'] = []
 
-        if is_admin_or_mgr:
-            ctx['employees'] = Employee.objects.filter(status='active').order_by('first_name', 'last_name')
-            ctx['current_status'] = self.request.GET.get('status', '')
-            ctx['current_employee'] = self.request.GET.get('employee', '')
-
+        ctx['current_status'] = self.request.GET.get('status', '')
+        ctx['reset_url'] = reverse('leave:my_leaves')
         return ctx
 
 
@@ -372,7 +426,7 @@ class LeaveApproveView(RoleRequiredMixin, View):
         leave = get_object_or_404(LeaveRequest, pk=pk)
         LeaveService.approve_request(leave, request.user)
         messages.success(request, f"Leave request #{leave.pk} for {leave.employee} has been approved.")
-        return redirect(request.META.get('HTTP_REFERER', 'leave:my_leaves'))
+        return redirect(request.META.get('HTTP_REFERER') or 'leave:list')
 
 
 class LeaveRejectView(RoleRequiredMixin, View):
@@ -382,7 +436,7 @@ class LeaveRejectView(RoleRequiredMixin, View):
         leave = get_object_or_404(LeaveRequest, pk=pk)
         LeaveService.reject_request(leave, request.user)
         messages.info(request, f"Leave request #{leave.pk} for {leave.employee} has been rejected.")
-        return redirect(request.META.get('HTTP_REFERER', 'leave:my_leaves'))
+        return redirect(request.META.get('HTTP_REFERER') or 'leave:list')
 
 
 class LeaveCancelView(LoginRequiredMixin, View):
@@ -396,7 +450,7 @@ class LeaveCancelView(LoginRequiredMixin, View):
 
         LeaveService.cancel_request(leave, request.user)
         messages.info(request, f"Leave request #{leave.pk} has been cancelled.")
-        return redirect(request.META.get('HTTP_REFERER', 'leave:my_leaves'))
+        return redirect(request.META.get('HTTP_REFERER') or 'leave:my_leaves')
 
 
 class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):

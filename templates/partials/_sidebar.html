@@ -136,21 +136,21 @@
 
       <!-- Leave Collapsible Dropdown -->
       {% if request.user|has_module:'leave' %}
-      <li class="nav-item {% if request.resolver_match.app_name == 'leave' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name != 'my_leaves' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-leave"
-          aria-expanded="{% if request.resolver_match.app_name == 'leave' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name != 'my_leaves' %}true{% else %}false{% endif %}"
           aria-controls="ui-leave" data-title="Leave">
           <i class="menu-icon mdi mdi-calendar-check-outline"></i>
           <span class="menu-title">Leave</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'leave' %}show{% endif %}" id="ui-leave">
+        <div class="collapse {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name != 'my_leaves' %}show{% endif %}" id="ui-leave">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Leave</li>
             {% if request.user|has_perm:'leave.view' %}
             <li class="nav-item">
-              <a class="nav-link {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name in 'my_leaves,create,edit,delete,approve,reject,cancel' %}active{% endif %}"
-                href="{% url 'leave:my_leaves' %}">Requests & Approvals</a>
+              <a class="nav-link {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name in 'list,requests,create,edit,delete,approve,reject,cancel' %}active{% endif %}"
+                href="{% url 'leave:list' %}">Requests & Approvals</a>
             </li>
             {% endif %}
             {% if request.user|has_perm:'leave.types' %}
@@ -304,7 +304,7 @@
           <span class="menu-title">My Attendance</span>
         </a>
       </li>
-      <li class="nav-item {% if request.resolver_match.app_name == 'leave' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'leave' and request.resolver_match.url_name == 'my_leaves' %}active{% endif %}">
         <a class="nav-link" href="{% url 'leave:my_leaves' %}" data-title="My Leaves">
           <i class="menu-icon mdi mdi-calendar-clock"></i>
           <span class="menu-title">My Leave Requests</span>

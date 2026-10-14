@@ -78,9 +78,10 @@ class LunchBreak(models.Model):
             if self.end_time < self.start_time:
                 naive_end += datetime.timedelta(days=1)
 
-            if tz:
-                break_start = timezone.make_aware(naive_start, tz) if timezone.is_naive(naive_start) else naive_start
-                break_end = timezone.make_aware(naive_end, tz) if timezone.is_naive(naive_end) else naive_end
+            if timezone.is_aware(check_in_dt):
+                current_tz = timezone.get_current_timezone()
+                break_start = timezone.make_aware(naive_start, current_tz) if timezone.is_naive(naive_start) else naive_start
+                break_end = timezone.make_aware(naive_end, current_tz) if timezone.is_naive(naive_end) else naive_end
             else:
                 break_start = naive_start
                 break_end = naive_end
@@ -158,17 +159,6 @@ class Attendance(models.Model):
             breaks_qs = breaks_qs.filter(company__isnull=True)
 
         breaks = list(breaks_qs)
-        if not breaks:
-            default_break = LunchBreak(
-                name="Lunch Break",
-                start_time=datetime.time(12, 0),
-                end_time=datetime.time(13, 0),
-                duration_minutes=60,
-                auto_deduct=True,
-                status=True
-            )
-            breaks = [default_break]
-
         total_deduction = datetime.timedelta(0)
         for b in breaks:
             deduct = b.get_overlap_duration(check_in_dt, check_out_dt, target_date=date)

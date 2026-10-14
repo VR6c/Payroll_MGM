@@ -28,9 +28,10 @@ class AttendanceService:
             return start_t, end_t
 
         # Fallback to WorkSchedule
-        ws = WorkSchedule.objects.filter(company=employee.company, status=True).first()
-        if ws:
-            return ws.start_time, ws.end_time
+        if getattr(employee, 'company', None):
+            ws = WorkSchedule.objects.filter(company=employee.company, status=True).first()
+            if ws:
+                return ws.start_time, ws.end_time
 
         # Default company hours (8:00 AM - 5:00 PM)
         return datetime.time(8, 0), datetime.time(17, 0)
@@ -47,10 +48,13 @@ class AttendanceService:
         if user_status in ('checkout_early', 'early_leave'):
             return Attendance.Status.CHECKOUT_EARLY
 
+        if user_status and user_status not in ('', None, 'auto'):
+            return user_status
+
         expected_start, expected_end = cls.get_scheduled_hours(employee, date)
 
-        ci_time = check_in_dt.time() if check_in_dt else None
-        co_time = check_out_dt.time() if check_out_dt else None
+        ci_time = timezone.localtime(check_in_dt).time() if check_in_dt and timezone.is_aware(check_in_dt) else (check_in_dt.time() if check_in_dt else None)
+        co_time = timezone.localtime(check_out_dt).time() if check_out_dt and timezone.is_aware(check_out_dt) else (check_out_dt.time() if check_out_dt else None)
 
         # Check late check-in first (late arrival is an attendance infraction)
         if ci_time and ci_time > expected_start:
@@ -59,10 +63,6 @@ class AttendanceService:
         # Early departure check (e.g., leaving at 16:24 when shift ends at 17:00)
         if co_time and co_time < expected_end:
             return Attendance.Status.CHECKOUT_EARLY
-
-        # If user explicitly requested a specific non-default status (like 'overtime'), respect it
-        if user_status and user_status not in ('', None, 'present'):
-            return user_status
 
         # If staying past shift end and no other condition triggered
         if co_time and co_time > expected_end:
@@ -76,12 +76,13 @@ class AttendanceService:
         if Attendance.objects.filter(employee=employee, date=today).exists():
             raise ValueError("Already checked in today")
         now = timezone.now()
+        local_now = timezone.localtime(now) if timezone.is_aware(now) else now
         expected_start, expected_end = cls.get_scheduled_hours(employee, today)
         status = Attendance.Status.PRESENT
-        if now.time() > expected_start:
+        if local_now.time() > expected_start:
             status = Attendance.Status.LATE
         att = Attendance.objects.create(employee=employee, date=today, check_in=now, status=status)
-        log_activity(user, employee, 'ATTENDANCE', 'CHECK_IN', f'Checked in at {now.strftime("%H:%M")}')
+        log_activity(user, employee, 'ATTENDANCE', 'CHECK_IN', f'Checked in at {local_now.strftime("%H:%M")}')
         logger.info(f"Check-in: {employee.employee_code} at {now}")
         return att
 
@@ -95,21 +96,21 @@ class AttendanceService:
             raise ValueError("Already checked out today")
         now = timezone.now()
         att.check_out = now
+        local_now = timezone.localtime(now) if timezone.is_aware(now) else now
         expected_start, expected_end = cls.get_scheduled_hours(employee, today)
-        if now.time() < expected_end:
+        if local_now.time() < expected_end:
             if att.status != Attendance.Status.LATE:
                 att.status = Attendance.Status.CHECKOUT_EARLY
-        elif now.time() > expected_end:
+        elif local_now.time() > expected_end:
             if att.status != Attendance.Status.LATE:
                 att.status = Attendance.Status.OVERTIME
         att.calculate_working_hours()
         att.save()
-        log_activity(user, employee, 'ATTENDANCE', 'CHECK_OUT', f'Checked out at {now.strftime("%H:%M")}')
+        log_activity(user, employee, 'ATTENDANCE', 'CHECK_OUT', f'Checked out at {local_now.strftime("%H:%M")}')
         logger.info(f"Check-out: {employee.employee_code} at {now}")
         return att
 
 
-import datetime
 from employees.models import Employee
 from .models import EmployeeSchedule
 

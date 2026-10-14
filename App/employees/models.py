@@ -29,7 +29,7 @@ class Employee(models.Model):
     email = models.EmailField(unique=True)
     address = models.TextField(blank=True)
     photo = models.ImageField(upload_to='employee_photos/', null=True, blank=True)
-    join_date = models.DateField()
+    join_date = models.DateField(default=timezone.localdate)
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
     deleted_at = models.DateTimeField(null=True, blank=True)

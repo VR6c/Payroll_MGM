@@ -83,6 +83,19 @@ class ViewIntegrationTests(TestCase):
         leave_type = LeaveType.objects.create(company=self.company, name="Annual Leave", default_days=10)
         response = self.client.get(reverse('leave:my_leaves'))
         self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['is_admin_or_mgr'])
+
+    def test_leave_list_admin_access_and_employee_redirect(self):
+        # Admin gets 200 and is_admin_or_mgr is True
+        self.client.force_login(self.admin_user)
+        resp_admin = self.client.get(reverse('leave:list'))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertTrue(resp_admin.context['is_admin_or_mgr'])
+
+        # Regular employee accessing leave:list is redirected to leave:my_leaves
+        self.client.force_login(self.employee_user)
+        resp_emp = self.client.get(reverse('leave:list'))
+        self.assertRedirects(resp_emp, reverse('leave:my_leaves'))
 
     def test_leave_request_edit_and_delete(self):
         self.client.force_login(self.admin_user)

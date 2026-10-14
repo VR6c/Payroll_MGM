@@ -122,64 +122,7 @@
       </div>
     </div>
 
-    <!-- Summary KPI Cards (Dashboard Style) -->
-    <div class="row g-3 mb-4">
-      <!-- Total Hours -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-clock-time-four-outline stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0"><span class="counter-value" data-counter>{{ total_hours }}</span> <span class="fs-6 text-muted fw-normal ms-1">hrs</span></h3>
-              <span class="stat-kpi-label d-block">Total Hours</span>
-              <small class="stat-kpi-sub d-block">{{ approved_hours }} hrs approved</small>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Total Overtime Pay -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-cash-multiple stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>${{ total_amount|floatformat:2 }}</h3>
-              <span class="stat-kpi-label d-block">Total Overtime Pay</span>
-              <small class="stat-kpi-sub d-block">${{ approved_amount|floatformat:2 }} approved</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Approved Sessions -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-check-decagram-outline stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0"><span class="counter-value" data-counter>{{ approved_count }}</span> <span class="fs-6 text-muted fw-normal ms-1">/ {{ total_requests }}</span></h3>
-              <span class="stat-kpi-label d-block">Approved Sessions</span>
-              <small class="stat-kpi-sub d-block">{{ avg_hours|floatformat:1 }} hrs avg / session</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pending Approvals -->
-      <div class="col-6 col-xl-3">
-        <div class="card stat-card border-0 h-100">
-          <div class="d-flex align-items-center">
-            <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
-            <div>
-              <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ pending_count }}</h3>
-              <span class="stat-kpi-label d-block">Pending Approvals</span>
-              <small class="stat-kpi-sub d-block">{{ pending_hours }} hrs pending</small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Filter Card (no-print) -->
     <div class="card shadow-sm border-0 mb-4 no-print">
