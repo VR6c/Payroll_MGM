@@ -83,84 +83,12 @@
                 <td class="text-end">
                   {% if user.role in 'super_admin,hr_admin' %}
                   <div class="table-action-group justify-content-end">
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPositionModal{{ pos.id }}">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPositionModal{{ pos.id }}">
                       <i class="mdi mdi-pencil"></i> Edit
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePositionModal{{ pos.id }}">
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePositionModal{{ pos.id }}">
                       <i class="mdi mdi-trash-can-outline"></i> Delete
                     </button>
-                  </div>
-
-                  <!-- Edit Modal -->
-                  <div class="modal fade text-start" id="editPositionModal{{ pos.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content">
-                        <form method="post" action="{% url 'employees:position_update' pos.id %}">
-                          {% csrf_token %}
-                          <div class="modal-header">
-                            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Position</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body">
-                            <div class="mb-3">
-                              <label class="form-label fw-bold">Company</label>
-                              <select name="company" class="form-select" required>
-                                {% for comp in companies %}
-                                <option value="{{ comp.id }}" {% if comp.id == pos.company.id %}selected{% endif %}>{{ comp.name }}</option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                            <div class="mb-3">
-                              <label class="form-label fw-bold">Department</label>
-                              <select name="department" class="form-select">
-                                <option value="">-- General / All Departments --</option>
-                                {% for dept in departments %}
-                                <option value="{{ dept.id }}" {% if pos.department and pos.department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                            <div class="mb-3">
-                              <label class="form-label fw-bold">Position Title</label>
-                              <input type="text" name="name" class="form-control" value="{{ pos.name }}" required>
-                            </div>
-                            <div class="mb-3">
-                              <label class="form-label fw-bold">Description</label>
-                              <textarea name="description" class="form-control" rows="2">{{ pos.description }}</textarea>
-                            </div>
-                            <div class="form-check form-switch mb-3 ps-4">
-                              <input class="form-check-input" type="checkbox" name="status" id="posStatus{{ pos.id }}" {% if pos.status %}checked{% endif %}>
-                              <label class="form-check-label fw-bold" for="posStatus{{ pos.id }}">Active</label>
-                            </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Delete Modal -->
-                  <div class="modal fade text-start" id="deletePositionModal{{ pos.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content">
-                        <form method="post" action="{% url 'employees:position_delete' pos.id %}">
-                          {% csrf_token %}
-                          <div class="modal-header">
-                            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Position</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body">
-                            Are you sure you want to delete position <strong>{{ pos.name }}</strong>?
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger text-white">Delete</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
                   </div>
                   {% endif %}
                 </td>
@@ -178,6 +106,83 @@
     </div>
   </div>
 </div>
+
+<!-- Position Edit & Delete Modals (Placed at root level outside tables to avoid backdrop stacking context traps) -->
+{% if user.role in 'super_admin,hr_admin' %}
+  {% for pos in positions %}
+  <!-- Edit Modal -->
+  <div class="modal fade text-start" id="editPositionModal{{ pos.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="{% url 'employees:position_update' pos.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-pencil me-1 text-primary"></i> Edit Position</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Company</label>
+              <select name="company" class="form-select" required>
+                {% for comp in companies %}
+                <option value="{{ comp.id }}" {% if comp.id == pos.company.id %}selected{% endif %}>{{ comp.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Department</label>
+              <select name="department" class="form-select">
+                <option value="">-- General / All Departments --</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if pos.department and pos.department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Position Title</label>
+              <input type="text" name="name" class="form-control" value="{{ pos.name }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Description</label>
+              <textarea name="description" class="form-control" rows="2">{{ pos.description }}</textarea>
+            </div>
+            <div class="form-check form-switch mb-3 ps-4">
+              <input class="form-check-input" type="checkbox" name="status" id="posStatus{{ pos.id }}" {% if pos.status %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="posStatus{{ pos.id }}">Active</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary text-white">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal fade text-start" id="deletePositionModal{{ pos.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="{% url 'employees:position_delete' pos.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-danger"><i class="mdi mdi-alert-circle me-1"></i> Delete Position</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete position <strong>{{ pos.name }}</strong>?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger text-white">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% endif %}
 
 <!-- Add Position Modal -->
 <div class="modal fade" id="addPositionModal" tabindex="-1" aria-hidden="true">

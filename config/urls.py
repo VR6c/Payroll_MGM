@@ -8,7 +8,7 @@ from django.http import HttpResponse
 
 urlpatterns = [
     path('.well-known/appspecific/com.chrome.devtools.json', lambda r: HttpResponse(status=204)),
-    path('', RedirectView.as_view(pattern_name='accounts:login', permanent=False)),
+    path('', RedirectView.as_view(pattern_name='dashboard:home', permanent=False)),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('dashboard.urls')),

@@ -301,6 +301,8 @@ class DailyReportView(RoleRequiredMixin, TemplateView):
         ctx['late_count'] = late_cnt
         ctx['absent_count'] = absent_cnt
         ctx['early_leave_count'] = early_leave_cnt
+        ctx['leave_count'] = len(leave_records)
+        ctx['holiday_count'] = len(holiday_records)
         ctx['overtime_count'] = ot_cnt
         ctx['attendance_rate'] = att_rate
 
@@ -741,8 +743,28 @@ class SummaryReportView(RoleRequiredMixin, TemplateView):
         ctx.update(data)
         roster_data = _get_attendance_summary_roster(self.request)
         ctx.update(roster_data)
-        ctx['summary_rows'] = roster_data['roster_rows']
+        rows = roster_data['roster_rows']
+        ctx['summary_rows'] = rows
         ctx['leave_requests_count'] = LeaveRequest.objects.count()
+
+        total_attend = sum(float(r.get('attend', 0) or 0) for r in rows)
+        total_absent = sum(float(r.get('absent', 0) or 0) for r in rows)
+        total_leave = sum(float(r.get('leave', 0) or 0) for r in rows)
+        total_holiday = sum(float(r.get('holiday', 0) or 0) for r in rows)
+        total_late = sum(int(r.get('late', 0) or 0) for r in rows)
+        total_early = sum(int(r.get('early', 0) or 0) for r in rows)
+        total_ot = sum(int(r.get('ot', 0) or 0) for r in rows)
+
+        ctx['summary_totals'] = {
+            'total_employees': len(rows),
+            'total_attend': _fmt_days(total_attend),
+            'total_absent': _fmt_days(total_absent),
+            'total_leave': _fmt_days(total_leave),
+            'total_holiday': _fmt_days(total_holiday),
+            'total_late': total_late,
+            'total_early': total_early,
+            'total_ot': total_ot,
+        }
         return ctx
 
 
@@ -1194,6 +1216,24 @@ class DetailReportView(RoleRequiredMixin, TemplateView):
         employees = list(emp_qs.order_by('first_name', 'last_name'))
         daily_data = _get_detail_daily_records(employees, roster_data['from_date'], roster_data['to_date'])
         ctx.update(daily_data)
+
+        rows = roster_data['roster_rows']
+        total_attend = sum(float(r.get('attend', 0) or 0) for r in rows)
+        total_absent = sum(float(r.get('absent', 0) or 0) for r in rows)
+        total_leave = sum(float(r.get('leave', 0) or 0) for r in rows)
+        total_holiday = sum(float(r.get('holiday', 0) or 0) for r in rows)
+        total_late = sum(int(r.get('late', 0) or 0) for r in rows)
+        total_early = sum(int(r.get('early', 0) or 0) for r in rows)
+
+        ctx['detail_totals'] = {
+            'total_employees': len(rows),
+            'total_attend': _fmt_days(total_attend),
+            'total_absent': _fmt_days(total_absent),
+            'total_leave': _fmt_days(total_leave),
+            'total_holiday': _fmt_days(total_holiday),
+            'total_late': total_late,
+            'total_early': total_early,
+        }
         return ctx
 
 

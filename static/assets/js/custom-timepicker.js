@@ -265,20 +265,25 @@
       return;
     }
 
-    var popoverWidth = 280;
-    var popoverHeight = 330;
     var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
     var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    var popoverWidth = Math.min(280, viewportWidth - 20);
+    var popoverHeight = 330;
 
     var top = rect.bottom + 6;
     var left = rect.left;
 
-    // Right bounds check
-    if (left + popoverWidth > viewportWidth - 16) {
-      left = Math.max(16, viewportWidth - popoverWidth - 16);
-    }
-    if (left < 16) {
-      left = 16;
+    // Center on mobile viewports (< 576px like iPhone SE)
+    if (viewportWidth < 576) {
+      left = Math.max(10, Math.floor((viewportWidth - popoverWidth) / 2));
+    } else {
+      // Right bounds check
+      if (left + popoverWidth > viewportWidth - 16) {
+        left = Math.max(16, viewportWidth - popoverWidth - 16);
+      }
+      if (left < 16) {
+        left = 16;
+      }
     }
 
     // Bottom bounds check (flip above)

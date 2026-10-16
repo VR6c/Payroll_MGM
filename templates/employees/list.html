@@ -31,7 +31,7 @@
     <div class="card filter-card">
       <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
-          <div class="col-12 col-md-5">
+          <div class="col-12 col-md-7 col-xl-4">
             <label class="filter-label">Search</label>
             <div class="input-group">
               <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
@@ -40,7 +40,7 @@
                 value="{{ request.GET.search }}">
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-12 col-md-5 col-xl-3">
             <label class="filter-label">Department</label>
             <select name="department" class="form-select">
               <option value="">All Departments</option>
@@ -49,7 +49,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-6 col-md-2">
+          <div class="col-12 col-md-6 col-xl-2">
             <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">All Status</option>
@@ -58,7 +58,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-12 col-md-2">
+          <div class="col-12 col-md-6 col-xl-3">
             <label class="filter-label d-none d-md-block">&nbsp;</label>
             <div class="filter-actions">
               <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">

@@ -144,6 +144,63 @@
         }
       }
     });
+
+    // 5. Ultrawide Canvas View Mode Controller (for 24", 27", 34", 39", 49" Monitors)
+    var $ultrawideBtn = $('#ultrawideToggleBtn');
+    var savedUltrawideMode = localStorage.getItem('payroll_ultrawide_mode');
+    
+    if (savedUltrawideMode === 'full') {
+      $('body').addClass('layout-ultrawide-full');
+      $ultrawideBtn.find('i').removeClass('mdi-arrow-expand-horizontal').addClass('mdi-arrow-collapse-horizontal');
+      $ultrawideBtn.find('span').text('Focused');
+    }
+
+    $ultrawideBtn.on('click', function (e) {
+      e.preventDefault();
+      $('body').toggleClass('layout-ultrawide-full');
+      var isFull = $('body').hasClass('layout-ultrawide-full');
+      localStorage.setItem('payroll_ultrawide_mode', isFull ? 'full' : 'focused');
+      
+      $ultrawideBtn.find('i')
+        .toggleClass('mdi-arrow-expand-horizontal', !isFull)
+        .toggleClass('mdi-arrow-collapse-horizontal', isFull);
+      $ultrawideBtn.find('span').text(isFull ? 'Focused' : 'Full Width');
+    });
+
+    // 6. Mobile Responsive Data Table: Automatic Card View Label Mapping
+    function initMobileDataTableLabels() {
+      // Remove any previously injected toolbars
+      $('.table-mobile-toolbar').remove();
+
+      $('.table-responsive').each(function () {
+        var $wrapper = $(this);
+        var $table = $wrapper.find('table.table');
+        if (!$table.length) return;
+
+        // Populate data-label attributes on each td for mobile card view
+        var headers = [];
+        $table.find('thead th').each(function () {
+          var txt = $(this).text().trim();
+          headers.push(txt.toLowerCase() === 'actions' ? 'Actions' : txt);
+        });
+
+        $table.find('tbody tr').each(function () {
+          var $row = $(this);
+          if ($row.find('td[colspan]').length) return;
+
+          $row.find('td').each(function (idx) {
+            if (headers[idx] && !$(this).attr('data-label')) {
+              $(this).attr('data-label', headers[idx]);
+            }
+          });
+        });
+      });
+    }
+
+    initMobileDataTableLabels();
+    $(document).ajaxComplete(function () {
+      initMobileDataTableLabels();
+    });
   });
 })(jQuery);
 

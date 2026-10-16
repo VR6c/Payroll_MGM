@@ -100,15 +100,17 @@
     <!-- Filter & Search Card -->
     <div class="card filter-card">
       <div class="card-body">
-        <form method="get" class="row g-2 align-items-center">
-          <div class="col-12 col-md-5 col-lg-5">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-12 col-md-7 col-xl-4">
+            <label class="filter-label">Search</label>
             <div class="input-group">
               <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
               <input type="text" name="search" class="form-control" placeholder="Search by username, full name, email..." value="{{ active_search }}">
             </div>
           </div>
 
-          <div class="col-6 col-md-3 col-lg-3">
+          <div class="col-12 col-md-5 col-xl-3">
+            <label class="filter-label">Role</label>
             <select name="role" class="form-select">
               <option value="">-- All Roles --</option>
               {% for r_val, r_label in role_choices %}
@@ -117,7 +119,8 @@
             </select>
           </div>
 
-          <div class="col-6 col-md-2 col-lg-2">
+          <div class="col-12 col-md-6 col-xl-2">
+            <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">-- All Status --</option>
               <option value="active" {% if active_status == 'active' %}selected{% endif %}>Active</option>
@@ -125,7 +128,8 @@
             </select>
           </div>
 
-          <div class="col-12 col-md-2 col-lg-2">
+          <div class="col-12 col-md-6 col-xl-3">
+            <label class="filter-label d-none d-md-block">&nbsp;</label>
             <div class="filter-actions">
               <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
                 <i class="mdi mdi-filter-variant"></i> Filter
@@ -269,150 +273,6 @@
                   </button>
                   {% endif %}
                 </div>
-
-                <!-- Edit User Modal -->
-                <div class="modal fade text-start" id="editUserModal{{ u.id }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ u.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable modal-dialog-scroll-fixed">
-                    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
-                      <form method="post" action="{% url 'accounts:user_update' u.id %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
-                        {% csrf_token %}
-                        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
-                          <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editUserModalLabel{{ u.id }}">
-                            <i class="mdi mdi-account-edit-outline text-primary fs-5"></i>
-                            <span>Edit User: {{ u.username }}</span>
-                          </h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body modal-body-scrollable p-4">
-                          <div class="row g-3">
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Username <span class="text-danger">*</span></label>
-                              <input type="text" name="username" class="form-control" value="{{ u.username }}" required>
-                            </div>
-
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Access Role (RBAC) <span class="text-danger">*</span></label>
-                              <select name="role" class="form-select" required>
-                                {% for r_val, r_label in role_choices %}
-                                <option value="{{ r_val }}" {% if u.role == r_val %}selected{% endif %}>{{ r_label }}</option>
-                                {% endfor %}
-                              </select>
-                            </div>
-
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">First Name</label>
-                              <input type="text" name="first_name" class="form-control" value="{{ u.first_name }}">
-                            </div>
-
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Last Name</label>
-                              <input type="text" name="last_name" class="form-control" value="{{ u.last_name }}">
-                            </div>
-
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Email Address</label>
-                              <input type="email" name="email" class="form-control" value="{{ u.email }}">
-                            </div>
-
-                            <div class="col-md-6">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Phone</label>
-                              <input type="text" name="phone" class="form-control" value="{{ u.phone }}">
-                            </div>
-
-                            <div class="col-12">
-                              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Linked Employee Profile</label>
-                              <select name="employee" class="form-select">
-                                <option value="">-- Standalone User Account (No Employee) --</option>
-                                {% for emp in all_employees %}
-                                  {% if not emp.user or emp.user.pk == u.pk %}
-                                  <option value="{{ emp.id }}" {% if u.employee_profile and u.employee_profile.pk == emp.pk %}selected{% endif %}>
-                                    {{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }} ({{ emp.position.name|default:"General" }})
-                                  </option>
-                                  {% endif %}
-                                {% endfor %}
-                              </select>
-                            </div>
-
-                            <div class="col-12">
-                              <div class="form-check form-switch mt-2">
-                                <input type="checkbox" name="is_active" class="form-check-input" id="isActiveSwitch{{ u.id }}" {% if u.is_active %}checked{% endif %}>
-                                <label class="form-check-label fw-semibold text-dark" for="isActiveSwitch{{ u.id }}">Account Active Immediately (Permit login)</label>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
-                          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-primary text-white px-4">Save Changes</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Reset Password Modal -->
-                <div class="modal fade text-start" id="resetPasswordModal{{ u.id }}" tabindex="-1" aria-labelledby="resetPasswordModalLabel{{ u.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-                      <form method="post" action="{% url 'accounts:user_password_reset' u.id %}">
-                        {% csrf_token %}
-                        <div class="modal-header border-bottom py-3 px-4">
-                          <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="resetPasswordModalLabel{{ u.id }}">
-                            <i class="mdi mdi-key-variant text-warning fs-5"></i>
-                            <span>Reset Password: {{ u.username }}</span>
-                          </h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                          <p class="small text-muted mb-3">Set a new password for user <strong>{{ u.username }}</strong>. They will use this on their next login.</p>
-                          <div class="mb-3">
-                            <label class="form-label small fw-semibold text-muted text-uppercase mb-1">New Password <span class="text-danger">*</span></label>
-                            <input type="password" name="new_password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Confirm New Password <span class="text-danger">*</span></label>
-                            <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password" minlength="6" required>
-                          </div>
-                        </div>
-                        <div class="modal-footer border-top px-4 py-3">
-                          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-warning text-dark fw-semibold px-4">Reset Password</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Delete Confirmation Modal -->
-                {% if u != request.user %}
-                <div class="modal fade text-start" id="deleteUserModal{{ u.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ u.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-                      <form method="post" action="{% url 'accounts:user_delete' u.id %}">
-                        {% csrf_token %}
-                        <div class="modal-header border-bottom py-3 px-4">
-                          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="deleteUserModalLabel{{ u.id }}">
-                            <i class="mdi mdi-alert-circle-outline"></i>
-                            <span>Delete User: {{ u.username }}</span>
-                          </h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                          <p class="text-dark mb-2">Are you sure you want to permanently delete user <strong>{{ u.username }}</strong> ({{ u.get_role_display }})?</p>
-                          <div class="alert alert-warning small mb-0">
-                            <i class="mdi mdi-information-outline me-1"></i>
-                            If linked to an employee profile, the employee record will remain safe, but their login credentials will be removed.
-                          </div>
-                        </div>
-                        <div class="modal-footer border-top px-4 py-3">
-                          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-danger text-white px-4">Permanently Delete</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-                {% endif %}
               </td>
             </tr>
             {% empty %}
@@ -547,4 +407,151 @@
     </div>
   </div>
 </div>
+
+<!-- Edit, Reset Password & Delete User Modals (Placed at root level to prevent backdrop stacking trap) -->
+{% for u in users %}
+<!-- Edit User Modal -->
+<div class="modal fade text-start" id="editUserModal{{ u.id }}" tabindex="-1" aria-labelledby="editUserModalLabel{{ u.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable modal-dialog-scroll-fixed">
+    <div class="modal-content modal-content-scroll-fixed border-0 shadow-lg" style="border-radius: 16px;">
+      <form method="post" action="{% url 'accounts:user_update' u.id %}" class="d-flex flex-column mb-0" style="height: 100%; min-height: 0;">
+        {% csrf_token %}
+        <div class="modal-header border-bottom py-3 px-4 bg-white flex-shrink-0">
+          <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editUserModalLabel{{ u.id }}">
+            <i class="mdi mdi-account-edit-outline text-primary fs-5"></i>
+            <span>Edit User: {{ u.username }}</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body modal-body-scrollable p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Username <span class="text-danger">*</span></label>
+              <input type="text" name="username" class="form-control" value="{{ u.username }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Access Role (RBAC) <span class="text-danger">*</span></label>
+              <select name="role" class="form-select" required>
+                {% for r_val, r_label in role_choices %}
+                <option value="{{ r_val }}" {% if u.role == r_val %}selected{% endif %}>{{ r_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">First Name</label>
+              <input type="text" name="first_name" class="form-control" value="{{ u.first_name }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Last Name</label>
+              <input type="text" name="last_name" class="form-control" value="{{ u.last_name }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Email Address</label>
+              <input type="email" name="email" class="form-control" value="{{ u.email }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Phone</label>
+              <input type="text" name="phone" class="form-control" value="{{ u.phone }}">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Linked Employee Profile</label>
+              <select name="employee" class="form-select">
+                <option value="">-- Standalone User Account (No Employee) --</option>
+                {% for emp in all_employees %}
+                  {% if not emp.user or emp.user.pk == u.pk %}
+                  <option value="{{ emp.id }}" {% if u.employee_profile and u.employee_profile.pk == emp.pk %}selected{% endif %}>
+                    {{ emp.employee_code }} - {{ emp.first_name }} {{ emp.last_name }} ({{ emp.position.name|default:"General" }})
+                  </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12">
+              <div class="form-check form-switch mt-2">
+                <input type="checkbox" name="is_active" class="form-check-input" id="isActiveSwitch{{ u.id }}" {% if u.is_active %}checked{% endif %}>
+                <label class="form-check-label fw-semibold text-dark" for="isActiveSwitch{{ u.id }}">Account Active Immediately (Permit login)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top px-4 py-3 flex-shrink-0">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary text-white px-4">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade text-start" id="resetPasswordModal{{ u.id }}" tabindex="-1" aria-labelledby="resetPasswordModalLabel{{ u.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+      <form method="post" action="{% url 'accounts:user_password_reset' u.id %}">
+        {% csrf_token %}
+        <div class="modal-header border-bottom py-3 px-4">
+          <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="resetPasswordModalLabel{{ u.id }}">
+            <i class="mdi mdi-key-variant text-warning fs-5"></i>
+            <span>Reset Password: {{ u.username }}</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">Set a new password for user <strong>{{ u.username }}</strong>. They will use this on their next login.</p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-muted text-uppercase mb-1">New Password <span class="text-danger">*</span></label>
+            <input type="password" name="new_password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Confirm New Password <span class="text-danger">*</span></label>
+            <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password" minlength="6" required>
+          </div>
+        </div>
+        <div class="modal-footer border-top px-4 py-3">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning text-dark fw-semibold px-4">Reset Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if u != request.user %}
+<div class="modal fade text-start" id="deleteUserModal{{ u.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ u.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 14px; border: 0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+      <form method="post" action="{% url 'accounts:user_delete' u.id %}">
+        {% csrf_token %}
+        <div class="modal-header border-bottom py-3 px-4">
+          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="deleteUserModalLabel{{ u.id }}">
+            <i class="mdi mdi-alert-circle-outline"></i>
+            <span>Delete User: {{ u.username }}</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-dark mb-2">Are you sure you want to permanently delete user <strong>{{ u.username }}</strong> ({{ u.get_role_display }})?</p>
+          <div class="alert alert-warning small mb-0">
+            <i class="mdi mdi-information-outline me-1"></i>
+            If linked to an employee profile, the employee record will remain safe, but their login credentials will be removed.
+          </div>
+        </div>
+        <div class="modal-footer border-top px-4 py-3">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger text-white px-4">Permanently Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
 {% endblock %}

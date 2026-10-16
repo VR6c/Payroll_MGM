@@ -14,6 +14,16 @@
     </button>
   </div>
 
+  <!-- Mobile User Card (Visible only on < 992px & iPhone SE) -->
+  <div class="sidebar-mobile-user-card d-flex align-items-center px-3 py-2 border-bottom d-lg-none bg-light-subtle">
+    <span class="avatar-title rounded-circle bg-primary text-white me-2 fs-6 fw-bold d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px; flex-shrink: 0;">
+      {{ request.user.username|slice:":2"|upper }}
+    </span>
+    <div class="overflow-hidden flex-grow-1">
+      <div class="fw-bold text-dark text-truncate small mb-0">{{ request.user.get_full_name|default:request.user.username }}</div>
+      <span class="badge bg-primary text-white fs-xs">{{ request.user.get_role_display }}</span>
+    </div>
+  </div>
 
   <div class="sidebar-nav-container">
     <ul class="nav">
@@ -34,15 +44,15 @@
 
       <!-- Setup Collapsible Dropdown -->
       {% if request.user|has_any_perm:'employees.view,employees.positions,employees.departments,employees.branches,attendance.schedules,users.manage' %}
-      <li class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}active{% endif %}">
+      <li class="nav-item {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name not in 'login,logout,password_change,password_change_done' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}active{% endif %}">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-setup"
-          aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}true{% else %}false{% endif %}"
+          aria-expanded="{% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name not in 'login,logout,password_change,password_change_done' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}true{% else %}false{% endif %}"
           aria-controls="ui-setup" data-title="Setup">
           <i class="menu-icon mdi mdi-cog-outline"></i>
           <span class="menu-title">Setup</span>
           <i class="menu-arrow mdi mdi-chevron-right"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'password_change' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}show{% endif %}"
+        <div class="collapse {% if request.resolver_match.app_name == 'employees' or request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name not in 'login,logout,password_change,password_change_done' or request.resolver_match.app_name == 'attendance' and request.resolver_match.url_name == 'schedules' %}show{% endif %}"
           id="ui-setup">
           <ul class="nav flex-column sub-menu">
             <li class="sub-menu-title d-none">Setup</li>

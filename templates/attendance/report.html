@@ -41,7 +41,7 @@
           {% if request.GET.type %}
           <input type="hidden" name="type" value="{{ request.GET.type }}">
           {% endif %}
-          <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+          <div class="col-12 col-md-6 col-xxl-3">
             <label class="filter-label">Employee</label>
             <select name="employee" id="filterEmployee" class="form-select select2">
               <option value="">-- All Employees --</option>
@@ -52,7 +52,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-6 col-sm-6 col-md-3 col-lg-2">
+          <div class="col-12 col-md-6 col-xxl-2">
             <label class="filter-label">Status</label>
             <select name="status" class="form-select">
               <option value="">-- All Statuses --</option>
@@ -63,10 +63,10 @@
               <option value="overtime" {% if request.GET.status == 'overtime' %}selected{% endif %}>Overtime</option>
             </select>
           </div>
-          {% include 'partials/_select_date.html' with name='from_date' label='From Date' value=request.GET.from_date wrapper_class='col-6 col-sm-6 col-md-3 col-lg-2' %}
-          {% include 'partials/_select_date.html' with name='to_date' label='To Date' value=request.GET.to_date wrapper_class='col-6 col-sm-6 col-md-3 col-lg-2' %}
-          <div class="col-12 col-sm-6 col-md-12 col-lg-3">
-            <label class="filter-label d-none d-lg-block">&nbsp;</label>
+          {% include 'partials/_select_date.html' with name='from_date' label='From Date' value=request.GET.from_date wrapper_class='col-6 col-md-4 col-xxl-2' %}
+          {% include 'partials/_select_date.html' with name='to_date' label='To Date' value=request.GET.to_date wrapper_class='col-6 col-md-4 col-xxl-2' %}
+          <div class="col-12 col-md-4 col-xxl-3">
+            <label class="filter-label d-none d-md-block">&nbsp;</label>
             <div class="filter-actions">
               <button type="submit" class="btn btn-primary filter-btn-submit flex-grow-1">
                 <i class="mdi mdi-filter-variant"></i> Filter Report

@@ -18,7 +18,16 @@
         <h3 class="welcome-sub-text">Payroll & HR Management System</h3>
       </li>
     </ul>
-    <ul class="navbar-nav ms-auto">
+    <ul class="navbar-nav ms-auto align-items-center flex-row">
+      <!-- Ultrawide Canvas Toggle (Screens >= 1600px: 24", 27", 34", 39", 49") -->
+      <li class="nav-item d-none d-xxl-flex align-items-center me-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary ultrawide-mode-toggle" id="ultrawideToggleBtn" title="Toggle Focused / Full Ultrawide Canvas">
+          <i class="mdi mdi-arrow-expand-horizontal"></i>
+          <span class="d-none d-ultrawide-inline ms-1 fs-xs">Full Width</span>
+        </button>
+      </li>
+
+      <!-- Desktop User Dropdown -->
       <li class="nav-item dropdown d-none d-lg-block user-dropdown">
         <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
           <div class="d-flex align-items-center">
@@ -46,9 +55,38 @@
           </form>
         </div>
       </li>
+
+      <!-- Mobile User Avatar Dropdown (Mobile < 992px & iPhone SE) -->
+      <li class="nav-item dropdown d-lg-none me-2">
+        <a class="nav-link p-0" id="MobileUserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false" title="User Menu">
+          <span class="avatar-title rounded-circle bg-primary text-white fs-xs fw-bold d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+            {{ request.user.username|slice:":2"|upper }}
+          </span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end navbar-dropdown mobile-user-menu shadow-lg border-0 py-2" aria-labelledby="MobileUserDropdown">
+          <div class="dropdown-header text-center py-2">
+            <p class="mb-0 fw-semibold text-dark">{{ request.user.get_full_name|default:request.user.username }}</p>
+            <p class="fw-light text-muted mb-1 small">{{ request.user.username }}</p>
+            <span class="badge bg-primary text-white">{{ request.user.get_role_display }}</span>
+          </div>
+          <a class="dropdown-item py-2" href="{% url 'accounts:password_change' %}"><i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Password</a>
+          {% if request.user.role == 'super_admin' %}
+          <a class="dropdown-item py-2" href="{% url 'accounts:user_list' %}"><i class="dropdown-item-icon mdi mdi-shield-account-outline text-primary me-2"></i> Users & RBAC</a>
+          {% endif %}
+          <div class="dropdown-divider my-1"></div>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item py-2 text-danger border-0 bg-transparent w-100 text-start"><i class="dropdown-item-icon mdi mdi-power text-danger me-2"></i> Logout</button>
+          </form>
+        </div>
+      </li>
+
+      <!-- Mobile Sidebar Offcanvas Toggler -->
+      <li class="nav-item d-lg-none ms-1">
+        <button class="navbar-toggler navbar-toggler-right p-1 border-0" type="button" data-bs-toggle="offcanvas" title="Toggle Navigation">
+          <span class="mdi mdi-menu fs-4"></span>
+        </button>
+      </li>
     </ul>
-    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-bs-toggle="offcanvas">
-      <span class="mdi mdi-menu"></span>
-    </button>
   </div>
 </nav>
