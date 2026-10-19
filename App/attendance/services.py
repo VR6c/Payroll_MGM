@@ -2,7 +2,6 @@ import datetime
 import logging
 from django.utils import timezone
 from .models import Attendance, WorkSchedule, EmployeeSchedule
-from activities.services import log_activity
 
 logger = logging.getLogger('attendance')
 
@@ -82,7 +81,6 @@ class AttendanceService:
         if local_now.time() > expected_start:
             status = Attendance.Status.LATE
         att = Attendance.objects.create(employee=employee, date=today, check_in=now, status=status)
-        log_activity(user, employee, 'ATTENDANCE', 'CHECK_IN', f'Checked in at {local_now.strftime("%H:%M")}')
         logger.info(f"Check-in: {employee.employee_code} at {now}")
         return att
 
@@ -106,7 +104,6 @@ class AttendanceService:
                 att.status = Attendance.Status.OVERTIME
         att.calculate_working_hours()
         att.save()
-        log_activity(user, employee, 'ATTENDANCE', 'CHECK_OUT', f'Checked out at {local_now.strftime("%H:%M")}')
         logger.info(f"Check-out: {employee.employee_code} at {now}")
         return att
 

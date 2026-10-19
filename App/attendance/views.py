@@ -13,7 +13,6 @@ from django.utils import timezone
 from accounts.mixins import RoleRequiredMixin
 from companies.models import Company, Department, Position
 from employees.models import Employee
-from activities.services import log_activity
 from .models import Attendance, WorkSchedule, EmployeeSchedule, LunchBreak
 from .services import AttendanceService, ScheduleService
 from .forms import AttendanceForm, LunchBreakForm
@@ -377,17 +376,6 @@ class AttendanceCreateView(RoleRequiredMixin, View):
             request,
             f"Attendance successfully recorded: {summary_text} across {total_emp} employee{'s' if total_emp != 1 else ''} and {total_d} date{'s' if total_d != 1 else ''}."
         )
-
-        try:
-            log_activity(
-                request.user,
-                None,
-                'ATTENDANCE',
-                'CREATE_BULK',
-                f"Recorded attendance: {created_count} created, {updated_count} updated across {total_emp} employees."
-            )
-        except Exception:
-            pass
 
         return redirect('attendance:report')
 

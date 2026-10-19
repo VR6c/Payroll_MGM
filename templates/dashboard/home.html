@@ -201,14 +201,53 @@
   }
 
   @media (max-width: 576px) {
-    .chart-container-260 { height: 220px; }
+    .chart-container-260 { height: 210px; }
     .chart-container-220 { height: 180px; }
     .gauge-box { min-height: 160px; }
     .card-body {
-      padding: 1rem !important;
+      padding: 0.85rem 0.75rem !important;
     }
     .chart-card .card-title {
       font-size: 0.88rem !important;
+    }
+    .stat-card {
+      padding: 0.75rem 0.65rem !important;
+      border-radius: 12px !important;
+    }
+    .stat-kpi-icon {
+      font-size: 1.4rem !important;
+      margin-right: 0.5rem !important;
+    }
+    .stat-kpi-value {
+      font-size: 1.05rem !important;
+      line-height: 1.25 !important;
+    }
+    .stat-kpi-label {
+      font-size: 0.72rem !important;
+      color: #64748b !important;
+      font-weight: 500;
+    }
+    .stat-kpi-sub {
+      font-size: 0.65rem !important;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .stat-card {
+      padding: 0.65rem 0.5rem !important;
+    }
+    .stat-kpi-icon {
+      font-size: 1.25rem !important;
+      margin-right: 0.35rem !important;
+    }
+    .stat-kpi-value {
+      font-size: 0.95rem !important;
+    }
+    .stat-kpi-label {
+      font-size: 0.68rem !important;
+    }
+    .stat-kpi-sub {
+      font-size: 0.62rem !important;
     }
   }
 </style>
@@ -239,17 +278,17 @@
 
       <!-- Employee Overview Stat Cards (Consistent with project design) -->
       <p class="dash-section-label">My Overview</p>
-      <div class="row g-3 mb-4">
+      <div class="row g-2 g-sm-3 mb-4 stat-cards-row">
 
         <!-- Today's Status -->
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-clock-check-outline stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0">{{ today_attendance.get_status_display|default:"Not In" }}</h3>
-                <span class="stat-kpi-label d-block">Today's Status</span>
-                <small class="stat-kpi-sub d-block">
+              <i class="mdi mdi-clock-check-outline stat-kpi-icon stat-kpi-icon-primary me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 text-truncate" title="{{ today_attendance.get_status_display|default:'Not In' }}">{{ today_attendance.get_status_display|default:"Not In" }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Today's Status</span>
+                <small class="stat-kpi-sub d-block text-truncate">
                   {% if today_attendance.check_in %}In: {{ today_attendance.check_in|date:"H:i" }}{% else %}No check-in today{% endif %}
                 </small>
               </div>
@@ -261,11 +300,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-calendar-account stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ leave_balance.remaining_days|default:"0" }}</h3>
-                <span class="stat-kpi-label d-block">Leave Balance</span>
-                <small class="stat-kpi-sub d-block">Days remaining &bull; {% now "Y" %}</small>
+              <i class="mdi mdi-calendar-account stat-kpi-icon stat-kpi-icon-success me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 counter-value text-truncate" data-counter>{{ leave_balance.remaining_days|default:"0" }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Leave Balance</span>
+                <small class="stat-kpi-sub d-block text-truncate">Days left &bull; {% now "Y" %}</small>
               </div>
             </div>
           </div>
@@ -275,11 +314,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-cash-multiple stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0">${{ recent_payslips.0.net_salary|default:"—" }}</h3>
-                <span class="stat-kpi-label d-block">Net Salary</span>
-                <small class="stat-kpi-sub d-block">
+              <i class="mdi mdi-cash-multiple stat-kpi-icon stat-kpi-icon-info me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 text-truncate">{% if recent_payslips.0.net_salary %}${{ recent_payslips.0.net_salary|floatformat:2 }}{% else %}—{% endif %}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Net Salary</span>
+                <small class="stat-kpi-sub d-block text-truncate">
                   {% if recent_payslips.0 %}{{ recent_payslips.0.payroll_period|date:"M Y" }}{% else %}No payslips yet{% endif %}
                 </small>
               </div>
@@ -291,11 +330,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-timer-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0">{% if today_attendance.working_hours %}{{ today_attendance.working_hours }} hrs{% else %}—{% endif %}</h3>
-                <span class="stat-kpi-label d-block">Working Hours</span>
-                <small class="stat-kpi-sub d-block">Logged hours today</small>
+              <i class="mdi mdi-timer-outline stat-kpi-icon stat-kpi-icon-warning me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 text-truncate">{% if today_attendance.check_in and today_attendance.check_out %}{{ today_attendance.formatted_working_hours }}{% elif today_attendance.check_in %}Active{% else %}—{% endif %}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Working Hours</span>
+                <small class="stat-kpi-sub d-block text-truncate">Logged today</small>
               </div>
             </div>
           </div>
@@ -379,9 +418,16 @@
                 <h5 class="card-title mb-0"><i class="mdi mdi-calendar-check text-success me-2"></i>Leave Balances</h5>
                 <span class="badge bg-light text-muted fw-semibold">{% now "Y" %}</span>
               </div>
-              <div class="chart-container-260">
-                <canvas id="leaveBalChart"></canvas>
-              </div>
+              {% if leave_balances %}
+                <div class="chart-container-260">
+                  <canvas id="leaveBalChart"></canvas>
+                </div>
+              {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center text-muted" style="min-height: 200px;">
+                  <i class="mdi mdi-calendar-blank-outline" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  <p class="mt-2 mb-0 small">No leave balances assigned for {% now "Y" %}.</p>
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -445,17 +491,17 @@
 
       <!-- Admin Stat Cards (Consistent with users.html & lunch_breaks.html) -->
       <p class="dash-section-label">Today's Overview</p>
-      <div class="row g-3 mb-4">
+      <div class="row g-2 g-sm-3 mb-4 stat-cards-row">
 
         <!-- Active Employees -->
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-account-group stat-kpi-icon stat-kpi-icon-primary me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ total_employees }}</h3>
-                <span class="stat-kpi-label d-block">Active Employees</span>
-                <small class="stat-kpi-sub d-block">Total headcount</small>
+              <i class="mdi mdi-account-group stat-kpi-icon stat-kpi-icon-primary me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 counter-value text-truncate" data-counter>{{ total_employees }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Active Employees</span>
+                <small class="stat-kpi-sub d-block text-truncate">Headcount</small>
               </div>
             </div>
           </div>
@@ -465,11 +511,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-account-check stat-kpi-icon stat-kpi-icon-success me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ present_today }}</h3>
-                <span class="stat-kpi-label d-block">Present Today</span>
-                <small class="stat-kpi-sub d-block">Checked in today</small>
+              <i class="mdi mdi-account-check stat-kpi-icon stat-kpi-icon-success me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 counter-value text-truncate" data-counter>{{ present_today }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Present Today</span>
+                <small class="stat-kpi-sub d-block text-truncate">Checked in</small>
               </div>
             </div>
           </div>
@@ -479,11 +525,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ late_today }}</h3>
-                <span class="stat-kpi-label d-block">Late Today</span>
-                <small class="stat-kpi-sub d-block">Arrived late</small>
+              <i class="mdi mdi-clock-alert-outline stat-kpi-icon stat-kpi-icon-warning me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 counter-value text-truncate" data-counter>{{ late_today }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Late Today</span>
+                <small class="stat-kpi-sub d-block text-truncate">Arrived late</small>
               </div>
             </div>
           </div>
@@ -493,11 +539,11 @@
         <div class="col-6 col-xl-3">
           <div class="card stat-card border-0 h-100">
             <div class="d-flex align-items-center">
-              <i class="mdi mdi-calendar-question stat-kpi-icon stat-kpi-icon-info me-3 me-sm-4"></i>
-              <div>
-                <h3 class="stat-kpi-value mb-0 counter-value" data-counter>{{ pending_leaves }}</h3>
-                <span class="stat-kpi-label d-block">Pending Leaves</span>
-                <small class="stat-kpi-sub d-block">Awaiting approval</small>
+              <i class="mdi mdi-calendar-question stat-kpi-icon stat-kpi-icon-info me-2 me-sm-3 me-xl-4 flex-shrink-0"></i>
+              <div class="min-w-0 flex-grow-1">
+                <h3 class="stat-kpi-value mb-0 counter-value text-truncate" data-counter>{{ pending_leaves }}</h3>
+                <span class="stat-kpi-label d-block text-truncate">Pending Leaves</span>
+                <small class="stat-kpi-sub d-block text-truncate">To approve</small>
               </div>
             </div>
           </div>
@@ -1251,7 +1297,7 @@
               borderWidth: 2,
               fill: true,
               tension: 0.35,
-              pointRadius: 0,
+              pointRadius: 2,
               pointHoverRadius: 5
             },
             {
@@ -1262,7 +1308,7 @@
               borderWidth: 2,
               fill: true,
               tension: 0.35,
-              pointRadius: 0,
+              pointRadius: 2,
               pointHoverRadius: 5
             }
           ]
@@ -1284,7 +1330,7 @@
           scales: {
             x: {
               grid: { display: false },
-              ticks: { maxTicksLimit: 8, font: { size: 10 }, color: '#64748b' }
+              ticks: { maxTicksLimit: window.innerWidth < 576 ? 5 : 8, font: { size: 9 }, color: '#64748b' }
             },
             y: {
               min: 0,

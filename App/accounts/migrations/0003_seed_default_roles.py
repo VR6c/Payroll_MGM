@@ -12,7 +12,7 @@ def seed_default_roles(apps, schema_editor):
             'is_system': True,
             'permissions': [
                 'dashboard', 'employees', 'attendance', 'leave',
-                'overtime', 'payroll', 'reports', 'activities', 'users'
+                'overtime', 'payroll', 'reports', 'users'
             ]
         },
         {
@@ -22,7 +22,7 @@ def seed_default_roles(apps, schema_editor):
             'is_system': True,
             'permissions': [
                 'dashboard', 'employees', 'attendance', 'leave',
-                'overtime', 'payroll', 'reports', 'activities'
+                'overtime', 'payroll', 'reports'
             ]
         },
         {

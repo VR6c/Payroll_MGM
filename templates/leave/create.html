@@ -43,7 +43,7 @@
 
     <!-- Main Leave Form Card -->
     <div class="card border-0 shadow-sm">
-      <div class="card-body p-4">
+      <div class="card-body p-3 p-sm-4">
         <form method="post" id="leaveForm" class="forms-sample">
           {% csrf_token %}
 
@@ -265,18 +265,16 @@
     }
   }
 
-  // Update Delete Buttons State (Disable trash button if only 1 period row exists)
+  // Update Delete Buttons State (Hide trash button if only 1 period row exists)
   function updateRemoveButtons() {
     const rows = document.querySelectorAll('.period-row');
     rows.forEach(function(row) {
       const btn = row.querySelector('.rm');
       if (btn) {
         if (rows.length <= 1) {
-          btn.disabled = true;
-          btn.classList.add('opacity-25');
-          btn.setAttribute('title', 'At least one period is required');
-          btn.style.cursor = 'not-allowed';
+          btn.style.display = 'none';
         } else {
+          btn.style.display = '';
           btn.disabled = false;
           btn.classList.remove('opacity-25');
           btn.setAttribute('title', 'Remove this period');
@@ -549,31 +547,29 @@
     row.innerHTML = `
       <div class="period-card-inner">
         <!-- Card Header -->
-        <div class="period-header d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2">
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <div class="period-number-chip">
-              <span class="period-num-dot"></span>
-              <span class="period-badge fw-bold">Period #${currIdx + 1}</span>
-            </div>
-            <!-- Mode Toggle Pill -->
-            <div class="period-mode-pills period-mode-toggle" role="group">
-              <button type="button" class="mode-pill ${isHourly ? '' : 'active'} mode-btn-full">
-                <i class="mdi mdi-calendar-blank"></i>
-                <span>Full Day</span>
-              </button>
-              <button type="button" class="mode-pill ${isHourly ? 'active' : ''} mode-btn-hourly">
-                <i class="mdi mdi-clock-outline"></i>
-                <span>By Hours</span>
-              </button>
-            </div>
+        <div class="period-header d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2">
+          <div class="period-number-chip order-1">
+            <span class="period-num-dot"></span>
+            <span class="period-badge fw-bold">Period #${currIdx + 1}</span>
           </div>
 
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 order-2 order-sm-3 ms-auto ms-sm-0">
             <span class="conflict-badge period-conflict-pill d-none">
               <i class="mdi mdi-alert-circle"></i> Conflict
             </span>
             <button type="button" class="period-remove-btn rm" title="Remove this period">
               <i class="mdi mdi-trash-can-outline"></i>
+            </button>
+          </div>
+
+          <div class="period-mode-pills period-mode-toggle order-3 order-sm-2" role="group">
+            <button type="button" class="mode-pill ${isHourly ? '' : 'active'} mode-btn-full">
+              <i class="mdi mdi-calendar-blank"></i>
+              <span>Full Day</span>
+            </button>
+            <button type="button" class="mode-pill ${isHourly ? 'active' : ''} mode-btn-hourly">
+              <i class="mdi mdi-clock-outline"></i>
+              <span>By Hours</span>
             </button>
           </div>
         </div>
@@ -1389,11 +1385,21 @@
 /* ── Responsive tweaks ───────────────────────────────────────── */
 @media (max-width: 575px) {
   .period-body { padding: 12px; }
-  .period-fields-row { gap: 8px; }
+  .period-fields-row { gap: 10px; }
   .period-field-group { flex: 1 1 100%; min-width: 0; }
   .period-time-row { gap: 8px; }
-  .period-mode-pills { width: 100%; justify-content: center; }
-  .period-header { flex-direction: column; align-items: flex-start !important; gap: 8px !important; }
+  .period-mode-pills {
+    width: 100%;
+    display: flex;
+    justify-content: stretch;
+  }
+  .period-mode-pills .mode-pill {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    padding: 6px 10px;
+  }
+  .period-header { gap: 8px !important; }
 }
 </style>
 {% endblock %}

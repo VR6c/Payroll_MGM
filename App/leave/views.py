@@ -9,7 +9,6 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.mixins import RoleRequiredMixin
-from activities.services import log_activity
 from companies.models import Company
 from companies.services import get_default_company
 from employees.models import Employee
@@ -120,14 +119,6 @@ class LeaveRequestCreateView(LoginRequiredMixin, CreateView):
                 )
 
         status_display = leave.get_status_display()
-        log_activity(
-            user=self.request.user,
-            employee=employee,
-            module='LEAVE',
-            action='CREATE',
-            description=f"Created leave request #{leave.pk} ({leave.leave_type.name}, {leave.total_days} days, status: {status_display}) for {employee}"
-        )
-
         messages.success(self.request, f"Leave request for {employee} submitted successfully ({status_display})!")
         return redirect(self.success_url)
 
@@ -378,15 +369,6 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
 
         # Adjust leave balance synchronization
         LeaveService.adjust_balance_on_update(old_snapshot, updated_leave)
-
-        status_display = updated_leave.get_status_display()
-        log_activity(
-            user=self.request.user,
-            employee=updated_leave.employee,
-            module='LEAVE',
-            action='UPDATE',
-            description=f"Updated leave request #{updated_leave.pk} ({updated_leave.leave_type.name}, {updated_leave.total_days} days, status: {status_display}) for {updated_leave.employee}"
-        )
 
         messages.success(self.request, f"Leave request #{updated_leave.pk} updated successfully!")
         return redirect(self.success_url)

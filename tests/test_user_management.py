@@ -225,7 +225,7 @@ class RoleManagementTests(TestCase):
             'name': 'Payroll Auditor',
             'code': 'payroll_auditor',
             'description': 'Audits all payroll runs and calculations',
-            'permissions': ['payroll', 'reports', 'activities']
+            'permissions': ['payroll', 'reports']
         }
         response = self.client.post(reverse('accounts:role_create'), data=post_data)
         self.assertEqual(response.status_code, 302)

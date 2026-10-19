@@ -11,7 +11,6 @@ from accounts.mixins import RoleRequiredMixin
 from companies.models import Company, Department
 from companies.services import get_default_company
 from employees.models import Employee
-from activities.services import log_activity
 
 from .models import OvertimeType, OvertimeRequest
 from .forms import OvertimeTypeForm, AdminOvertimeRequestForm, EmployeeOvertimeRequestForm
@@ -112,13 +111,6 @@ class OvertimeCreateView(RoleRequiredMixin, CreateView):
             ot.approved_at = timezone.now()
 
         ot.save()
-        log_activity(
-            user=self.request.user,
-            employee=ot.employee,
-            module='OVERTIME',
-            action='CREATE',
-            description=f"Created {ot.hours}h overtime record for {ot.employee} on {ot.date}"
-        )
         messages.success(self.request, f"Overtime record for {ot.employee} created successfully!")
         return redirect(self.success_url)
 
@@ -140,13 +132,6 @@ class OvertimeUpdateView(RoleRequiredMixin, UpdateView):
             ot.approved_at = timezone.now()
 
         ot.save()
-        log_activity(
-            user=self.request.user,
-            employee=ot.employee,
-            module='OVERTIME',
-            action='UPDATE',
-            description=f"Updated overtime record ID #{ot.pk} for {ot.employee}"
-        )
         messages.success(self.request, f"Overtime record updated successfully!")
         return redirect(self.success_url)
 
@@ -165,13 +150,6 @@ class OvertimeDeleteView(RoleRequiredMixin, DeleteView):
         emp = obj.employee
         pk_val = obj.pk
         obj.delete()
-        log_activity(
-            user=request.user,
-            employee=emp,
-            module='OVERTIME',
-            action='DELETE',
-            description=f"Deleted overtime record #{pk_val} for {emp}"
-        )
         messages.success(request, "Overtime record deleted successfully!")
         return redirect(self.success_url)
 
@@ -304,13 +282,6 @@ class MyOvertimeCreateView(LoginRequiredMixin, CreateView):
         ot.status = OvertimeRequest.Status.PENDING
         ot.save()
 
-        log_activity(
-            user=self.request.user,
-            employee=employee,
-            module='OVERTIME',
-            action='REQUEST',
-            description=f"Submitted overtime request for {ot.date} ({ot.hours} hrs)"
-        )
         messages.success(self.request, "Overtime request submitted successfully!")
         return redirect(self.success_url)
 
@@ -329,13 +300,6 @@ class MyOvertimeCancelView(LoginRequiredMixin, View):
 
         ot.status = OvertimeRequest.Status.CANCELLED
         ot.save(update_fields=['status', 'updated_at'])
-        log_activity(
-            user=request.user,
-            employee=employee,
-            module='OVERTIME',
-            action='CANCEL',
-            description=f"Cancelled overtime request #{ot.pk} for {ot.date}"
-        )
         messages.success(request, "Overtime request cancelled.")
         return redirect('overtime:my_overtime')
 

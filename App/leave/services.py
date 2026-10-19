@@ -3,7 +3,6 @@ import datetime
 import logging
 from decimal import Decimal
 from django.utils import timezone
-from activities.services import log_activity
 from .models import LeaveRequest, LeaveBalance, LeavePeriod
 
 logger = logging.getLogger('leave')
@@ -241,13 +240,6 @@ class LeaveService:
                 remaining_days=max(Decimal('0'), allocated - used)
             )
 
-        log_activity(
-            user=user,
-            employee=leave_request.employee,
-            module='LEAVE',
-            action='APPROVE',
-            description=f"Approved leave request #{leave_request.pk} ({leave_request.total_days} days {leave_request.leave_type.name}) for {leave_request.employee}"
-        )
         return leave_request
 
     @staticmethod
@@ -258,13 +250,6 @@ class LeaveService:
         leave_request.approved_at = timezone.now()
         leave_request.save(update_fields=['status', 'approved_by', 'approved_at'])
 
-        log_activity(
-            user=user,
-            employee=leave_request.employee,
-            module='LEAVE',
-            action='REJECT',
-            description=f"Rejected leave request #{leave_request.pk} for {leave_request.employee}"
-        )
         return leave_request
 
     @staticmethod
@@ -276,13 +261,6 @@ class LeaveService:
         leave_request.status = LeaveRequest.Status.CANCELLED
         leave_request.save(update_fields=['status'])
 
-        log_activity(
-            user=user,
-            employee=leave_request.employee,
-            module='LEAVE',
-            action='CANCEL',
-            description=f"Cancelled leave request #{leave_request.pk} for {leave_request.employee}"
-        )
         return leave_request
 
     @staticmethod
@@ -308,13 +286,6 @@ class LeaveService:
                 balance.remaining_days = max(Decimal('0'), allocated - used)
                 balance.save(update_fields=['used_days', 'remaining_days'])
 
-        log_activity(
-            user=user,
-            employee=emp,
-            module='LEAVE',
-            action='DELETE',
-            description=f"Deleted leave request #{leave_request.pk} ({total_days} days {leave_type.name if leave_type else ''}) for {emp}"
-        )
         leave_request.delete()
 
     @staticmethod

@@ -175,6 +175,20 @@ class Attendance(models.Model):
             )
         return self.working_hours
 
+    @property
+    def formatted_working_hours(self):
+        duration = self.get_working_hours or self.working_hours
+        if not duration:
+            return "—"
+        total_seconds = int(duration.total_seconds())
+        if total_seconds <= 0:
+            return "0h 0m"
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m"
+
     def calculate_working_hours(self):
         if self.check_in and self.check_out:
             self.working_hours = self.calculate_net_working_hours(

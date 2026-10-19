@@ -1,7 +1,6 @@
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
-from activities.services import log_activity
 from .models import OvertimeRequest
 
 
@@ -20,13 +19,6 @@ class OvertimeService:
         ot_request.overtime_amount = ot_request.calculate_amount()
         ot_request.save()
 
-        log_activity(
-            user=user,
-            employee=ot_request.employee,
-            module='OVERTIME',
-            action='APPROVE',
-            description=f"Approved {ot_request.hours}h OT (${ot_request.overtime_amount}) for {ot_request.date}"
-        )
         return ot_request
 
     @staticmethod
@@ -38,13 +30,6 @@ class OvertimeService:
         ot_request.rejection_reason = reason
         ot_request.save()
 
-        log_activity(
-            user=user,
-            employee=ot_request.employee,
-            module='OVERTIME',
-            action='REJECT',
-            description=f"Rejected OT for {ot_request.date}. Reason: {reason or 'N/A'}"
-        )
         return ot_request
 
     @staticmethod

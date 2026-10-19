@@ -36,6 +36,14 @@ A4_PORTRAIT_USABLE = A4_WIDTH - (MARGIN_STANDARD * 2)    # ≈ 515.27
 A4_LANDSCAPE_USABLE = A4_HEIGHT - (MARGIN_NARROW * 2)    # ≈ 781.89
 
 
+def _format_dt_time(dt, empty_val="-"):
+    if not dt:
+        return empty_val
+    if timezone.is_aware(dt):
+        return timezone.localtime(dt).strftime("%H:%M")
+    return dt.strftime("%H:%M")
+
+
 # ==============================================================================
 # PROFESSIONAL COLOR SYSTEM
 # ==============================================================================
@@ -501,8 +509,8 @@ def generate_daily_attendance_excel(report_date, attendances, stats,
     curr_row = 9
     for idx, a in enumerate(attendances, start=1):
         emp = a.employee
-        cin = a.check_in.strftime("%H:%M") if a.check_in else "-"
-        cout = a.check_out.strftime("%H:%M") if a.check_out else "-"
+        cin = _format_dt_time(a.check_in, "-")
+        cout = _format_dt_time(a.check_out, "-")
         hours_str = str(a.working_hours).split('.')[0] if a.working_hours else "-"
 
         row_vals = [
@@ -652,8 +660,8 @@ def generate_daily_attendance_pdf(report_date, attendances, stats,
 
     for idx, a in enumerate(attendances, start=1):
         emp = a.employee
-        cin = a.check_in.strftime("%H:%M") if a.check_in else "—"
-        cout = a.check_out.strftime("%H:%M") if a.check_out else "—"
+        cin = _format_dt_time(a.check_in, "—")
+        cout = _format_dt_time(a.check_out, "—")
         hours_str = str(a.working_hours).split('.')[0] if a.working_hours else "—"
 
         status_type = 'success' if a.status == 'present' else (
@@ -1392,8 +1400,8 @@ def generate_detail_report_pdf(category, data_list,
 
         for idx, a in enumerate(data_list, start=1):
             emp = a.employee
-            cin = a.check_in.strftime("%H:%M") if a.check_in else "—"
-            cout = a.check_out.strftime("%H:%M") if a.check_out else "—"
+            cin = _format_dt_time(a.check_in, "—")
+            cout = _format_dt_time(a.check_out, "—")
             hours_str = str(a.working_hours).split('.')[0] if a.working_hours else "—"
             status_type = 'success' if a.status == 'present' else (
                 'warning' if a.status == 'late' else (
@@ -2020,8 +2028,8 @@ def generate_attendance_list_excel(attendances, company_name="Payroll MGM", gene
     for idx, a in enumerate(attendances, start=1):
         r_idx = 5 + idx
         emp = a.employee
-        cin = a.check_in.strftime("%H:%M") if a.check_in else "-"
-        cout = a.check_out.strftime("%H:%M") if a.check_out else "-"
+        cin = _format_dt_time(a.check_in, "-")
+        cout = _format_dt_time(a.check_out, "-")
         hours_str = str(a.working_hours).split('.')[0] if a.working_hours else "-"
 
         ws.row_dimensions[r_idx].height = 20

@@ -38,7 +38,6 @@ class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
             'overtime': 'overtime',
             'payroll': 'payroll',
             'reports': 'reports',
-            'activities': 'activities',
             'accounts': 'users',
         }
         module_key = app_to_module.get(app_name)

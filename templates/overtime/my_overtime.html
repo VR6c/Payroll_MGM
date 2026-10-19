@@ -6,7 +6,8 @@
 <div class="row">
   <div class="col-12">
     <!-- Page Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
       <div>
         <h3 class="fw-bold text-dark mb-1">My Overtime Requests</h3>
         <p class="text-muted mb-0">View submitted overtime requests, hours, and approval status</p>
@@ -19,7 +20,8 @@
             <li class="breadcrumb-item active" aria-current="page">My Overtime</li>
           </ol>
         </nav>
-        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#requestOtModal">
+        <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal"
+          data-bs-target="#requestOtModal">
           <i class="mdi mdi-plus me-1"></i> Request Overtime
         </button>
       </div>
@@ -49,9 +51,9 @@
                 <td class="fw-semibold text-dark">{{ ot.date|date:"M d, Y" }}</td>
                 <td>
                   {% if ot.start_time and ot.end_time %}
-                    {{ ot.start_time|time:"H:i" }} &ndash; {{ ot.end_time|time:"H:i" }}
+                  {{ ot.start_time|time:"H:i" }} &ndash; {{ ot.end_time|time:"H:i" }}
                   {% else %}
-                    <span class="text-muted small">Flexible Shift</span>
+                  <span class="text-muted small">Flexible Shift</span>
                   {% endif %}
                 </td>
                 <td>
@@ -65,32 +67,33 @@
                 <td class="fw-bold text-success">${{ ot.overtime_amount|floatformat:2 }}</td>
                 <td>
                   {% if ot.status == 'approved' %}
-                    <span class="badge-status-approved"><i class="mdi mdi-check-circle-outline"></i> Approved</span>
+                  <span class="badge-status-approved"><i class="mdi mdi-check-circle-outline"></i> Approved</span>
                   {% elif ot.status == 'pending' %}
-                    <span class="badge-status-pending"><i class="mdi mdi-clock-outline"></i> Pending</span>
+                  <span class="badge-status-pending"><i class="mdi mdi-clock-outline"></i> Pending</span>
                   {% elif ot.status == 'rejected' %}
-                    <span class="badge-status-rejected"><i class="mdi mdi-close-circle-outline"></i> Rejected</span>
+                  <span class="badge-status-rejected"><i class="mdi mdi-close-circle-outline"></i> Rejected</span>
                   {% elif ot.status == 'cancelled' %}
-                    <span class="badge-status-cancelled"><i class="mdi mdi-cancel"></i> Cancelled</span>
+                  <span class="badge-status-cancelled"><i class="mdi mdi-cancel"></i> Cancelled</span>
                   {% else %}
-                    <span class="badge-status-secondary">{{ ot.get_status_display }}</span>
+                  <span class="badge-status-secondary">{{ ot.get_status_display }}</span>
                   {% endif %}
                 </td>
                 <td>{{ ot.created_at|date:"M d, Y" }}</td>
                 <td>
                   {% if ot.approved_by %}
-                    {{ ot.approved_by.get_full_name|default:ot.approved_by.username }}
+                  {{ ot.approved_by.get_full_name|default:ot.approved_by.username }}
                   {% elif ot.rejection_reason %}
-                    <small class="text-danger">{{ ot.rejection_reason|truncatechars:30 }}</small>
+                  <small class="text-danger">{{ ot.rejection_reason|truncatechars:30 }}</small>
                   {% else %}
-                    <span class="text-muted">-</span>
+                  <span class="text-muted">-</span>
                   {% endif %}
                 </td>
                 <td class="text-end">
                   {% if ot.status == 'pending' %}
                   <form method="post" action="{% url 'overtime:my_cancel' ot.id %}" class="d-inline">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this overtime request?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Cancel this overtime request?');">
                       Cancel
                     </button>
                   </form>
@@ -115,54 +118,615 @@
   </div>
 </div>
 
-<!-- Employee Request Overtime Modal -->
-<div class="modal fade text-start" id="requestOtModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="{% url 'overtime:my_create' %}">
+<!-- Employee Request Overtime Modal (Consistent with Request Leave UI) -->
+<div class="modal fade text-start" id="requestOtModal" tabindex="-1" aria-labelledby="requestOtModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ot-modal-dialog">
+    <div class="modal-content ot-modal-card border-0 shadow-lg">
+      <form method="post" action="{% url 'overtime:my_create' %}" id="otRequestForm" class="d-flex flex-column h-100 mb-0">
         {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold text-dark"><i class="mdi mdi-plus me-1 text-primary"></i> Request Overtime</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          {% include 'partials/_select_date.html' with name='date' id='id_my_ot_date' label='Overtime Date' required=True wrapper_class='mb-3' %}
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">Overtime Type / Policy</label>
-            {{ form.overtime_type }}
-          </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-6">
-              <label class="form-label fw-bold">Start Time</label>
-              <input type="time" name="start_time" class="form-control" id="id_my_start_time">
+        <!-- Modal Header (Consistent with Request Leave Header) -->
+        <div class="modal-header border-0 py-2 px-3 bg-gradient-header d-flex align-items-center justify-content-between flex-shrink-0">
+          <div class="d-flex align-items-center gap-2">
+            <div class="ot-modal-icon-badge shadow-2xs">
+              <i class="mdi mdi-clock-fast fs-5 text-primary"></i>
             </div>
-            <div class="col-6">
-              <label class="form-label fw-bold">End Time</label>
-              <input type="time" name="end_time" class="form-control" id="id_my_end_time">
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <h6 class="modal-title fw-bold text-dark mb-0" id="requestOtModalLabel">Request Overtime</h6>
+                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0.5 fs-2xs">
+                  <i class="mdi mdi-account-circle me-1"></i>Self-Service
+                </span>
+              </div>
+              <span class="text-muted fs-xs">Log extra hours for approval & compensation</span>
             </div>
           </div>
+          <button type="button" class="btn-close ot-close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">Total Overtime Hours <span class="text-danger">*</span></label>
-            <input type="number" step="0.25" min="0.25" name="hours" class="form-control" placeholder="e.g. 2.50" id="id_my_hours" required>
-            <div class="form-text small">Auto-calculated if start and end times are set</div>
+        <!-- Modal Body -->
+        <div class="modal-body px-3 py-2">
+
+          <!-- Section 1: Date & Policy (Side-by-side, consistent with Leave Details) -->
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="period-field-label mb-1">
+                <i class="mdi mdi-calendar-blank text-primary"></i> Overtime Date <span class="req-star">*</span>
+              </label>
+              <div class="input-group component-select-date date-picker-group period-date-wrap ot-date-wrap">
+                <input type="text" name="date" id="id_my_ot_date" class="form-control form-control-sm period-input select-date-input" placeholder="YYYY-MM-DD" required autocomplete="off">
+                <span class="input-group-text select-date-trigger text-muted" role="button" tabindex="0" title="Open calendar">
+                  <i class="mdi mdi-calendar"></i>
+                </span>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="period-field-label mb-1">
+                <i class="mdi mdi-shield-star-outline text-primary"></i> Overtime Policy <span class="req-star">*</span>
+              </label>
+              <div class="ot-select-wrap">
+                {{ form.overtime_type }}
+              </div>
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">Reason / Tasks Completed <span class="text-danger">*</span></label>
-            <textarea name="reason" class="form-control" rows="3" placeholder="Describe the tasks or justification for overtime..." required></textarea>
+          <!-- Section 2: Overtime Schedule & Duration Card (Consistent with Leave Period Card) -->
+          <div class="period-card ot-period-card mb-2">
+            <!-- Period Header -->
+            <div class="period-header d-flex flex-wrap align-items-center justify-content-between gap-1 p-2">
+              <div class="period-number-chip">
+                <span class="period-num-dot"></span>
+                <span class="period-badge fw-bold">Overtime Shift</span>
+              </div>
+
+              <!-- Segmented Mode Pills (Leave consistent) -->
+              <div class="period-mode-pills" role="group">
+                <button type="button" class="mode-pill active" id="btnModeShift">
+                  <i class="mdi mdi-clock-outline"></i>
+                  <span>Shift Window</span>
+                </button>
+                <button type="button" class="mode-pill" id="btnModeDirect">
+                  <i class="mdi mdi-numeric"></i>
+                  <span>Direct Hours</span>
+                </button>
+              </div>
+
+              <!-- Live Policy Rate Badge -->
+              <span id="liveRateBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 fs-xs fw-bold">
+                1.50× Rate
+              </span>
+            </div>
+
+            <!-- Card Body -->
+            <div class="period-body p-2 pt-1">
+              <!-- Mode A: Shift Window Inputs -->
+              <div id="sectionShiftInterval">
+                <div class="d-flex align-items-center gap-1 gap-sm-2 mb-1">
+                  <!-- Start Time -->
+                  <div class="period-field-group flex-grow-1 min-w-0">
+                    <label class="period-field-label mb-1">
+                      <i class="mdi mdi-clock-start text-primary"></i> Start Time <span class="req-star">*</span>
+                    </label>
+                    <div class="input-group component-select-time time-picker-group period-date-wrap">
+                      <input type="text" name="start_time" class="period-input period-start-time select-time-input text-center fw-bold" id="id_my_start_time" value="17:30" autocomplete="off" placeholder="HH:MM">
+                      <span class="input-group-text select-time-trigger period-time-trigger text-muted" role="button" tabindex="0" title="Select time">
+                        <i class="mdi mdi-clock-outline"></i>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Time Arrow -->
+                  <div class="period-date-arrow d-flex align-items-center justify-content-center pt-3 flex-shrink-0">
+                    <i class="mdi mdi-arrow-right text-muted"></i>
+                  </div>
+
+                  <!-- End Time -->
+                  <div class="period-field-group flex-grow-1 min-w-0">
+                    <label class="period-field-label mb-1">
+                      <i class="mdi mdi-clock-end text-primary"></i> End Time <span class="req-star">*</span>
+                    </label>
+                    <div class="input-group component-select-time time-picker-group period-date-wrap">
+                      <input type="text" name="end_time" class="period-input period-end-time select-time-input text-center fw-bold" id="id_my_end_time" value="20:00" autocomplete="off" placeholder="HH:MM">
+                      <span class="input-group-text select-time-trigger period-time-trigger text-muted" role="button" tabindex="0" title="Select time">
+                        <i class="mdi mdi-clock-outline"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Presets & Live Calculated Hours -->
+                <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                  <div class="quick-chips d-flex gap-1 flex-wrap align-items-center">
+                    <span class="fs-2xs text-muted fw-semibold">Presets:</span>
+                    <button type="button" class="quick-chip ot-preset-chip" data-st="17:30" data-et="19:30">2 hrs</button>
+                    <button type="button" class="quick-chip ot-preset-chip" data-st="17:30" data-et="20:30">3 hrs</button>
+                    <button type="button" class="quick-chip ot-preset-chip" data-st="08:00" data-et="17:00">8 hrs (Full)</button>
+                  </div>
+                  <div class="fs-xs fw-bold text-primary">
+                    <span id="shiftLiveDisplay">2.50</span> <span class="text-muted fw-normal">hrs</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mode B: Direct Hours Inputs (Hidden by default) -->
+              <div id="sectionDirectHours" class="d-none">
+                <div class="mb-1">
+                  <label class="period-field-label mb-1">
+                    <i class="mdi mdi-timer-sand text-primary"></i> Total Overtime Hours <span class="req-star">*</span>
+                  </label>
+                  <div class="duration-input-wrap">
+                    <input type="number" step="0.25" min="0.25" class="period-input period-days text-center fw-bold" id="id_my_hours_input" value="2.50" placeholder="0.00">
+                    <span class="duration-unit">Hours</span>
+                  </div>
+                </div>
+                <!-- Quick Hours Chips -->
+                <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                  <div class="quick-chips d-flex gap-1 flex-wrap">
+                    <button type="button" class="quick-chip ot-quick-hr" data-hrs="1.0">1h</button>
+                    <button type="button" class="quick-chip ot-quick-hr" data-hrs="1.5">1.5h</button>
+                    <button type="button" class="quick-chip ot-quick-hr" data-hrs="2.0">2h</button>
+                    <button type="button" class="quick-chip ot-quick-hr" data-hrs="3.0">3h</button>
+                    <button type="button" class="quick-chip ot-quick-hr" data-hrs="4.0">4h</button>
+                  </div>
+                  <span class="fs-2xs text-muted fw-semibold">Custom</span>
+                </div>
+              </div>
+
+              <!-- Hidden input for final hours submitted with form -->
+              <input type="hidden" name="hours" id="id_my_hours" value="2.50">
+            </div>
           </div>
+
+          <!-- Section 3: Summary Banner (Consistent with Leave Summary Card) -->
+          <div class="card border-0 shadow-2xs mb-2 ot-summary-banner" style="background: linear-gradient(135deg, #eef2ff 0%, #f1f5f9 100%); border: 1px solid #dbeafe !important; border-radius: 10px;">
+            <div class="card-body p-2 px-3">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-2xs" style="width: 34px; height: 34px; min-width: 34px;">
+                    <i class="mdi mdi-calculator fs-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-muted fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.62rem;">Calculated Duration</div>
+                    <div class="d-flex align-items-baseline gap-1">
+                      <span id="liveSummaryHours" class="fs-5 fw-bold text-primary">2.50</span>
+                      <span class="fs-xs fw-semibold text-secondary">Hours Requested</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span id="summaryRateBadge" class="badge bg-primary text-white px-2 py-1 rounded-pill fs-2xs fw-bold shadow-2xs">
+                    1.50× Multiplier
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Reason / Notes (Consistent with Leave Form) -->
+          <div class="mb-1">
+            <label for="id_reason" class="period-field-label mb-1">
+              <i class="mdi mdi-text-box-outline text-primary"></i> Reason for Overtime <span class="req-star">*</span>
+            </label>
+            <textarea name="reason" id="id_reason" class="form-control form-control-sm ot-reason-input" rows="2" placeholder="e.g. Supported month-end closing, urgent system update..." required></textarea>
+          </div>
+
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary text-white">Submit Request</button>
+
+        <!-- Modal Footer (Consistent with Leave Actions) -->
+        <div class="modal-footer border-0 p-2 px-3 bg-light-subtle d-flex flex-row align-items-center gap-2 flex-shrink-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 fw-semibold" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary btn-sm px-3 py-2 fw-semibold text-white shadow-sm flex-grow-1" id="btnSubmitOt">
+            <i class="mdi mdi-send me-1"></i> Submit Overtime Request (<span id="btnSubmitHours">2.50h</span>)
+          </button>
         </div>
+
       </form>
     </div>
   </div>
 </div>
+
+<style>
+  /* ── Overtime Modal Design System (Consistent with Request Leave) ─── */
+  .ot-modal-dialog {
+    max-width: 440px;
+  }
+  .ot-modal-card {
+    border-radius: 14px !important;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  .bg-gradient-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-bottom: 1px solid #e9eef5;
+  }
+  .ot-modal-icon-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ot-close-btn {
+    opacity: 0.6;
+    padding: 0.4rem;
+  }
+  .ot-close-btn:hover {
+    opacity: 1;
+  }
+
+  /* ── Labels (Request Leave Token) ────────────────────────────── */
+  .period-field-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .req-star {
+    color: #ef4444;
+    font-size: 0.75rem;
+  }
+
+  /* ── Period Schedule Card (Request Leave Token) ─────────────── */
+  .ot-period-card {
+    border: 1.5px solid #dde3ed;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ot-period-card:hover {
+    border-color: #cbd5e1;
+  }
+  .ot-period-card .period-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f6;
+  }
+  .period-number-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+  .period-num-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6366f1;
+    flex-shrink: 0;
+  }
+  .period-badge {
+    color: #4f46e5;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Mode Pill Toggle (Request Leave Token) ──────────────────── */
+  .period-mode-pills {
+    display: inline-flex;
+    background: #f1f5f9;
+    border: 1px solid #dde3ed;
+    border-radius: 20px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    border-radius: 16px;
+    padding: 3px 9px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .mode-pill i { font-size: 0.85rem; }
+  .mode-pill.active {
+    background: #fff;
+    color: #4f46e5;
+    box-shadow: 0 1px 3px rgba(99,102,241,0.18);
+    font-weight: 600;
+  }
+
+  /* ── Input Wrappers (Request Leave Token: .period-date-wrap) ── */
+  .period-date-wrap {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 8px !important;
+  }
+  .period-date-wrap .period-input {
+    border: 1.5px solid #dde3ed !important;
+    border-right: none !important;
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 0.85rem !important;
+    color: #1e293b !important;
+    background: #fdfdff !important;
+    flex: 1 1 auto !important;
+    width: 1% !important;
+    box-shadow: none !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .period-date-wrap .select-date-trigger,
+  .period-date-wrap .select-time-trigger {
+    border: 1.5px solid #dde3ed !important;
+    border-left: none !important;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    background: #f8fafc !important;
+    color: #64748b !important;
+    padding: 0 10px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease;
+  }
+  .period-date-wrap:hover .period-input,
+  .period-date-wrap:hover .select-date-trigger,
+  .period-date-wrap:hover .select-time-trigger {
+    border-color: #94a3b8 !important;
+  }
+  .period-date-wrap:focus-within {
+    border-radius: 8px !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  }
+  .period-date-wrap:focus-within .period-input,
+  .period-date-wrap:focus-within .select-date-trigger,
+  .period-date-wrap:focus-within .select-time-trigger {
+    border-color: #3b82f6 !important;
+  }
+
+  /* ── Direct Hours Duration Input (Request Leave Token) ─────── */
+  .duration-input-wrap {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: 38px;
+  }
+  .duration-input-wrap .period-days {
+    padding-right: 52px;
+    height: 38px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    border: 1.5px solid #dde3ed;
+    width: 100%;
+    background: #fdfdff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .duration-input-wrap .period-days:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+  .duration-unit {
+    position: absolute;
+    right: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #4f46e5;
+    background: #eef2ff;
+    padding: 2px 7px;
+    border-radius: 4px;
+    pointer-events: none;
+    text-transform: uppercase;
+  }
+
+  /* ── Quick Chips (Request Leave Token) ───────────────────────── */
+  .quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .quick-chip {
+    border: 1px solid #dde3ed;
+    background: #f8fafc;
+    color: #475569;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    line-height: 1.3;
+  }
+  .quick-chip:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  /* ── Modal Dialog & Body Overflow Prevention ───────────────── */
+  #requestOtModal .modal-dialog {
+    max-width: 440px;
+    overflow-x: hidden !important;
+  }
+  #requestOtModal .modal-content {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  #requestOtModal .modal-body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ── Policy Select & Select2 Harmonization ──────────────────── */
+  .ot-select-wrap {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  .ot-select-wrap select.select2-hidden-accessible {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .ot-select-wrap select {
+    font-size: 0.8rem !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #dde3ed !important;
+    background-color: #fdfdff !important;
+    color: #0f172a !important;
+    font-weight: 500 !important;
+    padding-left: 8px !important;
+    width: 100% !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  }
+  .ot-select-wrap select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  }
+  .ot-select-wrap .select2-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .ot-select-wrap .select2-container--default .select2-selection--single {
+    height: 38px !important;
+    border: 1.5px solid #dde3ed !important;
+    border-radius: 8px !important;
+    background-color: #fdfdff !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  }
+  .ot-select-wrap .select2-container--default:hover .select2-selection--single {
+    border-color: #94a3b8 !important;
+  }
+  .ot-select-wrap .select2-container--default.select2-container--open .select2-selection--single,
+  .ot-select-wrap .select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  }
+  .ot-select-wrap .select2-selection__rendered {
+    line-height: 36px !important;
+    padding-left: 10px !important;
+    padding-right: 24px !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .ot-select-wrap .select2-selection__arrow {
+    height: 36px !important;
+    right: 8px !important;
+  }
+
+  .period-field-group {
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+  }
+
+  .ot-reason-input {
+    border: 1.5px solid #dde3ed;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    resize: none;
+    height: 52px;
+    background: #fdfdff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .ot-reason-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .fs-xs { font-size: 0.72rem !important; }
+  .fs-2xs { font-size: 0.65rem !important; }
+
+  /* ── Mobile Responsiveness (iPhone SE & Small Viewports) ─────── */
+  @media (max-width: 576px) {
+    .ot-modal-dialog {
+      margin: 0.5rem auto !important;
+      max-width: calc(100% - 1rem) !important;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .period-header {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 6px !important;
+    }
+    .period-mode-pills {
+      width: 100% !important;
+      display: flex !important;
+      order: 3 !important;
+    }
+    .period-mode-pills .mode-pill {
+      flex: 1 1 50% !important;
+      justify-content: center !important;
+      padding: 3px 6px !important;
+      font-size: 0.7rem !important;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .ot-modal-dialog {
+      margin: 0.3rem auto !important;
+      max-width: calc(100% - 0.6rem) !important;
+    }
+    .period-badge {
+      font-size: 0.68rem;
+    }
+    .period-field-label {
+      font-size: 0.68rem;
+    }
+  }
+</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -170,26 +734,123 @@
     if (dateInput && !dateInput.value) {
       dateInput.value = new Date().toISOString().split('T')[0];
     }
+
     var st = document.getElementById('id_my_start_time');
     var et = document.getElementById('id_my_end_time');
-    var hrs = document.getElementById('id_my_hours');
+    var hiddenHrs = document.getElementById('id_my_hours');
+    var directHrsInput = document.getElementById('id_my_hours_input');
+    var policySelect = document.querySelector('select[name="overtime_type"]');
+    var liveRateBadge = document.getElementById('liveRateBadge');
+    var summaryRateBadge = document.getElementById('summaryRateBadge');
+    var liveSummaryHours = document.getElementById('liveSummaryHours');
+    var shiftLiveDisplay = document.getElementById('shiftLiveDisplay');
+    var btnSubmitHours = document.getElementById('btnSubmitHours');
+    var btnModeShift = document.getElementById('btnModeShift');
+    var btnModeDirect = document.getElementById('btnModeDirect');
+    var sectionShift = document.getElementById('sectionShiftInterval');
+    var sectionDirect = document.getElementById('sectionDirectHours');
 
-    function calc() {
+    // Parse Policy Multiplier from select option text (e.g. "(1.5x)")
+    function updatePolicyRate() {
+      if (!policySelect) return;
+      var selectedText = policySelect.options[policySelect.selectedIndex]?.text || '';
+      var match = selectedText.match(/\(([\d\.]+)x\)/i);
+      var rate = match ? match[1] + '× Rate' : '1.50× Rate';
+      var mult = match ? match[1] + '× Multiplier' : '1.50× Multiplier';
+      if (liveRateBadge) liveRateBadge.textContent = rate;
+      if (summaryRateBadge) summaryRateBadge.textContent = mult;
+    }
+
+    if (policySelect) {
+      policySelect.addEventListener('change', updatePolicyRate);
+      if (window.jQuery) {
+        window.jQuery(policySelect).on('change select2:select', updatePolicyRate);
+      }
+      updatePolicyRate();
+    }
+
+    // Set Final Hours and Sync Live Displays
+    function setFinalHours(valStr) {
+      var num = parseFloat(valStr) || 0;
+      var formatted = num.toFixed(2);
+      if (hiddenHrs) hiddenHrs.value = formatted;
+      if (liveSummaryHours) liveSummaryHours.textContent = formatted;
+      if (shiftLiveDisplay) shiftLiveDisplay.textContent = formatted;
+      if (btnSubmitHours) btnSubmitHours.textContent = formatted + 'h';
+      if (directHrsInput && document.activeElement !== directHrsInput) {
+        directHrsInput.value = formatted;
+      }
+    }
+
+    // Calculate Hours from Start & End Time
+    function calcFromTimes() {
       if (st && et && st.value && et.value) {
         var s = st.value.split(':');
         var e = et.value.split(':');
-        var sm = parseInt(s[0]) * 60 + parseInt(s[1]);
-        var em = parseInt(e[0]) * 60 + parseInt(e[1]);
-        if (em < sm) { em += 24 * 60; }
-        if (hrs) {
-          hrs.value = ((em - sm) / 60.0).toFixed(2);
-        }
+        var sm = parseInt(s[0], 10) * 60 + parseInt(s[1], 10);
+        var em = parseInt(e[0], 10) * 60 + parseInt(e[1], 10);
+        if (em < sm) { em += 24 * 60; } // Handle past midnight
+        var diff = ((em - sm) / 60.0).toFixed(2);
+        setFinalHours(diff);
       }
     }
+
     if (st && et) {
-      st.addEventListener('change', calc);
-      et.addEventListener('change', calc);
+      st.addEventListener('change', calcFromTimes);
+      et.addEventListener('change', calcFromTimes);
+      st.addEventListener('input', calcFromTimes);
+      et.addEventListener('input', calcFromTimes);
     }
+
+    if (directHrsInput) {
+      directHrsInput.addEventListener('input', function() {
+        setFinalHours(this.value);
+      });
+      directHrsInput.addEventListener('change', function() {
+        setFinalHours(this.value);
+      });
+    }
+
+    // Quick Shift Presets
+    document.querySelectorAll('.ot-preset-chip').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (st && et) {
+          st.value = this.dataset.st;
+          et.value = this.dataset.et;
+          calcFromTimes();
+        }
+      });
+    });
+
+    // Quick Direct Hour Presets
+    document.querySelectorAll('.ot-quick-hr').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var hrs = this.dataset.hrs;
+        setFinalHours(hrs);
+      });
+    });
+
+    // Mode Toggle (Shift Window vs Direct Hours)
+    if (btnModeShift && btnModeDirect) {
+      btnModeShift.addEventListener('click', function() {
+        btnModeShift.classList.add('active');
+        btnModeDirect.classList.remove('active');
+        if (sectionShift) sectionShift.classList.remove('d-none');
+        if (sectionDirect) sectionDirect.classList.add('d-none');
+        calcFromTimes();
+      });
+
+      btnModeDirect.addEventListener('click', function() {
+        btnModeDirect.classList.add('active');
+        btnModeShift.classList.remove('active');
+        if (sectionShift) sectionShift.classList.add('d-none');
+        if (sectionDirect) sectionDirect.classList.remove('d-none');
+        if (directHrsInput) setFinalHours(directHrsInput.value || '2.50');
+      });
+    }
+
+    // Initial calculation on load
+    calcFromTimes();
   });
 </script>
 {% endblock %}

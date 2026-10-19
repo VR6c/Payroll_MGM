@@ -16,7 +16,6 @@ urlpatterns = [
     path('attendance/', include('attendance.urls')),
     path('leave/', include('leave.urls')),
     path('payroll/', include('payroll.urls')),
-    path('activities/', include('activities.urls')),
     path('reports/', include('reports.urls')),
     path('overtime/', include('overtime.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

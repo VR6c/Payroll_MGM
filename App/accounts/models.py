@@ -88,14 +88,6 @@ PERMISSION_CATALOG = {
             ('dashboard.view', 'Access Executive Dashboard', 'View organization KPI cards, present/late metrics, and quick operations'),
         ]
     },
-    'activities': {
-        'name': 'System Audit Trail',
-        'short_name': 'Audit Logs',
-        'icon': 'mdi-history',
-        'permissions': [
-            ('activities.view', 'View Activity Stream', 'Browse and filter system activity and audit logs'),
-        ]
-    },
     'users': {
         'name': 'Users & Access Roles (RBAC)',
         'short_name': 'Users & RBAC',
@@ -118,7 +110,6 @@ class Role(models.Model):
         ('overtime', 'Overtime Records & Rates'),
         ('payroll', 'Salary Setup & Payroll Processing'),
         ('reports', 'Reports & PDF/Excel Exports'),
-        ('activities', 'System Activity Logs'),
         ('users', 'User & Access Role (RBAC) Management'),
     ]
 
@@ -216,7 +207,7 @@ class User(AbstractUser):
         if r:
             return r.has_permission(module_key)
         if self.role == self.Role.HR_ADMIN:
-            return module_key in ['dashboard', 'employees', 'attendance', 'leave', 'overtime', 'payroll', 'reports', 'activities']
+            return module_key in ['dashboard', 'employees', 'attendance', 'leave', 'overtime', 'payroll', 'reports']
         if self.role == self.Role.MANAGER:
             return module_key in ['dashboard', 'attendance', 'leave', 'employees']
         if self.role == self.Role.EMPLOYEE:

@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     'attendance.apps.AttendanceConfig',
     'leave.apps.LeaveConfig',
     'payroll.apps.PayrollConfig',
-    'activities.apps.ActivitiesConfig',
     'dashboard.apps.DashboardConfig',
     'reports.apps.ReportsConfig',
     'overtime.apps.OvertimeConfig',
@@ -97,7 +96,7 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv('TIME_ZONE', 'Asia/Phnom_Penh')
 USE_I18N = True
 USE_TZ = True
 

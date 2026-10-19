@@ -79,7 +79,6 @@ A production-ready, enterprise-grade **Human Resource & Payroll Management Syste
   - Multi-tiered RBAC (`super_admin`, `hr_admin`, `manager`, `employee`).
   - View-level (`RoleRequiredMixin`) and form field-level (`FieldPermissionMixin`) access guards.
   - Session protection middleware (`SecureSessionMiddleware`) guarding against session hijacking.
-  - Append-only activity log (`Activity`) tracking user and administrative operations.
 
 ---
 
@@ -126,7 +125,7 @@ A production-ready, enterprise-grade **Human Resource & Payroll Management Syste
 ```
 
 - **Domain-Driven Architecture**: Business logic is decoupled into standalone Django apps under `App/`:
-  - `accounts`, `activities`, `attendance`, `companies`, `dashboard`, `employees`, `leave`, `overtime`, `payroll`, `reports`.
+  - `accounts`, `attendance`, `companies`, `dashboard`, `employees`, `leave`, `overtime`, `payroll`, `reports`.
 - **Modular Exporters**: Dedicated export engines in `App/reports/exporters.py` and `App/overtime/exporters.py` streamline CSV, Excel (`openpyxl`), and PDF (`ReportLab`) generation across all modules.
 - **Unified Templates**: Organized under `templates/<app>/*.html` using a cohesive base theme (`templates/base.html`).
 - **Centralized Rules**: Business logic parameters (tax rates, NSSF rates, standard hours, overtime multipliers) reside in `config/business_rules.json` and are accessed via `config/rules.py`.
@@ -207,11 +206,7 @@ Access enforcement is provided by:
 
 ### 9. `dashboard` — Role-Aware Landing Experience
 - **Employee View**: Today's clock-in status, remaining leave balance, latest net salary card, overtime summary, and recent requests.
-- **Admin/Manager View**: Total active employees, attendance counts (present/late), pending overtime and leave requests, recent hires, and system activity logs.
-
-### 10. `activities` — System Audit Logging
-- `Activity` model recording actor, targeted employee, module, action, and timestamp.
-- Indexed by date and module for fast audit stream queries.
+- **Admin/Manager View**: Total active employees, attendance counts (present/late), pending overtime and leave requests, and recent hires.
 
 ---
 
@@ -416,7 +411,6 @@ Automated test execution is enforced on every commit and pull request via the [G
 Payroll_MGM/
 ├── App/                            # Core Django applications
 │   ├── accounts/                   # Authentication, User model, RBAC mixins, middleware
-│   ├── activities/                 # System audit log & activity streams
 │   ├── attendance/                 # Time tracking, lunch break deductions, schedule matrix
 │   │   └── management/commands/    # recalculate_working_hours, seed_schedules
 │   ├── companies/                  # Company, Department, Position, and Branch definitions
