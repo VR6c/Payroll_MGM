@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    EmployeeListView, EmployeeCreateView, EmployeeUpdateView, EmployeeDetailView,
+    EmployeeListView, EmployeeCreateView, EmployeeUpdateView, EmployeeDetailView, EmployeeDeleteView,
     PositionListView, PositionCreateView, PositionUpdateView, PositionDeleteView,
     DepartmentListView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView,
     BranchListView, BranchCreateView, BranchUpdateView, BranchDeleteView
@@ -23,6 +23,7 @@ urlpatterns = [
     path('create/', EmployeeCreateView.as_view(), name='create'),
     path('<int:pk>/', EmployeeDetailView.as_view(), name='detail'),
     path('<int:pk>/edit/', EmployeeUpdateView.as_view(), name='update'),
+    path('<int:pk>/delete/', EmployeeDeleteView.as_view(), name='delete'),
 ]
 
 

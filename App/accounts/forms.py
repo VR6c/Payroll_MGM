@@ -21,6 +21,8 @@ class RoleForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Allow leaving code blank so clean_code can auto-generate it from the role name
+        self.fields['code'].required = False
         if self.instance and self.instance.pk and self.instance.is_system:
             self.fields['code'].disabled = True
             self.fields['code'].help_text = "Core system role identifier cannot be modified."
@@ -40,8 +42,11 @@ class RoleForm(forms.ModelForm):
         code = self.cleaned_data.get('code', '').strip()
         if not code:
             name = self.cleaned_data.get('name', '')
-            code = slugify(name).replace('-', '_')
-        code = slugify(code).replace('-', '_')
+            code = slugify(name, allow_unicode=True).replace('-', '_')
+        code = slugify(code, allow_unicode=True).replace('-', '_')
+        if not code:
+            import uuid
+            code = f"role_{uuid.uuid4().hex[:6]}"
         qs = Role.objects.filter(code__iexact=code)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -113,16 +118,18 @@ class UserCreateForm(forms.ModelForm):
             self.fields['role'].choices = [(r.code, r.name) for r in roles]
 
     def clean_username(self):
-        username = self.cleaned_data.get('username')
+        username = (self.cleaned_data.get('username') or '').strip()
+        if not username:
+            raise ValidationError("This field is required.")
         if User.objects.filter(username__iexact=username).exists():
             raise ValidationError("A user with this username already exists.")
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = (self.cleaned_data.get('email') or '').strip()
         if email and User.objects.filter(email__iexact=email).exists():
             raise ValidationError("A user with this email address already exists.")
-        return email
+        return email or ''
 
     def clean(self):
         cleaned_data = super().clean()

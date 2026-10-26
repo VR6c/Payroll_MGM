@@ -187,6 +187,11 @@ class UserDeleteView(RoleRequiredMixin, View):
                 return redirect('accounts:user_list')
 
         username = target.username
+        if hasattr(target, 'employee_profile') and target.employee_profile:
+            emp = target.employee_profile
+            emp.user = None
+            emp.save(update_fields=['user'])
+
         target.delete()
         messages.success(request, f"User '{username}' was permanently deleted.")
         return redirect('accounts:user_list')

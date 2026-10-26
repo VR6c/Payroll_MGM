@@ -236,6 +236,22 @@ class RoleManagementTests(TestCase):
         self.assertIn('payroll', role.permissions)
         self.assertIn('reports', role.permissions)
 
+    def test_create_custom_role_with_auto_generated_code(self):
+        self.client.force_login(self.super_admin)
+        post_data = {
+            'name': 'Benefits Specialist',
+            'code': '',
+            'description': 'Manages employee benefits',
+            'permissions': ['employees']
+        }
+        response = self.client.post(reverse('accounts:role_create'), data=post_data)
+        self.assertEqual(response.status_code, 302)
+
+        role = Role.objects.get(name='Benefits Specialist')
+        self.assertEqual(role.code, 'benefits_specialist')
+        self.assertFalse(role.is_system)
+        self.assertIn('employees', role.permissions)
+
     def test_update_custom_role(self):
         self.client.force_login(self.super_admin)
         role = Role.objects.create(

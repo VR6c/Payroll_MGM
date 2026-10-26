@@ -129,6 +129,11 @@
                       <i class="mdi mdi-pencil"></i>
                     </a>
                     {% endif %}
+                    {% if user.role in 'super_admin,hr_admin' %}
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal{{ emp.id }}" title="Delete Employee">
+                      <i class="mdi mdi-delete-outline"></i>
+                    </button>
+                    {% endif %}
                   </div>
                 </td>
               </tr>
@@ -149,4 +154,160 @@
     </div>
   </div>
 </div>
+
+<!-- Delete Employee Modals with Premium UI -->
+<style>
+  .delete-choice-card {
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0.95rem 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    user-select: none;
+    margin-bottom: 0.65rem;
+  }
+  .delete-choice-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+  .delete-choice-card.active-soft {
+    border-color: #3b82f6 !important;
+    background: #eff6ff !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12) !important;
+  }
+  .delete-choice-card.active-permanent {
+    border-color: #ef4444 !important;
+    background: #fef2f2 !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12) !important;
+  }
+  .delete-choice-card .form-check-input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.15rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+  }
+</style>
+
+{% for emp in employees %}
+{% if user.role in 'super_admin,hr_admin' %}
+<div class="modal fade text-start" id="deleteEmployeeModal{{ emp.id }}" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel{{ emp.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <form method="post" action="{% url 'employees:delete' emp.id %}" id="deleteEmpForm{{ emp.id }}">
+        {% csrf_token %}
+        <div class="modal-header border-bottom py-3 px-4 bg-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(239, 68, 68, 0.12); color: #dc2626;">
+              <i class="mdi mdi-alert-circle-outline fs-5"></i>
+            </div>
+            <div>
+              <h6 class="modal-title fw-bold text-dark mb-0">Delete Employee</h6>
+              <span class="text-muted" style="font-size: 0.76rem;">Select separation or deletion mode</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4 bg-white">
+          <!-- Employee Preview Pill -->
+          <div class="p-3 mb-3 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-title rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 42px; height: 42px; font-size: 0.95rem;">
+                {{ emp.first_name|slice:":1" }}{{ emp.last_name|slice:":1" }}
+              </div>
+              <div>
+                <div class="fw-bold text-dark fs-6" style="line-height: 1.2;">{{ emp.first_name }} {{ emp.last_name }}</div>
+                <div class="text-muted small mt-0.5" style="font-size: 0.78rem;">
+                  {{ emp.department.name|default:"General Department" }} &bull; {{ emp.position.name|default:"Staff" }}
+                </div>
+              </div>
+            </div>
+            <span class="badge bg-white text-dark border px-2 py-1 font-monospace" style="font-size: 0.74rem;">{{ emp.employee_code }}</span>
+          </div>
+
+          <label class="form-label small fw-bold text-uppercase text-muted mb-2" style="font-size: 0.72rem; letter-spacing: 0.05em;">Select Action</label>
+
+          <!-- Option 1: Soft Delete / Archive -->
+          <label class="delete-choice-card active-soft d-flex align-items-start" for="deleteModeSoft{{ emp.id }}" onclick="updateDeleteCardState('{{ emp.id }}', 'soft')">
+            <input class="form-check-input flex-shrink-0" type="radio" name="delete_mode" id="deleteModeSoft{{ emp.id }}" value="soft" checked onchange="updateDeleteCardState('{{ emp.id }}', 'soft')">
+            <div class="flex-grow-1 ps-1">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="fw-bold text-dark" style="font-size: 0.88rem;">
+                  <i class="mdi mdi-archive-outline text-warning me-1"></i> Archive & Terminate
+                </span>
+                <span class="badge px-2 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">Recommended</span>
+              </div>
+              <p class="text-muted small mb-0" style="font-size: 0.78rem; line-height: 1.35;">
+                Sets status to <strong>Terminated</strong> and hides the employee from active directory. Safely preserves all historical payslips, attendance, and leave records.
+              </p>
+            </div>
+          </label>
+
+          <!-- Option 2: Permanent Delete -->
+          <label class="delete-choice-card d-flex align-items-start mb-0" for="deleteModePermanent{{ emp.id }}" onclick="updateDeleteCardState('{{ emp.id }}', 'permanent')">
+            <input class="form-check-input flex-shrink-0" type="radio" name="delete_mode" id="deleteModePermanent{{ emp.id }}" value="permanent" onchange="updateDeleteCardState('{{ emp.id }}', 'permanent')">
+            <div class="flex-grow-1 ps-1">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="fw-bold text-danger" style="font-size: 0.88rem;">
+                  <i class="mdi mdi-delete-alert-outline text-danger me-1"></i> Permanently Delete
+                </span>
+                <span class="badge px-2 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;">Irreversible</span>
+              </div>
+              <p class="text-muted small mb-0" style="font-size: 0.78rem; line-height: 1.35;">
+                Completely removes this employee and all associated logs from the database. Use only if this profile was created accidentally.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div class="modal-footer border-top px-4 py-3 bg-white d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal" style="font-size: 0.85rem;">Cancel</button>
+          <button type="submit" class="btn btn-warning text-dark fw-bold px-4 shadow-sm" id="deleteSubmitBtn{{ emp.id }}" style="font-size: 0.85rem;">
+            <i class="mdi mdi-archive-outline me-1"></i> Archive Employee
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<script>
+  function updateDeleteCardState(empId, mode) {
+    var softCard = document.querySelector('label[for="deleteModeSoft' + empId + '"]');
+    var permCard = document.querySelector('label[for="deleteModePermanent' + empId + '"]');
+    var submitBtn = document.getElementById('deleteSubmitBtn' + empId);
+
+    if (mode === 'soft') {
+      if (softCard) {
+        softCard.classList.add('active-soft');
+        softCard.classList.remove('active-permanent');
+      }
+      if (permCard) {
+        permCard.classList.remove('active-permanent', 'active-soft');
+      }
+      if (submitBtn) {
+        submitBtn.className = 'btn btn-warning text-dark fw-bold px-4 shadow-sm';
+        submitBtn.innerHTML = '<i class="mdi mdi-archive-outline me-1"></i> Archive Employee';
+      }
+    } else {
+      if (permCard) {
+        permCard.classList.add('active-permanent');
+        permCard.classList.remove('active-soft');
+      }
+      if (softCard) {
+        softCard.classList.remove('active-soft', 'active-permanent');
+      }
+      if (submitBtn) {
+        submitBtn.className = 'btn btn-danger text-white fw-bold px-4 shadow-sm';
+        submitBtn.innerHTML = '<i class="mdi mdi-delete-forever-outline me-1"></i> Permanently Delete';
+      }
+    }
+  }
+</script>
 {% endblock %}

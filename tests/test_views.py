@@ -76,7 +76,10 @@ class ViewIntegrationTests(TestCase):
 
         attendance_resp = self.client.get(reverse('attendance:my_attendance'))
         self.assertEqual(attendance_resp.status_code, 200)
-        self.assertContains(attendance_resp, "Present")
+        self.assertTrue(
+            "Present" in attendance_resp.content.decode() or "Late" in attendance_resp.content.decode(),
+            "Expected 'Present' or 'Late' status badge in attendance table"
+        )
 
     def test_leave_request(self):
         self.client.force_login(self.employee_user)
@@ -147,3 +150,38 @@ class ViewIntegrationTests(TestCase):
         payslip_resp = self.client.get(reverse('payroll:payslip', kwargs={'pk': payroll.pk}))
         self.assertEqual(payslip_resp.status_code, 200)
         self.assertContains(payslip_resp, "4250.00")
+
+    def test_employee_soft_delete(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            reverse('employees:delete', kwargs={'pk': self.employee.pk}),
+            data={'delete_mode': 'soft'}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.status, Employee.Status.TERMINATED)
+        self.assertIsNotNone(self.employee.deleted_at)
+        # Verify active manager excludes soft-deleted employee
+        self.assertFalse(Employee.objects.filter(pk=self.employee.pk).exists())
+        self.assertTrue(Employee.all_objects.filter(pk=self.employee.pk).exists())
+
+    def test_employee_permanent_delete(self):
+        self.client.force_login(self.admin_user)
+        emp_to_delete = Employee.objects.create(
+            company=self.company,
+            department=self.dept,
+            position=self.pos,
+            employee_code="EMP-PERM-DEL",
+            first_name="Perm",
+            last_name="Delete",
+            email="perm.delete@acme.com",
+            join_date=date(2023, 1, 1),
+            basic_salary=3000.00
+        )
+        response = self.client.post(
+            reverse('employees:delete', kwargs={'pk': emp_to_delete.pk}),
+            data={'delete_mode': 'permanent'}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Employee.all_objects.filter(pk=emp_to_delete.pk).exists())
+

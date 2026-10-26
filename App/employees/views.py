@@ -1,5 +1,8 @@
+from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
 from accounts.mixins import RoleRequiredMixin, FieldPermissionMixin
@@ -84,6 +87,29 @@ class EmployeeDetailView(RoleRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Employee.objects.select_related('company', 'department', 'position', 'manager', 'user')
+
+
+class EmployeeDeleteView(RoleRequiredMixin, View):
+    required_roles = ['super_admin', 'hr_admin']
+
+    def post(self, request, pk):
+        employee = get_object_or_404(Employee.all_objects, pk=pk)
+        delete_mode = request.POST.get('delete_mode', 'soft')
+        emp_name = f"{employee.first_name} {employee.last_name} ({employee.employee_code})"
+
+        if delete_mode == 'permanent':
+            if employee.user:
+                employee.user = None
+                employee.save(update_fields=['user'])
+            employee.delete()
+            messages.success(request, f"Employee '{emp_name}' was permanently deleted.")
+        else:
+            employee.status = Employee.Status.TERMINATED
+            employee.deleted_at = timezone.now()
+            employee.save()
+            messages.success(request, f"Employee '{emp_name}' was archived / terminated successfully.")
+
+        return redirect('employees:list')
 
 
 class PositionListView(RoleRequiredMixin, ListView):
